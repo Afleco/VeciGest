@@ -1,13 +1,24 @@
-import React, { useState } from 'react';
-import { 
-  StyleSheet, Text, View, TextInput, TouchableOpacity, Image, 
-  SafeAreaView, KeyboardAvoidingView, Platform, Alert, 
-  ActivityIndicator, TouchableWithoutFeedback, Keyboard 
-} from 'react-native';
-import { StatusBar } from 'expo-status-bar';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
-import { supabase } from '../../SupaBase/Supabase'; 
-import { MaterialCommunityIcons } from '@expo/vector-icons'; 
+import { StatusBar } from 'expo-status-bar';
+import React, { useState } from 'react';
+import {
+  ActivityIndicator,
+  Alert,
+  Image,
+  Keyboard,
+  KeyboardAvoidingView,
+  Platform,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  TouchableWithoutFeedback,
+  View
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { supabase } from '../../SupaBase/Supabase';
+import { BorderRadius, Colors, FontSizes, FontWeights, Shadows, Spacing } from '../theme';
 
 const LoginScreen: React.FC = () => {
   const [usuario, setUsuario] = useState<string>(''); 
@@ -23,7 +34,7 @@ const LoginScreen: React.FC = () => {
     setPassword('');
   };
 
-  // Helper para alertas (Soluciona el problema de Alert en Web)
+  // Helper para alertas (Soluciona problema de Alert en Web)
   const showAlert = (titulo: string, mensaje: string) => {
     if (Platform.OS === 'web') {
       window.alert(`${titulo}: ${mensaje}`);
@@ -41,20 +52,20 @@ const LoginScreen: React.FC = () => {
     setLoading(true);
 
     try {
-      // 1. Login en Supabase Auth
+      // Login en Supabase Auth
       const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
         email: usuario.trim(), 
         password: password,
       });
 
       if (authError) {
-        showAlert('Error de acceso', 'Correo o contraseña incorrectos');
-        limpiarFormulario(); // Limpia inputs tras el error
+        showAlert('Error de acceso', 'Credenciales de acceso incorrectos');
+        limpiarFormulario();
         setLoading(false);
         return;
       }
 
-      // 2. Validación de perfil en tabla 'usuarios'
+      // Validación de perfil en tabla 'usuarios'
       const { data: userData, error: userError } = await supabase
         .from('usuarios')
         .select('auth_id')
@@ -63,17 +74,17 @@ const LoginScreen: React.FC = () => {
 
       if (userError || !userData) {
         showAlert('Error de perfil', 'Tu cuenta no está vinculada a un perfil de vecino.');
-        limpiarFormulario(); // Limpia inputs tras el error
+        limpiarFormulario();
         setLoading(false);
         return;
       }
 
       setLoading(false);
-      navigation.navigate('Noticias');
+      navigation.navigate('Inicio');
 
     } catch (error: any) {
       showAlert('Error', 'Ocurrió un error inesperado.');
-      limpiarFormulario(); // Limpia inputs tras el error
+      limpiarFormulario();
       setLoading(false);
     }
   };
@@ -85,7 +96,11 @@ const LoginScreen: React.FC = () => {
         style={styles.content}
       >
         <View style={styles.headerContainer}>
-          <Image source={require('../../assets/images/icon.png')} style={styles.logo} resizeMode="contain" />
+          <Image 
+            source={require('../../assets/images/iconapp.png')} 
+            style={styles.logo} 
+            resizeMode="contain" 
+          />
           <Text style={styles.title}>VeciGest</Text>
         </View>
 
@@ -93,7 +108,7 @@ const LoginScreen: React.FC = () => {
           <TextInput
             style={styles.input}
             placeholder="Correo electrónico"
-            placeholderTextColor="#A9A9A9"
+            placeholderTextColor={Colors.text.light}
             value={usuario}
             onChangeText={setUsuario}
             autoCapitalize="none"
@@ -106,7 +121,7 @@ const LoginScreen: React.FC = () => {
             <TextInput
               style={[styles.input, { marginBottom: 0 }]} 
               placeholder="Contraseña"
-              placeholderTextColor="#A9A9A9"
+              placeholderTextColor={Colors.text.light}
               value={password}
               onChangeText={setPassword}
               secureTextEntry={!showPassword}
@@ -122,7 +137,8 @@ const LoginScreen: React.FC = () => {
               >
                 <MaterialCommunityIcons 
                   name={showPassword ? "eye" : "eye-off"} 
-                  size={24} color="#000000" 
+                  size={24} 
+                  color={Colors.base.black} 
                 />
               </TouchableOpacity>
             )}
@@ -133,7 +149,11 @@ const LoginScreen: React.FC = () => {
             onPress={handleLogin}
             disabled={loading}
           >
-            {loading ? <ActivityIndicator color="#FFFFFF" /> : <Text style={styles.buttonText}>Iniciar sesión</Text>}
+            {loading ? (
+              <ActivityIndicator color={Colors.base.white} />
+            ) : (
+              <Text style={styles.buttonText}>Iniciar sesión</Text>
+            )}
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
@@ -155,51 +175,86 @@ const LoginScreen: React.FC = () => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#FFFFFF' },
-  centerContent: { flex: 1, alignItems: 'center', justifyContent: 'center', width: '100%' },
-  content: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 20, width: '100%', maxWidth: 450 },
-  headerContainer: { alignItems: 'center', marginBottom: 30 },
-  logo: { width: 120, height: 120, marginBottom: 10 },
-  title: { fontSize: 32, fontWeight: 'bold', color: '#000000' },
+  container: { 
+    flex: 1, 
+    backgroundColor: Colors.base.white 
+  },
+  centerContent: { 
+    flex: 1, 
+    alignItems: 'center', 
+    justifyContent: 'center', 
+    width: '100%' 
+  },
+  content: { 
+    flex: 1, 
+    alignItems: 'center', 
+    justifyContent: 'center', 
+    paddingHorizontal: Spacing.xl, 
+    width: '100%', 
+    maxWidth: 450 
+  },
+  headerContainer: { 
+    alignItems: 'center', 
+    marginBottom: BorderRadius.xl 
+  },
+  logo: { 
+    width: 200, 
+    height: 200, 
+    marginBottom: Spacing.md 
+  },
+  title: { 
+    fontSize: FontSizes.xxxl, 
+    fontWeight: FontWeights.bold, 
+    color: Colors.base.black 
+  },
   card: {
-    backgroundColor: '#77A2D1',
+    backgroundColor: Colors.primary.blue,
     width: '100%',
-    borderRadius: 40,
+    borderRadius: BorderRadius.xl,
     paddingVertical: 45,
     paddingHorizontal: 25,
     alignItems: 'center',
-    elevation: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.15,
-    shadowRadius: 10,
+    ...Shadows.large,
   },
-  passwordContainer: { width: '100%', position: 'relative', marginBottom: 20, justifyContent: 'center' },
+  passwordContainer: { 
+    width: '100%', 
+    position: 'relative', 
+    marginBottom: Spacing.xl, 
+    justifyContent: 'center' 
+  },
   input: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.base.white,
     width: '100%',
     height: 55,
-    borderRadius: 30,
+    borderRadius: BorderRadius.xl,
     paddingHorizontal: 50,
-    fontSize: 18,
-    marginBottom: 20,
+    fontSize: FontSizes.lg,
+    marginBottom: Spacing.xl,
     textAlign: 'center',
-    color: '#333',
+    color: Colors.text.primary,
     ...Platform.select({
       web: { outlineStyle: 'none' } as any,
     }),
   },
-  eyeIcon: { position: 'absolute', right: 15, zIndex: 10 },
+  eyeIcon: { 
+    position: 'absolute', 
+    right: 15, 
+    zIndex: 10 
+  },
   button: {
-    backgroundColor: '#E68A4B',
+    backgroundColor: Colors.primary.orange,
     width: '100%',
     height: 55,
-    borderRadius: 30,
+    borderRadius: BorderRadius.xl,
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 10,
+    marginTop: Spacing.md,
   },
-  buttonText: { color: '#FFFFFF', fontSize: 20, fontWeight: 'bold' },
+  buttonText: { 
+    color: Colors.base.white, 
+    fontSize: FontSizes.xl, 
+    fontWeight: FontWeights.bold 
+  },
 });
 
 export default LoginScreen;
