@@ -1,6 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Picker } from '@react-native-picker/picker';
-import React, { useEffect, useState } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
+import React, { useCallback, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -29,9 +30,11 @@ const EliminarUsuario = () => {
   const [usuarioInfo, setUsuarioInfo] = useState<Usuario | null>(null);
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    cargarUsuarios();
-  }, []);
+  useFocusEffect(
+      useCallback(() => {
+        cargarUsuarios();
+      }, [])
+    );
 
   const cargarUsuarios = async () => {
     try {

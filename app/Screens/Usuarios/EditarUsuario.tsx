@@ -1,16 +1,17 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Picker } from '@react-native-picker/picker';
-import React, { useEffect, useState } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
+import React, { useCallback, useState } from 'react';
 import {
-    ActivityIndicator,
-    Alert,
-    Platform,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Alert,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { supabase } from '../../../SupaBase/Supabase';
@@ -36,9 +37,11 @@ const EditarUsuario = () => {
   const [roles, setRoles] = useState<string[]>([]);
   const [loadingData, setLoadingData] = useState(true);
 
-  useEffect(() => {
-    cargarDatos();
-  }, []);
+  useFocusEffect(
+        useCallback(() => {
+          cargarDatos();
+        }, [])
+      );
 
   const cargarDatos = async () => {
     try {
