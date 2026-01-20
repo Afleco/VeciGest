@@ -6,8 +6,9 @@ import { ActivityIndicator, Image, StyleSheet, Text, View } from 'react-native';
 import { supabase } from '../SupaBase/Supabase';
 import { BorderRadius, Colors, FontSizes, FontWeights, Spacing } from './theme';
 
-// Importamos las pantallas
+// Importa tus pantallas
 import Administracion from './Screens/Administracion';
+import GestionUsuarios from './Screens/GestionUsuarios';
 import Inicio from './Screens/Inicio';
 import Login from './Screens/Login';
 
@@ -159,7 +160,7 @@ export default function Index() {
           },
         }}
       >
-        {/* PANTALLA LOGIN */}
+        {/* PANTALLA LOGIN: Oculta del menú pero accesible */}
         <Drawer.Screen 
           name="Login" 
           component={Login} 
@@ -196,6 +197,16 @@ export default function Index() {
             }}
           />
         )}
+
+        {/* PANTALLA GESTIÓN DE USUARIOS: Oculta en el drawer */}
+        <Drawer.Screen 
+          name="GestionUsuarios" 
+          component={GestionUsuarios}
+          options={{
+            drawerItemStyle: { display: 'none' },
+            headerTitle: 'Gestión de Usuarios',
+          }}
+        />
 
       </Drawer.Navigator>
     </>

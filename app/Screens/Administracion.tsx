@@ -1,13 +1,14 @@
 import { Ionicons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
 import React, { useEffect, useState } from 'react';
 import {
-    Alert,
-    Platform,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View
+  Alert,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { supabase } from '../../SupaBase/Supabase';
@@ -15,6 +16,7 @@ import { BorderRadius, Colors, FontSizes, FontWeights, Shadows, Spacing } from '
 
 const Administracion = () => {
   const [userRole, setUserRole] = useState('');
+  const navigation = useNavigation<any>();
 
   useEffect(() => {
     getUserRole();
@@ -55,7 +57,7 @@ const Administracion = () => {
       description: 'Administrar vecinos y permisos',
       icon: 'people-outline',
       color: Colors.primary.blue,
-      action: () => showAlert('Próximamente', 'Gestión de usuarios en desarrollo')
+      action: () => navigation.navigate('GestionUsuarios')
     },
     {
       id: 2,
