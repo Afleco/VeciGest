@@ -118,7 +118,7 @@ const Noticias = () => {
               <Ionicons name="megaphone-outline" size={20} color={Colors.primary.orange} />
               <Text style={styles.newsTitle}>Información importante</Text>
             </View>
-            <Text style={styles.newsDate}>Hace 2 horas</Text>
+            <Text style={styles.newsDate}>Hace 4 días</Text>
             <Text style={styles.newsContent}>
               Próximamente podrás ver aquí todas las noticias y comunicados de tu comunidad.
             </Text>

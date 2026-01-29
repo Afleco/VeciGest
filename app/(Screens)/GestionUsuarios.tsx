@@ -4,10 +4,10 @@ import React from 'react';
 import { Colors, FontSizes } from '../theme';
 
 // Importar las pantallas de gestión
-import CrearUsuario from './Usuarios/CrearUsuario';
-import EditarUsuario from './Usuarios/EditarUsuario';
-import EliminarUsuario from './Usuarios/EliminarUsuario';
-import ListarUsuarios from './Usuarios/ListarUsuarios';
+import CrearUsuario from './(Usuarios)/CrearUsuario';
+import EditarUsuario from './(Usuarios)/EditarUsuario';
+import EliminarUsuario from './(Usuarios)/EliminarUsuario';
+import ListarUsuarios from './(Usuarios)/ListarUsuarios';
 
 const Tab = createBottomTabNavigator();
 

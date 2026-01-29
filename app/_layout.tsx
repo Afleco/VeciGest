@@ -6,11 +6,11 @@ import { ActivityIndicator, Image, StyleSheet, Text, View } from 'react-native';
 import { supabase } from '../SupaBase/Supabase';
 import { BorderRadius, Colors, FontSizes, FontWeights, Spacing } from './theme';
 
-// Importa tus pantallas
-import Administracion from './Screens/Administracion';
-import GestionUsuarios from './Screens/GestionUsuarios';
-import Inicio from './Screens/Inicio';
-import Login from './Screens/Login';
+// Importar las pantallas
+import Administracion from './(Screens)/Administracion';
+import GestionUsuarios from './(Screens)/GestionUsuarios';
+import Inicio from './(Screens)/Inicio';
+import Login from './(Screens)/Login';
 
 const Drawer = createDrawerNavigator();
 
