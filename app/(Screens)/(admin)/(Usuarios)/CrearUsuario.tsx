@@ -1,5 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
-import React, { useEffect, useState } from 'react';
+import { createClient } from '@supabase/supabase-js';
+import { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -12,9 +13,14 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { supabase } from '../../../lib/supabase';
-import { BorderRadius, Colors, FontSizes, FontWeights, Shadows, Spacing } from '../../../styles/theme';
-import CustomPicker from '../../components/CustomPicker';
+import { supabase } from '../../../../lib/supabase';
+import { BorderRadius, Colors, FontSizes, FontWeights, Shadows, Spacing } from '../../../../styles/theme';
+import CustomPicker from '../../../components/CustomPicker';
+
+// Necesitamos las URL y Key para crear el cliente temporal
+const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL || "";
+const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_KEY || ""; 
+
 
 const CrearUsuario = () => {
   const [nombre, setNombre] = useState('');
@@ -60,7 +66,6 @@ const CrearUsuario = () => {
       const { data, error } = await supabase.rpc('get_enum_values', { 
         enum_name: 'Roles' 
       });
-
       if (error || !data) {
         setRoles(['Vecino', 'Vicepresidente', 'Presidente', 'Administrador', 'Propietario']);
         setRol('Vecino');
@@ -99,48 +104,62 @@ const CrearUsuario = () => {
     setLoading(true);
 
     try {
-      // Crear Auth
-      const { data: authData, error: authError } = await supabase.auth.signUp({
+      // Creamos un cliente que NO guarda sesión
+      // Así, al hacer signUp, no sobrescribe la sesión de Admin que esté activa.
+      const tempSupabase = createClient(supabaseUrl, supabaseAnonKey, {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false, // Aquí no queremos mantener la sesión
+          detectSessionInUrl: false,
+        },
+      });
+
+      // Crear usuario en Auth usando el cliente temporal
+      const { data: authData, error: authError } = await tempSupabase.auth.signUp({
         email: email.trim(),
         password: password,
       });
 
       if (authError) throw authError;
-      if (!authData.user) throw new Error('No se pudo crear usuario auth');
+      if (!authData.user) throw new Error('No se pudo crear el usuario en Auth');
 
-      // Crear Perfil
+      // Insertar el perfil en la tabla pública
+      // AQUÍ usamos el cliente principal 'supabase' (Admin) porque el tempClient 
+      // es el nuevo usuario y  no tendrá permisos para asignarse roles
       const { error: insertError } = await supabase
         .from('usuarios')
         .insert({
           email: email.trim(),
           vivienda_id: viviendaId || null,
-          password: password,
+          password: password, // Opcional guardarla aquí (por ahora) ?? Esto se quitará en producción
           nombre: nombre.trim(),
           rol: rol,
-          auth_id: authData.user.id,
+          auth_id: authData.user.id, // Usamos el ID generado por el cliente temporal
         });
 
-      if (insertError) throw insertError;
+      if (insertError) {
+        // Si falla la inserción en la BD, intenta borrar el usuario de Auth para no dejar basura
+        // (Esto requeriría una Edge Function para ser perfecto, pero por ahora lanzamos error)
+        console.error('Error insertando perfil:', insertError);
+        throw new Error('El usuario se creó en Auth pero falló al crear el perfil.');
+      }
 
-      showAlert('Éxito', 'Usuario creado correctamente');
+      showAlert('Éxito', 'Usuario creado correctamente. Tu sesión sigue activa.');
       limpiarFormulario();
+      
     } catch (error: any) {
-      console.error('Error:', error);
+      console.error('Error creando usuario:', error);
       showAlert('Error', error.message || 'Error al crear usuario');
     } finally {
       setLoading(false);
     }
   };
 
-  // --- PREPARAR DATOS PARA EL CUSTOM PICKER ---
-  
-  // Transformamos las viviendas al formato { label: 'Vivienda 1A', value: '1A' }
+  // Preparar opciones para los Pickers
   const opcionesVivienda = [
     { label: 'Sin vivienda asignada', value: '' },
     ...viviendas.map(v => ({ label: `Vivienda ${v.unidad}`, value: v.unidad }))
   ];
-
-  // Transformamos los roles al formato { label: 'Presidente', value: 'Presidente' }
   const opcionesRoles = roles.map(r => ({ label: r, value: r }));
 
   if (loadingData) {
@@ -210,9 +229,7 @@ const CrearUsuario = () => {
             </View>
           </View>
 
-          {/* --- USAMOS EL COMPONENTE CustomPicker --- */}
-          
-          {/* Vivienda Picker */}
+          {/* Vivienda CustomPicker */}
           <CustomPicker
             label="Vivienda (Opcional)"
             placeholder="Seleccionar vivienda..."
@@ -226,7 +243,7 @@ const CrearUsuario = () => {
           
           <View style={{ height: Spacing.lg }} />
 
-          {/* Rol Picker */}
+          {/* Rol CustomPicker */}
           <CustomPicker
             label="Rol *"
             placeholder="Seleccionar rol..."
@@ -266,7 +283,6 @@ const CrearUsuario = () => {
     </SafeAreaView>
   );
 };
-
 
 const styles = StyleSheet.create({
   container: {
@@ -310,7 +326,7 @@ const styles = StyleSheet.create({
     borderRadius: BorderRadius.md,
     paddingHorizontal: Spacing.md,
     ...Shadows.small,
-    height: 50, // Forzamos altura consistente
+    height: 50,
   },
   inputIcon: {
     marginRight: Spacing.sm,
@@ -324,7 +340,7 @@ const styles = StyleSheet.create({
   helperText: {
     fontSize: FontSizes.xs,
     color: Colors.text.light,
-    marginTop: -Spacing.sm, // Ajuste visual pequeño
+    marginTop: -Spacing.sm,
     marginLeft: Spacing.xs,
     fontStyle: 'italic',
     marginBottom: Spacing.sm,
