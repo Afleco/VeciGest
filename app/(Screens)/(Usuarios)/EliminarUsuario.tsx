@@ -1,5 +1,4 @@
 import { Ionicons } from '@expo/vector-icons';
-import { Picker } from '@react-native-picker/picker';
 import { useFocusEffect } from '@react-navigation/native';
 import React, { useCallback, useState } from 'react';
 import {
@@ -15,6 +14,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { supabase } from '../../../lib/supabase';
 import { BorderRadius, Colors, FontSizes, FontWeights, Shadows, Spacing } from '../../../styles/theme';
+import CustomPicker from '../../components/CustomPicker'; // <--- Importamos componente
 
 interface Usuario {
   email: string;
@@ -78,7 +78,7 @@ const EliminarUsuario = () => {
         [
           { text: 'Cancelar', style: 'cancel' },
           { 
-            text: 'Eliminar', 
+            text: 'Eliminar Definitivamente', 
             onPress: handleEliminarUsuario, 
             style: 'destructive' 
           },
@@ -96,8 +96,7 @@ const EliminarUsuario = () => {
     setLoading(true);
 
     try {
-      // fixed: Usamos la RPC 'delete_user_full' en lugar de delete() directo
-      // Para borrar tanto de 'auth.users' como de 'public.usuarios'
+      // Usamos la RPC 'delete_user_full' para borrar de auth y public
       const { error } = await supabase.rpc('delete_user_full', {
         target_user_id: usuarioSeleccionado
       });
@@ -121,16 +120,21 @@ const EliminarUsuario = () => {
 
   const getRolColor = (rol: string) => {
     switch (rol) {
-      case 'Administrador':
-        return Colors.primary.orange;
-      case 'Presidente':
-        return Colors.primary.green;
-      case 'Vicepresidente':
-        return Colors.primary.blue;
-      default:
-        return Colors.text.light;
+      case 'Administrador': return Colors.primary.orange;
+      case 'Presidente': return Colors.primary.green;
+      case 'Vicepresidente': return Colors.primary.blue;
+      default: return Colors.text.light;
     }
   };
+
+  // --- PREPARACIÓN OPCIONES ---
+  const opcionesUsuarios = [
+    { label: 'Selecciona un usuario...', value: '' },
+    ...usuarios.map(u => ({ 
+      label: `${u.nombre} (${u.email})`, 
+      value: u.auth_id 
+    }))
+  ];
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
@@ -142,28 +146,17 @@ const EliminarUsuario = () => {
         </View>
 
         <View style={styles.form}>
-          {/* Select de Usuario */}
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Seleccionar Usuario *</Text>
-            <View style={styles.pickerContainer}>
-              <Ionicons name="people-outline" size={20} color={Colors.text.light} style={styles.inputIcon} />
-              <Picker
-                selectedValue={usuarioSeleccionado}
-                onValueChange={handleSeleccionarUsuario}
-                style={styles.picker}
-                enabled={!loading}
-              >
-                <Picker.Item label="Selecciona un usuario" value="" />
-                {usuarios.map((usuario) => (
-                  <Picker.Item
-                    key={usuario.auth_id}
-                    label={`${usuario.nombre} (${usuario.email})`}
-                    value={usuario.auth_id}
-                  />
-                ))}
-              </Picker>
-            </View>
-          </View>
+          
+          {/* SELECCIONAR USUARIO */}
+          <CustomPicker
+            label="Seleccionar Usuario *"
+            placeholder="Buscar usuario..."
+            value={usuarioSeleccionado}
+            options={opcionesUsuarios}
+            onChange={handleSeleccionarUsuario}
+            icon="people-outline"
+            disabled={loading}
+          />
 
           {usuarioInfo ? (
             <>
@@ -231,7 +224,7 @@ const EliminarUsuario = () => {
           ) : (
             <View style={styles.emptyState}>
               <Ionicons name="person-remove-outline" size={80} color={Colors.text.light} />
-              <Text style={styles.emptyText}>Selecciona un usuario para eliminar</Text>
+              <Text style={styles.emptyText}>Selecciona un usuario arriba para eliminar</Text>
             </View>
           )}
         </View>
@@ -266,30 +259,6 @@ const styles = StyleSheet.create({
   form: {
     padding: Spacing.lg,
   },
-  inputGroup: {
-    marginBottom: Spacing.lg,
-  },
-  label: {
-    fontSize: FontSizes.md,
-    fontWeight: FontWeights.semibold,
-    color: Colors.text.primary,
-    marginBottom: Spacing.sm,
-  },
-  pickerContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Colors.base.white,
-    borderRadius: BorderRadius.md,
-    paddingHorizontal: Spacing.md,
-    ...Shadows.small,
-  },
-  inputIcon: {
-    marginRight: Spacing.sm,
-  },
-  picker: {
-    flex: 1,
-    height: 50,
-  },
   warningCard: {
     backgroundColor: '#FFF3CD',
     padding: Spacing.lg,
@@ -298,6 +267,7 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.lg,
     borderLeftWidth: 4,
     borderLeftColor: Colors.status.error,
+    marginTop: Spacing.md,
   },
   warningTitle: {
     fontSize: FontSizes.lg,
@@ -399,12 +369,13 @@ const styles = StyleSheet.create({
   emptyState: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: Spacing.xxxl * 2,
+    paddingVertical: Spacing.xl,
+    opacity: 0.7,
   },
   emptyText: {
     fontSize: FontSizes.md,
-    color: Colors.text.light,
-    marginTop: Spacing.md,
+    color: Colors.text.secondary,
+    marginTop: Spacing.sm,
   },
 });
 

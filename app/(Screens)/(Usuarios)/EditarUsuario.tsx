@@ -1,5 +1,4 @@
 import { Ionicons } from '@expo/vector-icons';
-import { Picker } from '@react-native-picker/picker';
 import { useFocusEffect } from '@react-navigation/native';
 import React, { useCallback, useState } from 'react';
 import {
@@ -16,6 +15,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { supabase } from '../../../lib/supabase';
 import { BorderRadius, Colors, FontSizes, FontWeights, Shadows, Spacing } from '../../../styles/theme';
+import CustomPicker from '../../components/CustomPicker'; // <--- Importamos el componente personalizado
 
 interface Usuario {
   email: string;
@@ -38,10 +38,10 @@ const EditarUsuario = () => {
   const [loadingData, setLoadingData] = useState(true);
 
   useFocusEffect(
-        useCallback(() => {
-          cargarDatos();
-        }, [])
-      );
+    useCallback(() => {
+      cargarDatos();
+    }, [])
+  );
 
   const cargarDatos = async () => {
     try {
@@ -87,13 +87,9 @@ const EditarUsuario = () => {
         enum_name: 'Roles' 
       });
 
-      if (error) {
-        console.warn('No se pudo cargar el ENUM, usando valores por defecto:', error);
+      if (error || !data) {
         setRoles(['Vecino', 'Vicepresidente', 'Presidente', 'Administrador']);
-        return;
-      }
-
-      if (data && data.length > 0) {
+      } else {
         setRoles(data);
       }
     } catch (error) {
@@ -108,7 +104,7 @@ const EditarUsuario = () => {
     if (usuario) {
       setNombre(usuario.nombre);
       setEmail(usuario.email);
-      setViviendaId(usuario.vivienda_id);
+      setViviendaId(usuario.vivienda_id || ''); // Asegurar que no sea null
       setRol(usuario.rol);
     }
   };
@@ -147,7 +143,7 @@ const EditarUsuario = () => {
         .from('usuarios')
         .update({
           nombre: nombre.trim(),
-          vivienda_id: viviendaId || null, // Permitir null si está vacío
+          vivienda_id: viviendaId || null,
           rol: rol,
         })
         .eq('auth_id', usuarioSeleccionado);
@@ -155,7 +151,7 @@ const EditarUsuario = () => {
       if (error) throw error;
 
       showAlert('Éxito', 'Usuario actualizado correctamente');
-      cargarUsuarios();
+      cargarUsuarios(); // Recargar lista
       limpiarFormulario();
     } catch (error: any) {
       console.error('Error actualizando usuario:', error);
@@ -164,6 +160,24 @@ const EditarUsuario = () => {
       setLoading(false);
     }
   };
+
+  // --- PREPARACIÓN DE OPCIONES PARA CUSTOM PICKER ---
+  
+  const opcionesUsuarios = [
+    { label: 'Selecciona un usuario...', value: '' },
+    ...usuarios.map(u => ({ 
+      label: `${u.nombre} (${u.email})`, 
+      value: u.auth_id 
+    }))
+  ];
+
+  const opcionesVivienda = [
+    { label: 'Sin vivienda asignada', value: '' },
+    ...viviendas.map(v => ({ label: `Vivienda ${v.unidad}`, value: v.unidad }))
+  ];
+
+  const opcionesRoles = roles.map(r => ({ label: r, value: r }));
+
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
@@ -181,145 +195,105 @@ const EditarUsuario = () => {
           </View>
         ) : (
           <View style={styles.form}>
-          {/* Selector de Usuario */}
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Seleccionar Usuario *</Text>
-            <View style={styles.pickerContainer}>
-              <Ionicons name="people-outline" size={20} color={Colors.text.light} style={styles.inputIcon} />
-              <Picker
-                selectedValue={usuarioSeleccionado}
-                onValueChange={handleSeleccionarUsuario}
-                style={styles.picker}
-                enabled={!loading}
-              >
-                <Picker.Item label="Selecciona un usuario" value="" />
-                {usuarios.map((usuario) => (
-                  <Picker.Item
-                    key={usuario.auth_id}
-                    label={`${usuario.nombre} (${usuario.email})`}
-                    value={usuario.auth_id}
-                  />
-                ))}
-              </Picker>
-            </View>
+            
+            {/* 1. SELECCIONAR USUARIO */}
+            <CustomPicker
+              label="Seleccionar Usuario *"
+              placeholder="Buscar usuario..."
+              value={usuarioSeleccionado}
+              options={opcionesUsuarios}
+              onChange={handleSeleccionarUsuario}
+              icon="people-outline"
+              disabled={loading}
+            />
+
+            {usuarioSeleccionado ? (
+              <>
+                <View style={styles.divider} />
+
+                {/* Nombre */}
+                <View style={styles.inputGroup}>
+                  <Text style={styles.label}>Nombre Completo *</Text>
+                  <View style={styles.inputContainer}>
+                    <Ionicons name="person-outline" size={20} color={Colors.text.light} style={styles.inputIcon} />
+                    <TextInput
+                      style={styles.input}
+                      placeholder="Nombre completo"
+                      placeholderTextColor={Colors.text.light}
+                      value={nombre}
+                      onChangeText={setNombre}
+                      editable={!loading}
+                    />
+                  </View>
+                </View>
+
+                {/* Email (solo lectura) */}
+                <View style={styles.inputGroup}>
+                  <Text style={styles.label}>Correo Electrónico (No editable)</Text>
+                  <View style={[styles.inputContainer, { opacity: 0.6, backgroundColor: '#f5f5f5' }]}>
+                    <Ionicons name="mail-outline" size={20} color={Colors.text.light} style={styles.inputIcon} />
+                    <TextInput
+                      style={styles.input}
+                      value={email}
+                      editable={false}
+                    />
+                  </View>
+                </View>
+
+                {/* Vivienda Picker */}
+                <CustomPicker
+                  label="Vivienda (Opcional)"
+                  value={viviendaId}
+                  options={opcionesVivienda}
+                  onChange={setViviendaId}
+                  icon="home-outline"
+                  disabled={loading}
+                />
+
+                {/* Rol Picker */}
+                <CustomPicker
+                  label="Rol *"
+                  value={rol}
+                  options={opcionesRoles}
+                  onChange={setRol}
+                  icon="shield-outline"
+                  disabled={loading}
+                />
+
+                {/* Botones */}
+                <TouchableOpacity
+                  style={[styles.button, loading && { opacity: 0.7 }]}
+                  onPress={handleActualizarUsuario}
+                  disabled={loading}
+                >
+                  {loading ? (
+                    <ActivityIndicator color={Colors.base.white} />
+                  ) : (
+                    <>
+                      <Ionicons name="checkmark-circle-outline" size={24} color={Colors.base.white} />
+                      <Text style={styles.buttonText}>Actualizar Usuario</Text>
+                    </>
+                  )}
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={styles.buttonSecondary}
+                  onPress={limpiarFormulario}
+                  disabled={loading}
+                >
+                  <Ionicons name="close-circle-outline" size={24} color={Colors.text.light} />
+                  <Text style={styles.buttonTextSecondary}>Cancelar Edición</Text>
+                </TouchableOpacity>
+              </>
+            ) : (
+              <View style={styles.emptyState}>
+                <Ionicons name="arrow-up-circle-outline" size={50} color={Colors.text.light} />
+                <Text style={styles.emptyText}>Por favor, selecciona un usuario arriba</Text>
+              </View>
+            )}
           </View>
-
-          {usuarioSeleccionado ? (
-            <>
-              {/* Nombre */}
-              <View style={styles.inputGroup}>
-                <Text style={styles.label}>Nombre Completo *</Text>
-                <View style={styles.inputContainer}>
-                  <Ionicons name="person-outline" size={20} color={Colors.text.light} style={styles.inputIcon} />
-                  <TextInput
-                    style={styles.input}
-                    placeholder="Nombre completo"
-                    placeholderTextColor={Colors.text.light}
-                    value={nombre}
-                    onChangeText={setNombre}
-                    editable={!loading}
-                  />
-                </View>
-              </View>
-
-              {/* Email (solo lectura) */}
-              <View style={styles.inputGroup}>
-                <Text style={styles.label}>Correo Electrónico (No editable)</Text>
-                <View style={[styles.inputContainer, { opacity: 0.6 }]}>
-                  <Ionicons name="mail-outline" size={20} color={Colors.text.light} style={styles.inputIcon} />
-                  <TextInput
-                    style={styles.input}
-                    value={email}
-                    editable={false}
-                  />
-                </View>
-                <Text style={styles.helperText}>El email no se puede modificar</Text>
-              </View>
-
-              {/* Vivienda */}
-              <View style={styles.inputGroup}>
-                <Text style={styles.label}>Vivienda (Opcional)</Text>
-                <View style={styles.pickerContainer}>
-                  <Ionicons name="home-outline" size={20} color={Colors.text.light} style={styles.inputIcon} />
-                  <Picker
-                    selectedValue={viviendaId}
-                    onValueChange={setViviendaId}
-                    style={styles.picker}
-                    enabled={!loading}
-                  >
-                    <Picker.Item label="Sin vivienda asignada" value="" />
-                    {viviendas.map((vivienda) => (
-                      <Picker.Item
-                        key={vivienda.unidad}
-                        label={`Vivienda ${vivienda.unidad}`}
-                        value={vivienda.unidad}
-                      />
-                    ))}
-                  </Picker>
-                </View>
-              </View>
-
-              {/* Rol */}
-              <View style={styles.inputGroup}>
-                <Text style={styles.label}>Rol *</Text>
-                <View style={styles.pickerContainer}>
-                  <Ionicons name="shield-outline" size={20} color={Colors.text.light} style={styles.inputIcon} />
-                  <Picker
-                    selectedValue={rol}
-                    onValueChange={setRol}
-                    style={styles.picker}
-                    enabled={!loading}
-                  >
-                    {roles.length === 0 ? (
-                      <Picker.Item label="Cargando roles..." value="" />
-                    ) : (
-                      roles.map((roleOption) => (
-                        <Picker.Item
-                          key={roleOption}
-                          label={roleOption}
-                          value={roleOption}
-                        />
-                      ))
-                    )}
-                  </Picker>
-                </View>
-              </View>
-
-              {/* Botones */}
-              <TouchableOpacity
-                style={[styles.button, loading && { opacity: 0.7 }]}
-                onPress={handleActualizarUsuario}
-                disabled={loading}
-              >
-                {loading ? (
-                  <ActivityIndicator color={Colors.base.white} />
-                ) : (
-                  <>
-                    <Ionicons name="checkmark-circle-outline" size={24} color={Colors.base.white} />
-                    <Text style={styles.buttonText}>Actualizar Usuario</Text>
-                  </>
-                )}
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={styles.buttonSecondary}
-                onPress={limpiarFormulario}
-                disabled={loading}
-              >
-                <Ionicons name="close-circle-outline" size={24} color={Colors.text.light} />
-                <Text style={styles.buttonTextSecondary}>Cancelar</Text>
-              </TouchableOpacity>
-            </>
-          ) : (
-            <View style={styles.emptyState}>
-              <Ionicons name="person-outline" size={80} color={Colors.text.light} />
-              <Text style={styles.emptyText}>Selecciona un usuario para editar</Text>
-            </View>
-          )}
-        </View>
         )}
       </ScrollView>
-        
     </SafeAreaView>
   );
 };
@@ -359,6 +333,12 @@ const styles = StyleSheet.create({
   form: {
     padding: Spacing.lg,
   },
+  divider: {
+    height: 1,
+    backgroundColor: Colors.text.light,
+    opacity: 0.2,
+    marginVertical: Spacing.lg,
+  },
   inputGroup: {
     marginBottom: Spacing.lg,
   },
@@ -374,6 +354,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.base.white,
     borderRadius: BorderRadius.md,
     paddingHorizontal: Spacing.md,
+    height: 50, // Altura fija igual que el Picker
     ...Shadows.small,
   },
   inputIcon: {
@@ -384,24 +365,6 @@ const styles = StyleSheet.create({
     height: 50,
     fontSize: FontSizes.md,
     color: Colors.text.primary,
-  },
-  pickerContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Colors.base.white,
-    borderRadius: BorderRadius.md,
-    paddingHorizontal: Spacing.md,
-    ...Shadows.small,
-  },
-  picker: {
-    flex: 1,
-    height: 50,
-  },
-  helperText: {
-    fontSize: FontSizes.xs,
-    color: Colors.text.light,
-    marginTop: Spacing.xs,
-    marginLeft: Spacing.xs,
   },
   button: {
     backgroundColor: Colors.primary.blue,
@@ -439,12 +402,13 @@ const styles = StyleSheet.create({
   emptyState: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: Spacing.xxxl * 2,
+    paddingVertical: Spacing.xl,
+    opacity: 0.7,
   },
   emptyText: {
     fontSize: FontSizes.md,
-    color: Colors.text.light,
-    marginTop: Spacing.md,
+    color: Colors.text.secondary,
+    marginTop: Spacing.sm,
   },
 });
 
