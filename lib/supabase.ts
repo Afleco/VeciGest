@@ -2,9 +2,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createClient } from '@supabase/supabase-js';
 import { Platform } from 'react-native';
 
-const supabaseUrl = 'https://miydedgtsebprdbryvon.supabase.co';
-const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1peWRlZGd0c2VicHJkYnJ5dm9uIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc4NTExNzQsImV4cCI6MjA4MzQyNzE3NH0.TVPLvdqrHnJCnX5-2GdFsvXIRp0CWsVkQFwJMscIqIA'; // Pon la que empieza por eyJ...
-
+const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL || "";
+const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_KEY || "";
 // Definimos un almacenamiento que no rompa el servidor
 const CustomStorage = {
   getItem: (key: string) => {

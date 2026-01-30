@@ -3,7 +3,7 @@ import { createDrawerNavigator, DrawerContentScrollView, DrawerItemList } from '
 import { StatusBar } from 'expo-status-bar';
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, Image, StyleSheet, Text, View } from 'react-native';
-import { supabase } from '../SupaBase/Supabase';
+import { supabase } from '../lib/supabase';
 import { BorderRadius, Colors, FontSizes, FontWeights, Spacing } from '../styles/theme';
 
 // Importar las pantallas
