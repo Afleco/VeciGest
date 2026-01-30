@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
-import { createClient } from '@supabase/supabase-js'; // Importamos createClient
-import React, { useEffect, useState } from 'react';
+import { createClient } from '@supabase/supabase-js';
+import { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -13,16 +13,14 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { supabase } from '../../../lib/supabase'; // Tu cliente principal (Admin)
-import { BorderRadius, Colors, FontSizes, FontWeights, Shadows, Spacing } from '../../../styles/theme';
-import CustomPicker from '../../components/CustomPicker'; // El picker arreglado
+import { supabase } from '../../../../lib/supabase';
+import { BorderRadius, Colors, FontSizes, FontWeights, Shadows, Spacing } from '../../../../styles/theme';
+import CustomPicker from '../../../components/CustomPicker';
 
 // Necesitamos las URL y Key para crear el cliente temporal
-// (Asegúrate de que estas variables estén accesibles, si las tienes en un .env mejor, 
-// si no, las tomamos del archivo supabase.ts original o las pegas aquí temporalmente)
 const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL || "";
 const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_KEY || ""; 
-// NOTA: Si usas las del archivo supabase.ts, asegúrate de exportarlas desde allí.
+
 
 const CrearUsuario = () => {
   const [nombre, setNombre] = useState('');
@@ -106,7 +104,7 @@ const CrearUsuario = () => {
     setLoading(true);
 
     try {
-      // Creamos un cliente que NO guarda sesión en el teléfono.
+      // Creamos un cliente que NO guarda sesión
       // Así, al hacer signUp, no sobrescribe la sesión de Admin que esté activa.
       const tempSupabase = createClient(supabaseUrl, supabaseAnonKey, {
         auth: {
