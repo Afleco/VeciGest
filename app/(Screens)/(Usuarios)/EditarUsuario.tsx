@@ -15,7 +15,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { supabase } from '../../../lib/supabase';
 import { BorderRadius, Colors, FontSizes, FontWeights, Shadows, Spacing } from '../../../styles/theme';
-import CustomPicker from '../../components/CustomPicker'; // <--- Importamos el componente personalizado
+import CustomPicker from '../../components/CustomPicker';
 
 interface Usuario {
   email: string;
@@ -196,7 +196,7 @@ const EditarUsuario = () => {
         ) : (
           <View style={styles.form}>
             
-            {/* 1. SELECCIONAR USUARIO */}
+            {/* SELECCIONAR USUARIO */}
             <CustomPicker
               label="Seleccionar Usuario *"
               placeholder="Buscar usuario..."
