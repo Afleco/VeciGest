@@ -33,50 +33,68 @@ function CustomDrawerContent(props: any) {
       </View>
       {profile && (
         <View style={{ paddingHorizontal: 20, marginBottom: 15 }}>
-           <Text style={{ color: 'white', fontSize: 14, fontWeight: 'bold' }}>{profile.nombre}</Text>
-           <Text style={{ color: Colors.base.white, opacity: 0.8, fontSize: 12 }}>{profile.rol}</Text>
+           <Text style={{ color: 'white', fontSize: 16, fontWeight: 'bold' }}>{profile.nombre}</Text>
+           <Text style={{ color: Colors.base.white, opacity: 0.8, fontSize: 13 }}>{profile.rol}</Text>
         </View>
       )}
-      <DrawerItemList {...props} />
+      {/* Esta lista hereda los estilos que definimos abajo en screenOptions */}
+      <View style={{ marginTop: 10 }}> 
+        <DrawerItemList {...props} />
+      </View>
     </DrawerContentScrollView>
   );
 }
 
 function AppNavigation() {
-  // Obtenemos la sesión para decidir qué pantallas mostrar
   const { session, isAdmin } = useAuth(); 
 
   return (
     <>
       <StatusBar style="light" />
       <Drawer.Navigator
-        // Quitamos initialRouteName fijo. Dejamos que React Navigation elija la primera disponible.
         drawerContent={(props) => <CustomDrawerContent {...props} />}
         screenOptions={{
+          // --- ESTILOS DE LA CABECERA SUPERIOR ---
           headerStyle: { backgroundColor: Colors.background.header, height: 90 },
           headerTintColor: Colors.text.white,
           headerTitleStyle: { fontWeight: FontWeights.bold, fontSize: FontSizes.xl },
           headerTitle: 'VeciGest',
+
+          // --- ESTILOS DEL MENÚ LATERAL (DRAWER) ---
           drawerStyle: { backgroundColor: Colors.background.drawer, width: 280 },
-          drawerActiveTintColor: Colors.accent.active,
-          drawerInactiveTintColor: Colors.accent.inactive,
-          drawerLabelStyle: { fontSize: FontSizes.md, marginLeft: -10, fontWeight: FontWeights.medium },
+          
+          // ITEM ACTIVO (Seleccionado)
+          drawerActiveBackgroundColor: Colors.primary.orange, // Fondo Naranja fuerte
+          drawerActiveTintColor: Colors.base.white,           // Texto blanco
+
+          // ITEM INACTIVO (No seleccionado)
+          drawerInactiveBackgroundColor: 'transparent',       // Sin fondo
+          drawerInactiveTintColor: Colors.base.white,         // Texto blanco (porque el fondo del drawer es azul oscuro)
+            
+          // FORMA Y ESPACIADO
+          drawerItemStyle: {
+            borderRadius: BorderRadius.xl, // Bordes redondeados tipo botón
+            marginHorizontal: Spacing.sm,  // Separación lateral
+            marginBottom: Spacing.xs,      // Separación entre items
+          },
+          
+          drawerLabelStyle: { 
+            fontSize: FontSizes.md, 
+            marginLeft: -10, 
+            fontWeight: FontWeights.medium 
+          },
         }}
       >
         {!session ? (
-          // --- ESTADO: NO LOGUEADO ---
-          // Solo mostramos Login. Bloquea ir a Inicio.
           <Drawer.Screen 
             name="Login" 
             component={Login} 
             options={{
               headerShown: false,
-              swipeEnabled: false, // Bloqueamos el gesto lateral
+              swipeEnabled: false,
             }} 
           />
         ) : (
-          // --- ESTADO: LOGUEADO ---
-          // Mostramos la App real. Login no existe aquí.
           <>
             <Drawer.Screen 
               name="Inicio" 
@@ -108,7 +126,7 @@ function AppNavigation() {
               name="GestionUsuarios" 
               component={GestionUsuarios}
               options={{
-                drawerItemStyle: { display: 'none' },
+                drawerItemStyle: { display: 'none' }, // Oculto del menú pero navegable
                 headerTitle: 'Gestión de Usuarios',
               }}
             />
@@ -132,9 +150,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     padding: Spacing.xl,
+    paddingTop: 40, // Un poco más de aire arriba
     marginBottom: Spacing.md,
-    borderBottomWidth: 2,
-    borderBottomColor: Colors.base.white,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255, 255, 255, 0.2)', // Línea divisoria sutil
   },
   logoContainer: {
     backgroundColor: Colors.base.white,
@@ -148,11 +167,11 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   drawerLogo: {
-    width: 40,
-    height: 40,
+    width: 35, // Un poco más pequeño para que no descuadre
+    height: 35,
   },
   drawerTitle: {
-    fontSize: FontSizes.xxl,
+    fontSize: FontSizes.xl,
     fontWeight: FontWeights.bold,
     color: Colors.base.white,
   },
