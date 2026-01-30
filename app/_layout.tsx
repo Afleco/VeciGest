@@ -9,6 +9,7 @@ import { BorderRadius, Colors, FontSizes, FontWeights, Spacing } from '../styles
 import AuthProvider, { useAuth } from '../providers/AuthProvider';
 
 // Pantallas
+import GestionCuotas from './(Screens)/(admin)/GestionCuotas';
 import GestionUsuarios from './(Screens)/(admin)/GestionUsuarios';
 import Administracion from './(Screens)/Administracion';
 import Inicio from './(Screens)/Inicio';
@@ -46,10 +47,8 @@ function CustomDrawerContent(props: any) {
 }
 
 function AppNavigation() {
-  const { session, isAdmin, profile } = useAuth(); // Importamos 'profile' también
+  const { session, isAdmin, profile } = useAuth();
 
-  // Definimos quién NO debe ver las cuotas
-  // Si el rol es 'Inquilino', esta variable será true
   const esInquilino = profile?.rol === 'Inquilino';
 
   return (
@@ -107,7 +106,6 @@ function AppNavigation() {
               }}
             />
 
-            {/* --- LÓGICA CONDICIONAL: OCULTAR A INQUILINOS --- */}
             {!esInquilino && (
               <Drawer.Screen 
                 name="MisCuotas" 
@@ -123,17 +121,29 @@ function AppNavigation() {
             )}
 
             {isAdmin && (
-              <Drawer.Screen 
-                name="Administracion" 
-                component={Administracion}
-                options={{
-                  drawerLabel: 'Administración',
-                  headerTitle: 'Administración',
-                  drawerIcon: ({ color, size }) => (
-                    <Ionicons name="settings-outline" size={size} color={color} />
-                  ),
-                }}
-              />
+              <>
+                <Drawer.Screen 
+                  name="Administracion" 
+                  component={Administracion}
+                  options={{
+                    drawerLabel: 'Administración',
+                    headerTitle: 'Administración',
+                    drawerIcon: ({ color, size }) => (
+                      <Ionicons name="settings-outline" size={size} color={color} />
+                    ),
+                  }}
+                />
+
+                {/* GestionCuotas OCULTA */}
+                <Drawer.Screen 
+                  name="GestionCuotas" 
+                  component={GestionCuotas}
+                  options={{
+                    drawerItemStyle: { display: 'none' }, // Oculto del menú
+                    headerTitle: 'Estado de Cuentas',
+                  }}
+                />
+              </>
             )}
 
             <Drawer.Screen 

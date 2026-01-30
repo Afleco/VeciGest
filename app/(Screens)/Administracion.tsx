@@ -81,7 +81,7 @@ const Administracion = () => {
       description: 'Control de pagos y recibos',
       icon: 'cash-outline',
       color: Colors.primary.blue,
-      action: () => showAlert('Próximamente', 'Gestión de cuotas en desarrollo')
+      action: () => navigation.navigate('GestionCuotas') 
     },
     {
       id: 5,

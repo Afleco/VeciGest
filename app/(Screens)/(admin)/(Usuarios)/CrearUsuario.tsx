@@ -187,7 +187,7 @@ const CrearUsuario = () => {
               <Ionicons name="person-outline" size={20} color={Colors.text.light} style={styles.inputIcon} />
               <TextInput
                 style={styles.input}
-                placeholder="Ej: Juan Pérez"
+                placeholder="Nombre y Apellidos"
                 placeholderTextColor={Colors.text.light}
                 value={nombre}
                 onChangeText={setNombre}
@@ -204,6 +204,7 @@ const CrearUsuario = () => {
               <TextInput
                 style={styles.input}
                 placeholder="ejemplo@email.com"
+                placeholderTextColor={Colors.text.light}
                 value={email}
                 onChangeText={setEmail}
                 keyboardType="email-address"
@@ -221,6 +222,7 @@ const CrearUsuario = () => {
               <TextInput
                 style={styles.input}
                 placeholder="Mínimo 6 caracteres"
+                placeholderTextColor={Colors.text.light}
                 value={password}
                 onChangeText={setPassword}
                 secureTextEntry
