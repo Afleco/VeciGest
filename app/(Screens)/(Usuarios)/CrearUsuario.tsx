@@ -1,5 +1,4 @@
 import { Ionicons } from '@expo/vector-icons';
-// import { Picker } from '@react-native-picker/picker'; // <--- YA NO LO NECESITAMOS
 import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
@@ -13,9 +12,9 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { supabase } from '../../../lib/supabase'; // Asegúrate de que la ruta sea correcta
+import { supabase } from '../../../lib/supabase';
 import { BorderRadius, Colors, FontSizes, FontWeights, Shadows, Spacing } from '../../../styles/theme';
-import CustomPicker from '../../components/CustomPicker'; // <--- IMPORTAMOS EL NUEVO
+import CustomPicker from '../../components/CustomPicker';
 
 const CrearUsuario = () => {
   const [nombre, setNombre] = useState('');
@@ -100,7 +99,7 @@ const CrearUsuario = () => {
     setLoading(true);
 
     try {
-      // 1. Crear Auth
+      // Crear Auth
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: email.trim(),
         password: password,
@@ -109,7 +108,7 @@ const CrearUsuario = () => {
       if (authError) throw authError;
       if (!authData.user) throw new Error('No se pudo crear usuario auth');
 
-      // 2. Crear Perfil
+      // Crear Perfil
       const { error: insertError } = await supabase
         .from('usuarios')
         .insert({
@@ -211,7 +210,7 @@ const CrearUsuario = () => {
             </View>
           </View>
 
-          {/* --- AQUÍ USAMOS EL NUEVO COMPONENTE --- */}
+          {/* --- USAMOS EL COMPONENTE CustomPicker --- */}
           
           {/* Vivienda Picker */}
           <CustomPicker
@@ -268,7 +267,7 @@ const CrearUsuario = () => {
   );
 };
 
-// ... Tus estilos originales (puedes borrar los estilos de 'picker' y 'pickerContainer' viejos si quieres) ...
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,

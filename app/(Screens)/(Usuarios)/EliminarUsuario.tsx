@@ -14,7 +14,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { supabase } from '../../../lib/supabase';
 import { BorderRadius, Colors, FontSizes, FontWeights, Shadows, Spacing } from '../../../styles/theme';
-import CustomPicker from '../../components/CustomPicker'; // <--- Importamos componente
+import CustomPicker from '../../components/CustomPicker';
 
 interface Usuario {
   email: string;
