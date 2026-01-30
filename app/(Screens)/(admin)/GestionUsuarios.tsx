@@ -1,13 +1,13 @@
 import { Ionicons } from '@expo/vector-icons';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import React from 'react';
-import { Colors, FontSizes } from '../../styles/theme';
+import { Colors, FontSizes } from '../../../styles/theme';
 
 // Importar las pantallas de gestión
-import CrearUsuario from './(admin)/(Usuarios)/CrearUsuario';
-import EditarUsuario from './(admin)/(Usuarios)/EditarUsuario';
-import EliminarUsuario from './(admin)/(Usuarios)/EliminarUsuario';
-import ListarUsuarios from './(admin)/(Usuarios)/ListarUsuarios';
+import CrearUsuario from './(Usuarios)/CrearUsuario';
+import EditarUsuario from './(Usuarios)/EditarUsuario';
+import EliminarUsuario from './(Usuarios)/EliminarUsuario';
+import ListarUsuarios from './(Usuarios)/ListarUsuarios';
 
 const Tab = createBottomTabNavigator();
 

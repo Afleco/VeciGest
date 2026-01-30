@@ -164,7 +164,6 @@ const LoginScreen: React.FC = () => {
   );
 };
 
-// ... (Tus estilos se mantienen igual) ...
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.base.white },
   centerContent: { flex: 1, alignItems: 'center', justifyContent: 'center', width: '100%' },

@@ -9,10 +9,11 @@ import { BorderRadius, Colors, FontSizes, FontWeights, Spacing } from '../styles
 import AuthProvider, { useAuth } from '../providers/AuthProvider';
 
 // Pantallas
+import GestionUsuarios from './(Screens)/(admin)/GestionUsuarios';
 import Administracion from './(Screens)/Administracion';
-import GestionUsuarios from './(Screens)/GestionUsuarios';
 import Inicio from './(Screens)/Inicio';
 import Login from './(Screens)/Login';
+import MisCuotas from './(Screens)/MisCuotas';
 
 const Drawer = createDrawerNavigator();
 
@@ -37,7 +38,6 @@ function CustomDrawerContent(props: any) {
            <Text style={{ color: Colors.base.white, opacity: 0.8, fontSize: 13 }}>{profile.rol}</Text>
         </View>
       )}
-      {/* Esta lista hereda los estilos que definimos abajo en screenOptions */}
       <View style={{ marginTop: 10 }}> 
         <DrawerItemList {...props} />
       </View>
@@ -46,7 +46,11 @@ function CustomDrawerContent(props: any) {
 }
 
 function AppNavigation() {
-  const { session, isAdmin } = useAuth(); 
+  const { session, isAdmin, profile } = useAuth(); // Importamos 'profile' también
+
+  // Definimos quién NO debe ver las cuotas
+  // Si el rol es 'Inquilino', esta variable será true
+  const esInquilino = profile?.rol === 'Inquilino';
 
   return (
     <>
@@ -54,28 +58,23 @@ function AppNavigation() {
       <Drawer.Navigator
         drawerContent={(props) => <CustomDrawerContent {...props} />}
         screenOptions={{
-          // --- ESTILOS DE LA CABECERA SUPERIOR ---
           headerStyle: { backgroundColor: Colors.background.header, height: 90 },
           headerTintColor: Colors.text.white,
           headerTitleStyle: { fontWeight: FontWeights.bold, fontSize: FontSizes.xl },
           headerTitle: 'VeciGest',
 
-          // --- ESTILOS DEL MENÚ LATERAL (DRAWER) ---
           drawerStyle: { backgroundColor: Colors.background.drawer, width: 280 },
           
-          // ITEM ACTIVO (Seleccionado)
-          drawerActiveBackgroundColor: Colors.primary.orange, // Fondo Naranja fuerte
-          drawerActiveTintColor: Colors.base.white,           // Texto blanco
+          drawerActiveBackgroundColor: Colors.primary.orange,
+          drawerActiveTintColor: Colors.base.white,
 
-          // ITEM INACTIVO (No seleccionado)
-          drawerInactiveBackgroundColor: 'transparent',       // Sin fondo
-          drawerInactiveTintColor: Colors.base.white,         // Texto blanco (porque el fondo del drawer es azul oscuro)
-            
-          // FORMA Y ESPACIADO
+          drawerInactiveBackgroundColor: 'transparent',
+          drawerInactiveTintColor: Colors.base.white,
+
           drawerItemStyle: {
-            borderRadius: BorderRadius.xl, // Bordes redondeados tipo botón
-            marginHorizontal: Spacing.sm,  // Separación lateral
-            marginBottom: Spacing.xs,      // Separación entre items
+            borderRadius: BorderRadius.xl, 
+            marginHorizontal: Spacing.sm,  
+            marginBottom: Spacing.xs,      
           },
           
           drawerLabelStyle: { 
@@ -108,6 +107,21 @@ function AppNavigation() {
               }}
             />
 
+            {/* --- LÓGICA CONDICIONAL: OCULTAR A INQUILINOS --- */}
+            {!esInquilino && (
+              <Drawer.Screen 
+                name="MisCuotas" 
+                component={MisCuotas}
+                options={{
+                  drawerLabel: 'Mis Recibos',
+                  headerTitle: 'Mis Recibos',
+                  drawerIcon: ({ color, size }) => (
+                    <Ionicons name="wallet-outline" size={size} color={color} />
+                  ),
+                }}
+              />
+            )}
+
             {isAdmin && (
               <Drawer.Screen 
                 name="Administracion" 
@@ -126,7 +140,7 @@ function AppNavigation() {
               name="GestionUsuarios" 
               component={GestionUsuarios}
               options={{
-                drawerItemStyle: { display: 'none' }, // Oculto del menú pero navegable
+                drawerItemStyle: { display: 'none' },
                 headerTitle: 'Gestión de Usuarios',
               }}
             />
@@ -150,10 +164,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     padding: Spacing.xl,
-    paddingTop: 40, // Un poco más de aire arriba
+    paddingTop: 40,
     marginBottom: Spacing.md,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255, 255, 255, 0.2)', // Línea divisoria sutil
+    borderBottomColor: 'rgba(255, 255, 255, 0.2)',
   },
   logoContainer: {
     backgroundColor: Colors.base.white,
@@ -167,7 +181,7 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   drawerLogo: {
-    width: 35, // Un poco más pequeño para que no descuadre
+    width: 35,
     height: 35,
   },
   drawerTitle: {
