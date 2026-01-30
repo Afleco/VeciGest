@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import React from 'react';
-import { Colors, FontSizes } from '../theme';
+import { Colors, FontSizes } from '../../styles/theme';
 
 // Importar las pantallas de gestión
 import CrearUsuario from './(Usuarios)/CrearUsuario';

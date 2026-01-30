@@ -4,7 +4,7 @@ import { StatusBar } from 'expo-status-bar';
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, Image, StyleSheet, Text, View } from 'react-native';
 import { supabase } from '../SupaBase/Supabase';
-import { BorderRadius, Colors, FontSizes, FontWeights, Spacing } from './theme';
+import { BorderRadius, Colors, FontSizes, FontWeights, Spacing } from '../styles/theme';
 
 // Importar las pantallas
 import Administracion from './(Screens)/Administracion';

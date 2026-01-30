@@ -14,7 +14,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { supabase } from '../../../SupaBase/Supabase';
-import { BorderRadius, Colors, FontSizes, FontWeights, Shadows, Spacing } from '../../theme';
+import { BorderRadius, Colors, FontSizes, FontWeights, Shadows, Spacing } from '../../../styles/theme';
 
 interface Usuario {
   email: string;
@@ -96,22 +96,21 @@ const EliminarUsuario = () => {
     setLoading(true);
 
     try {
-      // Eliminar de la tabla usuarios
-      const { error: deleteError } = await supabase
-        .from('usuarios')
-        .delete()
-        .eq('auth_id', usuarioSeleccionado);
+      // fixed: Usamos la RPC 'delete_user_full' en lugar de delete() directo
+      // Para borrar tanto de 'auth.users' como de 'public.usuarios'
+      const { error } = await supabase.rpc('delete_user_full', {
+        target_user_id: usuarioSeleccionado
+      });
 
-      if (deleteError) throw deleteError;
-
-      // Eliminar de Supabase Auth (requiere permisos de admin)
-      // Nota: Esta operación puede requerir una función del lado del servidor
-      // con privilegios de service_role para eliminar usuarios de Auth ---- REVISAR
+      if (error) throw error;
       
-      showAlert('Éxito', 'Usuario eliminado correctamente');
-      cargarUsuarios();
+      showAlert('Éxito', 'Usuario eliminado correctamente del sistema');
+      
+      // Limpiamos y recargamos
       setUsuarioSeleccionado('');
       setUsuarioInfo(null);
+      cargarUsuarios();
+      
     } catch (error: any) {
       console.error('Error eliminando usuario:', error);
       showAlert('Error', error.message || 'No se pudo eliminar el usuario');
@@ -173,7 +172,7 @@ const EliminarUsuario = () => {
                 <Ionicons name="warning" size={30} color={Colors.status.error} />
                 <Text style={styles.warningTitle}>¡Atención!</Text>
                 <Text style={styles.warningText}>
-                  Estás a punto de eliminar este usuario de forma permanente. Esta acción no se puede deshacer.
+                  Estás a punto de eliminar este usuario de forma permanente (login y datos). Esta acción no se puede deshacer.
                 </Text>
               </View>
 
@@ -212,7 +211,7 @@ const EliminarUsuario = () => {
                 ) : (
                   <>
                     <Ionicons name="trash-outline" size={24} color={Colors.base.white} />
-                    <Text style={styles.buttonText}>Eliminar Usuario</Text>
+                    <Text style={styles.buttonText}>Eliminar Definitivamente</Text>
                   </>
                 )}
               </TouchableOpacity>
