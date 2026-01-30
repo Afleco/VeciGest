@@ -1,5 +1,4 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
 import { StatusBar } from 'expo-status-bar';
 import React, { useState } from 'react';
 import {
@@ -26,15 +25,6 @@ const LoginScreen: React.FC = () => {
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
   
-  const navigation = useNavigation<any>();
-
-  // Función para limpiar el formulario en caso de error
-  const limpiarFormulario = () => {
-    setUsuario('');
-    setPassword('');
-  };
-
-  // Helper para alertas (Soluciona problema de Alert en Web)
   const showAlert = (titulo: string, mensaje: string) => {
     if (Platform.OS === 'web') {
       window.alert(`${titulo}: ${mensaje}`);
@@ -52,20 +42,18 @@ const LoginScreen: React.FC = () => {
     setLoading(true);
 
     try {
-      // Login en Supabase Auth
       const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
         email: usuario.trim(), 
         password: password,
       });
 
       if (authError) {
-        showAlert('Error de acceso', 'Credenciales de acceso incorrectos');
-        limpiarFormulario();
+        showAlert('Error de acceso', 'Credenciales incorrectas');
         setLoading(false);
         return;
       }
 
-      // Validación de perfil en tabla 'usuarios'
+      // Validar perfil
       const { data: userData, error: userError } = await supabase
         .from('usuarios')
         .select('auth_id')
@@ -73,18 +61,20 @@ const LoginScreen: React.FC = () => {
         .single();
 
       if (userError || !userData) {
+        await supabase.auth.signOut();
         showAlert('Error de perfil', 'Tu cuenta no está vinculada a un perfil de vecino.');
-        limpiarFormulario();
         setLoading(false);
         return;
       }
 
-      setLoading(false);
-      navigation.navigate('Inicio');
+      // NO HACEMOS NADA MÁS.
+      // Al haber hecho signIn, el AuthProvider actualizará el estado 'session'.
+      // El _layout.tsx detectará que hay sesión y cambiará la pantalla 'Login' por 'Inicio'.
+      // setLoading(false) no es necesario porque el componente se desmontará.
 
     } catch (error: any) {
+      console.error(error);
       showAlert('Error', 'Ocurrió un error inesperado.');
-      limpiarFormulario();
       setLoading(false);
     }
   };
@@ -174,87 +164,20 @@ const LoginScreen: React.FC = () => {
   );
 };
 
+// ... (Tus estilos se mantienen igual) ...
 const styles = StyleSheet.create({
-  container: { 
-    flex: 1, 
-    backgroundColor: Colors.base.white 
-  },
-  centerContent: { 
-    flex: 1, 
-    alignItems: 'center', 
-    justifyContent: 'center', 
-    width: '100%' 
-  },
-  content: { 
-    flex: 1, 
-    alignItems: 'center', 
-    justifyContent: 'center', 
-    paddingHorizontal: Spacing.xl, 
-    width: '100%', 
-    maxWidth: 450 
-  },
-  headerContainer: { 
-    alignItems: 'center', 
-    marginBottom: BorderRadius.xl 
-  },
-  logo: { 
-    width: 200, 
-    height: 200, 
-    marginBottom: Spacing.md 
-  },
-  title: { 
-    fontSize: FontSizes.xxxl, 
-    fontWeight: FontWeights.bold, 
-    color: Colors.base.black 
-  },
-  card: {
-    backgroundColor: Colors.primary.blue,
-    width: '100%',
-    borderRadius: BorderRadius.xl,
-    paddingVertical: 45,
-    paddingHorizontal: 25,
-    alignItems: 'center',
-    ...Shadows.large,
-  },
-  passwordContainer: { 
-    width: '100%', 
-    position: 'relative', 
-    marginBottom: Spacing.xl, 
-    justifyContent: 'center' 
-  },
-  input: {
-    backgroundColor: Colors.base.white,
-    width: '100%',
-    height: 55,
-    borderRadius: BorderRadius.xl,
-    paddingHorizontal: 50,
-    fontSize: FontSizes.lg,
-    marginBottom: Spacing.xl,
-    textAlign: 'center',
-    color: Colors.text.primary,
-    ...Platform.select({
-      web: { outlineStyle: 'none' } as any,
-    }),
-  },
-  eyeIcon: { 
-    position: 'absolute', 
-    right: 15, 
-    zIndex: 10 
-  },
-  button: {
-    backgroundColor: Colors.primary.orange,
-    width: '100%',
-    height: 55,
-    borderRadius: BorderRadius.xl,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: Spacing.md,
-  },
-  buttonText: { 
-    color: Colors.base.white, 
-    fontSize: FontSizes.xl, 
-    fontWeight: FontWeights.bold 
-  },
+  container: { flex: 1, backgroundColor: Colors.base.white },
+  centerContent: { flex: 1, alignItems: 'center', justifyContent: 'center', width: '100%' },
+  content: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: Spacing.xl, width: '100%', maxWidth: 450 },
+  headerContainer: { alignItems: 'center', marginBottom: BorderRadius.xl },
+  logo: { width: 200, height: 200, marginBottom: Spacing.md },
+  title: { fontSize: FontSizes.xxxl, fontWeight: FontWeights.bold, color: Colors.base.black },
+  card: { backgroundColor: Colors.primary.blue, width: '100%', borderRadius: BorderRadius.xl, paddingVertical: 45, paddingHorizontal: 25, alignItems: 'center', ...Shadows.large },
+  passwordContainer: { width: '100%', position: 'relative', marginBottom: Spacing.xl, justifyContent: 'center' },
+  input: { backgroundColor: Colors.base.white, width: '100%', height: 55, borderRadius: BorderRadius.xl, paddingHorizontal: 50, fontSize: FontSizes.lg, marginBottom: Spacing.xl, textAlign: 'center', color: Colors.text.primary, ...Platform.select({ web: { outlineStyle: 'none' } as any }) },
+  eyeIcon: { position: 'absolute', right: 15, zIndex: 10 },
+  button: { backgroundColor: Colors.primary.orange, width: '100%', height: 55, borderRadius: BorderRadius.xl, justifyContent: 'center', alignItems: 'center', marginTop: Spacing.md },
+  buttonText: { color: Colors.base.white, fontSize: FontSizes.xl, fontWeight: FontWeights.bold },
 });
 
 export default LoginScreen;

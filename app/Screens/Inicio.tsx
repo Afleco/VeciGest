@@ -1,6 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import {
   Alert,
   Platform,
@@ -12,77 +11,58 @@ import {
   View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+<<<<<<< HEAD:app/Screens/Inicio.tsx
 import { supabase } from '../../SupaBase/Supabase';
 import { BorderRadius, Colors, FontSizes, FontWeights, Shadows, Spacing } from '../theme';
+=======
+import { supabase } from '../../lib/supabase';
+import { useAuth } from '../../providers/AuthProvider'; // Importamos el hook para usar el perfil
+import { BorderRadius, Colors, FontSizes, FontWeights, Shadows, Spacing } from '../../styles/theme';
+>>>>>>> 86a43b7 (Fixed: Persistencia de sesión y navegación adaptada con AuthProvider):app/(Screens)/Inicio.tsx
 
-const Noticias = () => {
-  const navigation = useNavigation<any>();
+const Inicio = () => {
   const [refreshing, setRefreshing] = useState(false);
-  const [userName, setUserName] = useState('');
-
-  useEffect(() => {
-    getUserInfo();
-  }, []);
-
-  const getUserInfo = async () => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (user) {
-        const { data: userData } = await supabase
-          .from('usuarios')
-          .select('nombre')
-          .eq('auth_id', user.id)
-          .single();
-
-        if (userData) {
-          setUserName(userData.nombre);
-        }
-      }
-    } catch (error) {
-      console.error('Error obteniendo información del usuario:', error);
-    }
-  };
+  
+  // Usamos los datos del contexto 
+  const { profile, user } = useAuth();
+  // Si por alguna razón el perfil tarda un poco en cargar, usamos un fallback
+  const userName = profile?.nombre || user?.email || 'Usuario';
 
   const onRefresh = async () => {
     setRefreshing(true);
-    // Aquí irá la lógica para cargar noticias desde Supabase
-    await new Promise(resolve => setTimeout(resolve, 1000)); // Simulación
+    // Noticias aquí ? 
+    await new Promise(resolve => setTimeout(resolve, 1000)); 
     setRefreshing(false);
   };
 
   const handleSignOut = async () => {
-    const confirmSignOut = () => {
-      if (Platform.OS === 'web') {
-        if (window.confirm('¿Estás seguro de que quieres cerrar sesión?')) {
-          performSignOut();
-        }
-      } else {
-        Alert.alert(
-          'Cerrar Sesión',
-          '¿Estás seguro de que quieres cerrar sesión?',
-          [
-            { text: 'Cancelar', style: 'cancel' },
-            { text: 'Cerrar Sesión', onPress: performSignOut, style: 'destructive' }
-          ]
-        );
-      }
-    };
-
     const performSignOut = async () => {
-      const { error } = await supabase.auth.signOut();
-      if (!error) {
-        navigation.navigate('Login');
-      } else {
-        if (Platform.OS === 'web') {
-          window.alert('Error: No se pudo cerrar sesión');
-        } else {
+      try {
+        const { error } = await supabase.auth.signOut();
+        if (error) {
           Alert.alert('Error', 'No se pudo cerrar sesión');
         }
+        
+        // El AuthProvider detectará el "SIGNED_OUT" y nos llevará al login solo.
+      } catch (error) {
+        console.error(error);
       }
     };
 
-    confirmSignOut();
+    if (Platform.OS === 'web') {
+      if (window.confirm('¿Estás seguro de que quieres cerrar sesión?')) {
+        performSignOut();
+      }
+    } else {
+      Alert.alert(
+        'Cerrar Sesión',
+        '¿Estás seguro de que quieres cerrar sesión?',
+        [
+          { text: 'Cancelar', style: 'cancel' },
+          { text: 'Cerrar Sesión', onPress: performSignOut, style: 'destructive' }
+        ]
+      );
+    }
   };
 
   return (
@@ -102,7 +82,7 @@ const Noticias = () => {
         <View style={styles.welcomeCard}>
           <Ionicons name="person-circle-outline" size={60} color={Colors.primary.orange} />
           <Text style={styles.welcomeText}>¡Bienvenido!</Text>
-          {userName ? <Text style={styles.userName}>{userName}</Text> : null}
+          <Text style={styles.userName}>{userName}</Text>
         </View>
 
         {/* Sección de Noticias */}
@@ -112,7 +92,6 @@ const Noticias = () => {
             <Text style={styles.sectionTitle}>Últimas Noticias</Text>
           </View>
 
-          {/* Placeholder para noticias - Aquí irán las noticias de Supabase */}
           <View style={styles.newsCard}>
             <View style={styles.newsHeader}>
               <Ionicons name="megaphone-outline" size={20} color={Colors.primary.orange} />
@@ -120,7 +99,7 @@ const Noticias = () => {
             </View>
             <Text style={styles.newsDate}>Hace 2 horas</Text>
             <Text style={styles.newsContent}>
-              Próximamente podrás ver aquí todas las noticias y comunicados de tu comunidad.
+              El sistema de gestión de usuarios ya está operativo.
             </Text>
           </View>
 
@@ -131,7 +110,7 @@ const Noticias = () => {
             </View>
             <Text style={styles.newsDate}>Hace 1 día</Text>
             <Text style={styles.newsContent}>
-              Las reuniones y eventos de la comunidad aparecerán listados en esta sección.
+              Revisión de cuotas anuales programada para el próximo mes.
             </Text>
           </View>
         </View>
@@ -257,4 +236,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default Noticias;
+export default Inicio;

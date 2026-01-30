@@ -1,6 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { createDrawerNavigator, DrawerContentScrollView, DrawerItemList } from '@react-navigation/drawer';
 import { StatusBar } from 'expo-status-bar';
+<<<<<<< HEAD
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, Image, StyleSheet, Text, View } from 'react-native';
 import { supabase } from '../SupaBase/Supabase';
@@ -10,48 +11,26 @@ import { BorderRadius, Colors, FontSizes, FontWeights, Spacing } from './theme';
 import Administracion from './Screens/Administracion';
 import Inicio from './Screens/Inicio';
 import Login from './Screens/Login';
+=======
+import React from 'react';
+import { Image, StyleSheet, Text, View } from 'react-native';
+import { BorderRadius, Colors, FontSizes, FontWeights, Spacing } from '../styles/theme';
+
+// Importamos el Provider
+import AuthProvider, { useAuth } from '../providers/AuthProvider';
+
+// Pantallas
+import Administracion from './(Screens)/Administracion';
+import GestionUsuarios from './(Screens)/GestionUsuarios';
+import Inicio from './(Screens)/Inicio';
+import Login from './(Screens)/Login';
+>>>>>>> 86a43b7 (Fixed: Persistencia de sesión y navegación adaptada con AuthProvider)
 
 const Drawer = createDrawerNavigator();
 
-// Logo con nombre en la parte superior del drawer
 function CustomDrawerContent(props: any) {
-  const [userRole, setUserRole] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    checkUserRole();
-  }, []);
-
-  const checkUserRole = async () => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (user) {
-        const { data: userData, error } = await supabase
-          .from('usuarios')
-          .select('rol')
-          .eq('auth_id', user.id)
-          .single();
-
-        if (!error && userData) {
-          setUserRole(userData.rol);
-        }
-      }
-    } catch (error) {
-      console.error('Error obteniendo rol:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  if (loading) {
-    return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={Colors.primary.orange} />
-      </View>
-    );
-  }
-
+  const { profile } = useAuth();
+  
   return (
     <DrawerContentScrollView {...props}>
       <View style={styles.drawerHeader}>
@@ -64,101 +43,39 @@ function CustomDrawerContent(props: any) {
         </View>
         <Text style={styles.drawerTitle}>VeciGest</Text>
       </View>
-      
+      {profile && (
+        <View style={{ paddingHorizontal: 20, marginBottom: 15 }}>
+           <Text style={{ color: 'white', fontSize: 14, fontWeight: 'bold' }}>{profile.nombre}</Text>
+           <Text style={{ color: Colors.base.white, opacity: 0.8, fontSize: 12 }}>{profile.rol}</Text>
+        </View>
+      )}
       <DrawerItemList {...props} />
     </DrawerContentScrollView>
   );
 }
 
-export default function Index() {
-  const [userRole, setUserRole] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    checkUserRole();
-
-    // Suscripción a cambios de autenticación
-    const { data: authListener } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        if (event === 'SIGNED_IN') {
-          checkUserRole();
-        } else if (event === 'SIGNED_OUT') {
-          setUserRole(null);
-        }
-      }
-    );
-
-    return () => {
-      authListener.subscription.unsubscribe();
-    };
-  }, []);
-
-  const checkUserRole = async () => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (user) {
-        const { data: userData, error } = await supabase
-          .from('usuarios')
-          .select('rol')
-          .eq('auth_id', user.id)
-          .single();
-
-        if (!error && userData) {
-          setUserRole(userData.rol);
-        }
-      }
-    } catch (error) {
-      console.error('Error obteniendo rol:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Verifica si el usuario tiene permisos de administración
-  const hasAdminAccess = userRole && ['Administrador', 'Presidente', 'Vicepresidente'].includes(userRole);
-
-  if (loading) {
-    return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={Colors.primary.orange} />
-      </View>
-    );
-  }
+function AppNavigation() {
+  // Obtenemos la sesión para decidir qué pantallas mostrar
+  const { session, isAdmin } = useAuth(); 
 
   return (
     <>
       <StatusBar style="light" />
       <Drawer.Navigator
-        initialRouteName="Login"
+        // Quitamos initialRouteName fijo. Dejamos que React Navigation elija la primera disponible.
         drawerContent={(props) => <CustomDrawerContent {...props} />}
         screenOptions={{
-          // Estilo de la topbar
-          headerStyle: { 
-            backgroundColor: Colors.background.header, 
-            height: 90 
-          },
+          headerStyle: { backgroundColor: Colors.background.header, height: 90 },
           headerTintColor: Colors.text.white,
-          headerTitleStyle: { 
-            fontWeight: FontWeights.bold, 
-            fontSize: FontSizes.xl 
-          },
+          headerTitleStyle: { fontWeight: FontWeights.bold, fontSize: FontSizes.xl },
           headerTitle: 'VeciGest',
-          
-          // Estilo del drawer
-          drawerStyle: { 
-            backgroundColor: Colors.background.drawer, 
-            width: 280 
-          },
+          drawerStyle: { backgroundColor: Colors.background.drawer, width: 280 },
           drawerActiveTintColor: Colors.accent.active,
           drawerInactiveTintColor: Colors.accent.inactive,
-          drawerLabelStyle: { 
-            fontSize: FontSizes.md, 
-            marginLeft: -10, 
-            fontWeight: FontWeights.medium 
-          },
+          drawerLabelStyle: { fontSize: FontSizes.md, marginLeft: -10, fontWeight: FontWeights.medium },
         }}
       >
+<<<<<<< HEAD
         {/* PANTALLA LOGIN */}
         <Drawer.Screen 
           name="Login" 
@@ -184,21 +101,73 @@ export default function Index() {
 
         {/* PANTALLA ADMINISTRACIÓN: Solo visible para roles específicos */}
         {hasAdminAccess && (
+=======
+        {!session ? (
+          // --- ESTADO: NO LOGUEADO ---
+          // Solo mostramos Login. Bloquea ir a Inicio.
+>>>>>>> 86a43b7 (Fixed: Persistencia de sesión y navegación adaptada con AuthProvider)
           <Drawer.Screen 
-            name="Administracion" 
-            component={Administracion}
+            name="Login" 
+            component={Login} 
             options={{
-              drawerLabel: 'Administración',
-              headerTitle: 'Administración',
-              drawerIcon: ({ color, size }) => (
-                <Ionicons name="settings-outline" size={size} color={color} />
-              ),
-            }}
+              headerShown: false,
+              swipeEnabled: false, // Bloqueamos el gesto lateral
+            }} 
           />
-        )}
+        ) : (
+          // --- ESTADO: LOGUEADO ---
+          // Mostramos la App real. Login no existe aquí.
+          <>
+            <Drawer.Screen 
+              name="Inicio" 
+              component={Inicio}
+              options={{
+                drawerLabel: 'Inicio',
+                headerTitle: 'Inicio',
+                drawerIcon: ({ color, size }) => (
+                  <Ionicons name="newspaper-outline" size={size} color={color} />
+                ),
+              }}
+            />
 
+            {isAdmin && (
+              <Drawer.Screen 
+                name="Administracion" 
+                component={Administracion}
+                options={{
+                  drawerLabel: 'Administración',
+                  headerTitle: 'Administración',
+                  drawerIcon: ({ color, size }) => (
+                    <Ionicons name="settings-outline" size={size} color={color} />
+                  ),
+                }}
+              />
+            )}
+
+            <Drawer.Screen 
+              name="GestionUsuarios" 
+              component={GestionUsuarios}
+              options={{
+                drawerItemStyle: { display: 'none' },
+                headerTitle: 'Gestión de Usuarios',
+              }}
+            />
+          </>
+        )}
+<<<<<<< HEAD
+
+=======
+>>>>>>> 86a43b7 (Fixed: Persistencia de sesión y navegación adaptada con AuthProvider)
       </Drawer.Navigator>
     </>
+  );
+}
+
+export default function Index() {
+  return (
+    <AuthProvider>
+      <AppNavigation />
+    </AuthProvider>
   );
 }
 
@@ -216,13 +185,11 @@ const styles = StyleSheet.create({
     borderRadius: BorderRadius.sm,
     padding: Spacing.sm,
     marginRight: Spacing.md,
-    ...{
-      shadowColor: Colors.shadow.color,
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.2,
-      shadowRadius: 4,
-      elevation: 3,
-    },
+    shadowColor: Colors.shadow.color,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 3,
   },
   drawerLogo: {
     width: 40,
@@ -232,11 +199,5 @@ const styles = StyleSheet.create({
     fontSize: FontSizes.xxl,
     fontWeight: FontWeights.bold,
     color: Colors.base.white,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: Colors.base.white,
   },
 });
