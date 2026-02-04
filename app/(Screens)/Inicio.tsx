@@ -1,7 +1,9 @@
 import { Ionicons } from '@expo/vector-icons';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
+  ActivityIndicator,
   Alert,
+  Modal,
   Platform,
   RefreshControl,
   ScrollView,
@@ -12,222 +14,319 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { supabase } from '../../lib/supabase';
-import { useAuth } from '../../providers/AuthProvider'; // Importamos el hook para usar el perfil
+import { useAuth } from '../../providers/AuthProvider';
 import { BorderRadius, Colors, FontSizes, FontWeights, Shadows, Spacing } from '../../styles/theme';
+import AddNotice from '../components/AddNotice';
 
 const Inicio = () => {
+  const [noticias, setNoticias] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [modalVisible, setModalVisible] = useState(false);
   
-  // Usamos los datos del contexto 
   const { profile, user } = useAuth();
-  // Si por alguna razón el perfil tarda un poco en cargar, usamos un fallback
-  const userName = profile?.nombre || user?.email || 'Usuario';
+  
+  const rolesPermitidos = ['Presidente', 'Vicepresidente', 'Secretario'];
+  const tienePermisoEscritura = rolesPermitidos.includes(profile?.rol || '');
 
-  const onRefresh = async () => {
-    setRefreshing(true);
-    // Noticias aquí ? 
-    await new Promise(resolve => setTimeout(resolve, 1000)); 
-    setRefreshing(false);
+  const fetchNoticias = async () => {
+    try {
+      // Buscamos el rol asociado al correo del usuario logeado 
+      // y lo imprimimos en la tarjeta de la noticia
+      const { data, error } = await supabase
+        .from('noticias')
+        .select(`
+          *,
+          profiles:email_user (
+            rol
+          )
+        `)
+        .order('id', { ascending: false });
+
+      if (error) throw error;
+      setNoticias(data || []);
+    } catch (error: any) {
+      console.error('Error:', error.message);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
   };
 
-  const handleSignOut = async () => {
-    const performSignOut = async () => {
+  const handleDeleteNotice = (id: number) => {
+    const deleteAction = async () => {
       try {
-        const { error } = await supabase.auth.signOut();
-        if (error) {
-          Alert.alert('Error', 'No se pudo cerrar sesión');
-        }
-        
-        // El AuthProvider detectará el "SIGNED_OUT" y nos llevará al login solo.
-      } catch (error) {
-        console.error(error);
+        const { error } = await supabase.from('noticias').delete().eq('id', id);
+        if (error) throw error;
+        fetchNoticias(); 
+      } catch (error: any) {
+        Alert.alert('Error', 'No se pudo eliminar la noticia');
       }
     };
 
     if (Platform.OS === 'web') {
-      if (window.confirm('¿Estás seguro de que quieres cerrar sesión?')) {
-        performSignOut();
-      }
+      if (confirm('¿Eliminar esta noticia?')) deleteAction();
     } else {
-      Alert.alert(
-        'Cerrar Sesión',
-        '¿Estás seguro de que quieres cerrar sesión?',
-        [
-          { text: 'Cancelar', style: 'cancel' },
-          { text: 'Cerrar Sesión', onPress: performSignOut, style: 'destructive' }
-        ]
-      );
+      Alert.alert('Eliminar Noticia', '¿Estás seguro?', [
+        { text: 'Cancelar', style: 'cancel' },
+        { text: 'Eliminar', onPress: deleteAction, style: 'destructive' }
+      ]);
     }
   };
 
+  useEffect(() => {
+    fetchNoticias();
+  }, []);
+
+  const onRefresh = () => {
+    setRefreshing(true);
+    fetchNoticias();
+  };
+
   return (
-    <SafeAreaView style={styles.container}>
-      <ScrollView 
-        style={styles.scrollView}
-        refreshControl={
-          <RefreshControl 
-            refreshing={refreshing} 
-            onRefresh={onRefresh}
-            colors={[Colors.primary.orange]}
-            tintColor={Colors.primary.orange}
-          />
-        }
-      >
-        {/* Cabecera de Bienvenida */}
-        <View style={styles.welcomeCard}>
-          <Ionicons name="person-circle-outline" size={60} color={Colors.primary.orange} />
-          <Text style={styles.welcomeText}>¡Bienvenido!</Text>
-          <Text style={styles.userName}>{userName}</Text>
-        </View>
-
-        {/* Sección de Noticias */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Ionicons name="newspaper-outline" size={24} color={Colors.primary.blue} />
-            <Text style={styles.sectionTitle}>Últimas Noticias</Text>
+    <View style={{ flex: 1 }}>
+      <SafeAreaView style={styles.container}>
+        <ScrollView 
+          style={styles.scrollView}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+        >
+          {/* Bienvenida */}
+          <View style={styles.welcomeCard}>
+            <Ionicons name="person-circle-outline" size={60} color={Colors.primary.orange} />
+            <Text style={styles.welcomeText}>¡Bienvenido!</Text>
+            <Text style={styles.userName}>{profile?.nombre || user?.email}</Text>
+            {profile?.rol && <Text style={styles.roleLabel}>{profile.rol}</Text>}
           </View>
 
-          <View style={styles.newsCard}>
-            <View style={styles.newsHeader}>
-              <Ionicons name="megaphone-outline" size={20} color={Colors.primary.orange} />
-              <Text style={styles.newsTitle}>Información importante</Text>
+          {/* Sección Noticias */}
+          {/* Imprime las Noticias guardadas en la tabla 
+          y permite que los roles Presidente, Vicepresidente y Secretario
+          puedan eliminar las noticias. */}
+          {/* Por si acaso en supabase se hizo una tarea programada
+          que elimina las noticias con 8 meses de antigüedad */}
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Ionicons name="newspaper-outline" size={24} color={Colors.primary.blue} />
+              <Text style={styles.sectionTitle}>Últimas Noticias</Text>
             </View>
-            <Text style={styles.newsDate}>Hace 4 días</Text>
-            <Text style={styles.newsContent}>
-              El sistema de gestión de usuarios ya está operativo.
-            </Text>
-          </View>
 
-          <View style={styles.newsCard}>
-            <View style={styles.newsHeader}>
-              <Ionicons name="calendar-outline" size={20} color={Colors.primary.orange} />
-              <Text style={styles.newsTitle}>Próximos eventos</Text>
+            {loading ? (
+              <ActivityIndicator size="large" color={Colors.primary.blue} style={{ marginTop: 20 }} />
+            ) : noticias.length > 0 ? (
+              noticias.map((item) => {
+                const partes = item.contenido.split('\n');
+                const titulo = partes[0];
+                const cuerpo = partes.slice(1).join('\n');
+                
+                // Extraemos el rol del objeto profiles que trajo la query
+                const rolAutor = item.profiles?.rol || 'Usuario';
+
+                return (
+                  <View key={item.id} style={styles.newsCard}>
+                    <View style={styles.newsHeaderRow}>
+                      <Text style={styles.newsTitle}>{titulo}</Text>
+                      {tienePermisoEscritura && (
+                        <TouchableOpacity onPress={() => handleDeleteNotice(item.id)}>
+                          <Ionicons name="trash-outline" size={20} color={Colors.primary.orange} />
+                        </TouchableOpacity>
+                      )}
+                    </View>
+
+                    {cuerpo.trim().length > 0 && (
+                      <Text style={styles.newsContent}>{cuerpo.trim()}</Text>
+                    )}
+                    
+                    <View style={styles.newsFooter}>
+                      {/* Aquí mostramos el ROL del autor de la noticia y la fecha de publicsacion */}
+                      <Text style={styles.newsMetaText}>{rolAutor}</Text>
+                      <Text style={styles.newsMetaText}>{item.fecha}</Text>
+                    </View>
+                  </View>
+                );
+              })
+            ) : (
+              <Text style={styles.emptyText}>No hay noticias que mostrar.</Text>
+            )}
+          </View>
+        </ScrollView>
+      </SafeAreaView>
+
+      {/* Boton, solo visible para roles Presidente, Vicepresidente y Secretario,
+       que abre una ventana emergente para la creacion de noticias */}
+      <Modal visible={modalVisible} animationType="slide" transparent={true}>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Crear Noticia</Text>
+              <TouchableOpacity onPress={() => setModalVisible(false)}>
+                <Ionicons name="close-circle" size={32} color={Colors.primary.orange} />
+              </TouchableOpacity>
             </View>
-            <Text style={styles.newsDate}>Hace 1 día</Text>
-            <Text style={styles.newsContent}>
-              Revisión de cuotas anuales programada para el próximo mes.
-            </Text>
+            <AddNotice onSuccess={() => { setModalVisible(false); fetchNoticias(); }} />
           </View>
         </View>
+      </Modal>
 
-        {/* Botones de Acción */}
-        <View style={styles.actionsContainer}>
-          <TouchableOpacity 
-            style={styles.actionButton}
-            onPress={onRefresh}
-          >
-            <Ionicons name="refresh-outline" size={24} color={Colors.base.white} />
-            <Text style={styles.actionButtonText}>Actualizar Noticias</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity 
-            style={[styles.actionButton, styles.signOutButton]}
-            onPress={handleSignOut}
-          >
-            <Ionicons name="log-out-outline" size={24} color={Colors.base.white} />
-            <Text style={styles.actionButtonText}>Cerrar Sesión</Text>
-          </TouchableOpacity>
-        </View>
-      </ScrollView>
-    </SafeAreaView>
+      {tienePermisoEscritura && (
+        <TouchableOpacity style={styles.fab} onPress={() => setModalVisible(true)}>
+          <Ionicons name="add" size={40} color={Colors.base.white} />
+        </TouchableOpacity>
+      )}
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Colors.background.main,
+  container: { 
+    flex: 1, 
+    backgroundColor: Colors.background.main 
   },
-  scrollView: {
-    flex: 1,
+  scrollView: { 
+    flex: 1 
   },
-  welcomeCard: {
-    backgroundColor: Colors.background.card,
-    margin: Spacing.lg,
-    padding: Spacing.xxl,
-    borderRadius: BorderRadius.lg,
-    alignItems: 'center',
-    ...Shadows.medium,
+  section: { 
+    margin: Spacing.lg 
   },
-  welcomeText: {
-    fontSize: FontSizes.xxl,
-    fontWeight: FontWeights.bold,
-    color: Colors.text.primary,
-    marginTop: Spacing.md,
+  sectionHeader: { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    marginBottom: Spacing.md 
   },
-  userName: {
-    fontSize: FontSizes.lg,
-    color: Colors.primary.blue,
-    marginTop: Spacing.xs,
-    fontWeight: FontWeights.semibold,
+  sectionTitle: { 
+    fontSize: FontSizes.xl, 
+    fontWeight: FontWeights.bold, 
+    marginLeft: Spacing.sm, 
+    color: Colors.text.primary 
   },
-  section: {
-    margin: Spacing.lg,
+
+  welcomeCard: { 
+    backgroundColor: Colors.background.card, 
+    margin: Spacing.lg, 
+    padding: Spacing.xxl, 
+    borderRadius: BorderRadius.lg, 
+    alignItems: 'center', 
+    ...Shadows.medium 
   },
-  sectionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: Spacing.md,
+  welcomeText: { 
+    fontSize: FontSizes.xxl, 
+    fontWeight: FontWeights.bold, 
+    color: Colors.text.primary, 
+    marginTop: Spacing.md 
   },
-  sectionTitle: {
-    fontSize: FontSizes.xl,
-    fontWeight: FontWeights.bold,
-    color: Colors.text.primary,
-    marginLeft: Spacing.sm,
+  userName: { 
+    fontSize: FontSizes.lg, 
+    color: Colors.primary.blue, 
+    marginTop: Spacing.xs 
   },
-  newsCard: {
-    backgroundColor: Colors.background.card,
-    padding: Spacing.lg,
-    borderRadius: BorderRadius.md,
-    marginBottom: Spacing.md,
-    ...Shadows.small,
-    borderLeftWidth: 4,
-    borderLeftColor: Colors.primary.green,
+  roleLabel: { 
+    fontSize: FontSizes.xs, 
+    color: Colors.text.secondary, 
+    fontStyle: 'italic', 
+    marginTop: 4 
   },
-  newsHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: Spacing.sm,
+
+  newsCard: { 
+    backgroundColor: Colors.background.card, 
+    padding: Spacing.lg, 
+    borderRadius: BorderRadius.md, 
+    marginBottom: Spacing.md, 
+    borderLeftWidth: 4, 
+    borderLeftColor: Colors.primary.green, 
+    ...Shadows.small 
   },
-  newsTitle: {
-    fontSize: FontSizes.md,
-    fontWeight: FontWeights.bold,
-    color: Colors.text.primary,
-    marginLeft: Spacing.sm,
-    flex: 1,
+  newsHeaderRow: { 
+    flexDirection: 'row', 
+    justifyContent: 'space-between', 
+    alignItems: 'flex-start', 
+    marginBottom: 4 
   },
-  newsDate: {
-    fontSize: FontSizes.xs,
-    color: Colors.text.light,
-    marginBottom: Spacing.sm,
+  newsTitle: { 
+    fontSize: FontSizes.md, 
+    fontWeight: FontWeights.bold, 
+    color: Colors.text.primary, 
+    flex: 1, 
+    marginRight: 10 
   },
-  newsContent: {
-    fontSize: FontSizes.sm,
-    color: Colors.text.secondary,
-    lineHeight: 20,
+  newsContent: { 
+    fontSize: FontSizes.sm, 
+    color: Colors.text.secondary, 
+    lineHeight: 20 
   },
-  actionsContainer: {
-    margin: Spacing.lg,
-    marginTop: Spacing.sm,
+  newsFooter: { 
+    alignItems: 'flex-end', 
+    marginTop: Spacing.md, 
+    borderTopWidth: 0.5, 
+    borderTopColor: '#f0f0f0', 
+    paddingTop: Spacing.xs 
   },
-  actionButton: {
-    backgroundColor: Colors.primary.blue,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: Spacing.lg,
-    borderRadius: BorderRadius.xl,
-    marginBottom: Spacing.md,
-    ...Shadows.medium,
+  newsMetaText: { 
+    fontSize: 10, 
+    color: Colors.text.light 
   },
-  signOutButton: {
-    backgroundColor: Colors.primary.orange,
+  emptyText: { 
+    textAlign: 'center', 
+    color: Colors.text.light, 
+    marginTop: 20 
   },
-  actionButtonText: {
-    color: Colors.base.white,
-    fontSize: FontSizes.md,
-    fontWeight: FontWeights.bold,
-    marginLeft: Spacing.sm,
+  
+  actionsContainer: { 
+    margin: Spacing.lg, 
+    paddingBottom: 100 
+  },
+  actionButton: { 
+    backgroundColor: Colors.primary.blue, 
+    flexDirection: 'row', 
+    padding: Spacing.lg, 
+    borderRadius: BorderRadius.xl, 
+    marginBottom: Spacing.md, 
+    justifyContent: 'center', 
+    alignItems: 'center' 
+  },
+  actionButtonText: { 
+    color: Colors.base.white, 
+    fontWeight: 'bold', 
+    marginLeft: 10, 
+    fontSize: FontSizes.md 
+  },
+  signOutButton: { 
+    backgroundColor: Colors.primary.orange 
+  },
+  fab: { 
+    position: 'absolute', 
+    right: 25, 
+    bottom: 25, 
+    backgroundColor: Colors.primary.green, 
+    width: 65, 
+    height: 65, 
+    borderRadius: 32.5, 
+    justifyContent: 'center', 
+    alignItems: 'center', 
+    elevation: 8, 
+    zIndex: 999 
+  },
+
+  modalOverlay: { 
+    flex: 1, 
+    backgroundColor: 'rgba(0,0,0,0.5)', 
+    justifyContent: 'flex-end' 
+  },
+  modalContent: { 
+    backgroundColor: Colors.base.white, 
+    borderTopLeftRadius: 20, 
+    borderTopRightRadius: 20, 
+    padding: 20, 
+    minHeight: '65%' 
+  },
+  modalHeader: { 
+    flexDirection: 'row', 
+    justifyContent: 'space-between', 
+    alignItems: 'center', 
+    marginBottom: 20 
+  },
+  modalTitle: { 
+    fontSize: FontSizes.xl, 
+    fontWeight: 'bold', 
+    color: Colors.primary.blue 
   },
 });
 
