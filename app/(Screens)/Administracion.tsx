@@ -59,14 +59,7 @@ const Administracion = () => {
       color: Colors.primary.blue,
       action: () => navigation.navigate('GestionUsuarios')
     },
-    {
-      id: 2,
-      title: 'Gestión de Noticias',
-      description: 'Publicar y editar comunicados',
-      icon: 'newspaper-outline',
-      color: Colors.primary.orange,
-      action: () => showAlert('Próximamente', 'Gestión de noticias en desarrollo')
-    },
+    // --- ELIMINADA LA GESTIÓN DE NOTICIAS DE AQUÍ ---
     {
       id: 3,
       title: 'Gestión de Incidencias',
