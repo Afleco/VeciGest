@@ -53,16 +53,16 @@ const AddNotice: React.FC<AddNoticeProps> = ({ onSuccess, onCancel, noticiaAEdit
 
   const uploadImage = async (uri: string): Promise<string | null> => {
     try {
-      // 1. Si la URI ya es de Supabase (http...), no hay que subir nada
+      //  Si la URI ya es de Supabase (http...), no hay que subir nada
       if (uri.startsWith('http')) return uri;
 
-      // 2. Preparar el archivo
+      //  Preparar el archivo
       const arrayBuffer = await fetch(uri).then(res => res.arrayBuffer());
       const fileExt = uri.split('.').pop()?.toLowerCase() || 'jpg';
       const fileName = `${Date.now()}.${fileExt}`;
       const filePath = `${fileName}`;
 
-      // 3. Subir al Bucket 'noticias'
+      //  Subir al Bucket 'noticias'
       const { error: uploadError, data } = await supabase.storage
         .from('noticias')
         .upload(filePath, arrayBuffer, {
@@ -74,7 +74,7 @@ const AddNotice: React.FC<AddNoticeProps> = ({ onSuccess, onCancel, noticiaAEdit
         throw uploadError;
       }
 
-      // 4. Obtener la URL Pública
+      // Obtener la URL Pública
       const { data: urlData } = supabase.storage
         .from('noticias')
         .getPublicUrl(filePath);
@@ -98,7 +98,7 @@ const AddNotice: React.FC<AddNoticeProps> = ({ onSuccess, onCancel, noticiaAEdit
     try {
       const contenidoCompleto = `${titulo.trim()}\n${cuerpo.trim()}`;
       
-      // 1. GESTIONAR SUBIDA DE IMAGEN
+      // GESTIONAR SUBIDA DE IMAGEN
       let finalImageUrl = null;
 
       // Si hay imagen seleccionada...
@@ -117,7 +117,7 @@ const AddNotice: React.FC<AddNoticeProps> = ({ onSuccess, onCancel, noticiaAEdit
         contenido: contenidoCompleto,
         email_user: user?.email,
         fecha: new Date().toISOString().split('T')[0],
-        imagen_url: finalImageUrl // Guardamos la URL de Supabase, NO el blob
+        imagen_url: finalImageUrl // Guardamos la URL de Supabase
       };
 
       if (noticiaAEditar) {

@@ -55,24 +55,50 @@ function AppNavigation() {
       <StatusBar style="light" />
       <Drawer.Navigator
         drawerContent={(props) => <CustomDrawerContent {...props} />}
-        screenOptions={{
-          headerStyle: { backgroundColor: Colors.background.header, height: 90 },
+        // Accedemos a { navigation } para poder usar toggleDrawer en el botón personalizado
+        screenOptions={({ navigation }) => ({
+          headerStyle: { 
+            backgroundColor: Colors.background.header, 
+            height: 120, 
+            elevation: 0, 
+            shadowOpacity: 0, 
+          },
           headerTintColor: Colors.text.white,
-          headerTitleStyle: { fontWeight: FontWeights.bold, fontSize: FontSizes.xl },
-          headerTitle: 'VeciGest',
+          headerTitleStyle: { 
+            fontWeight: FontWeights.bold, 
+            fontSize: FontSizes.xxl 
+          },
           headerTitleAlign: 'center',
-          headerRight: () => (
-            <TouchableOpacity onPress={() => setMenuVisible(true)} style={{ marginRight: 15 }}>
-              <Ionicons name="person-circle-outline" size={32} color={Colors.base.white} />
+          
+          // --- PERSONALIZACIÓN DEL BOTÓN DRAWER (IZQUIERDA) ---
+          headerLeft: () => (
+            <TouchableOpacity 
+              onPress={() => navigation.toggleDrawer()} 
+              style={{ marginLeft: 20 }} // Margen simétrico con la derecha
+            >
+              
+              <Ionicons name="menu" size={35} color={Colors.base.white} />
             </TouchableOpacity>
           ),
+          
+          // --- BOTÓN DE USUARIO (DERECHA) ---
+          headerRight: () => (
+            <TouchableOpacity 
+              onPress={() => setMenuVisible(true)} 
+              style={{ marginRight: 20 }} 
+            >
+              <Ionicons name="person-circle-outline" size={40} color={Colors.base.white} />
+            </TouchableOpacity>
+          ),
+
+          // --- ESTILOS DEL DRAWER ---
           drawerStyle: { backgroundColor: Colors.background.drawer, width: 280 },
           drawerActiveBackgroundColor: Colors.primary.orange,
           drawerActiveTintColor: Colors.base.white,
           drawerInactiveTintColor: Colors.base.white,
           drawerItemStyle: { borderRadius: BorderRadius.xl, marginHorizontal: Spacing.sm, marginBottom: Spacing.xs },
           drawerLabelStyle: { fontSize: FontSizes.md, marginLeft: -10, fontWeight: FontWeights.medium },
-        }}
+        })}
       >
         {!session ? (
           <Drawer.Screen name="Login" component={Login} options={{ headerShown: false, swipeEnabled: false }} />
@@ -136,7 +162,7 @@ function AppNavigation() {
         )}
       </Drawer.Navigator>
 
-      {/* --- DESPLEGABLE DE USUARIO (MODAL REDISEÑADO) --- */}
+      {/* --- MODAL DE USUARIO --- */}
       <Modal
         visible={menuVisible}
         transparent={true}
@@ -146,8 +172,6 @@ function AppNavigation() {
         <TouchableWithoutFeedback onPress={() => setMenuVisible(false)}>
           <View style={styles.modalOverlay}>
             <View style={styles.popoverMenu}>
-              
-              {/* Cabecera del Menú */}
               <View style={styles.popoverHeader}>
                  <Ionicons name="person-circle" size={40} color={Colors.primary.blue} />
                  <View style={styles.popoverUserInfo}>
@@ -160,7 +184,6 @@ function AppNavigation() {
               
               <View style={styles.divider} />
 
-              {/* Opciones */}
               <TouchableOpacity 
                 style={styles.popoverItem} 
                 onPress={() => { setMenuVisible(false); /* TODO: Navegar a avisos */ }}
@@ -216,20 +239,18 @@ const styles = StyleSheet.create({
     fontWeight: FontWeights.bold, 
     color: Colors.base.white 
   },
-  
-  // ESTILOS DEL MODAL (Popover)
   modalOverlay: { 
     flex: 1, 
-    backgroundColor: 'rgba(0,0,0,0.3)' // Fondo semitransparente para dar foco
+    backgroundColor: 'rgba(0,0,0,0.3)' 
   },
   popoverMenu: {
     position: 'absolute',
     top: 60,
     right: 15,
-    width: 220, // Un poco más ancho
+    width: 220, 
     backgroundColor: Colors.base.white,
     borderRadius: BorderRadius.lg,
-    ...Shadows.medium, // Sombra bonita definida en theme.ts
+    ...Shadows.medium, 
     paddingVertical: Spacing.sm,
   },
   popoverHeader: {

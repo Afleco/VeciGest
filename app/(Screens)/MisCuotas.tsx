@@ -2,12 +2,12 @@ import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import React, { useCallback, useState } from 'react';
 import {
-    ActivityIndicator,
-    FlatList,
-    RefreshControl,
-    StyleSheet,
-    Text,
-    View
+  ActivityIndicator,
+  FlatList,
+  RefreshControl,
+  StyleSheet,
+  Text,
+  View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { supabase } from '../../lib/supabase';
@@ -15,9 +15,9 @@ import { useAuth } from '../../providers/AuthProvider';
 import { BorderRadius, Colors, FontSizes, FontWeights, Shadows, Spacing } from '../../styles/theme';
 
 interface Cuota {
-  id: number; // o string, depende de tu BD
+  id: number; 
   fecha: string;
-  concepto: string; // Ej: "Cuota Enero 2024"
+  concepto: string; 
   coste: number;
   pagada: boolean;
   vivienda_id: string;

@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useFocusEffect } from '@react-navigation/native'; // <--- IMPORTANTE: Para recargar al entrar
+import { useFocusEffect } from '@react-navigation/native';
 import React, { useCallback, useState } from 'react';
 import {
     ActivityIndicator,
@@ -36,8 +36,6 @@ const Noticias = () => {
   const fetchNoticias = async () => {
     try {
       // Obtenemos noticias y los datos del autor (nombre y rol)
-      // Asegúrate de que la relación en Supabase (FK) se llama 'email_user' apuntando a 'usuarios.email'
-      // O ajusta la query si tu FK es diferente.
       const { data, error } = await supabase
         .from('noticias')
         .select(`
@@ -72,8 +70,7 @@ const Noticias = () => {
   const handleDeleteNotice = (id: number) => {
     const deleteAction = async () => {
       try {
-        // Borramos la noticia (la imagen se borra sola si configuraste cascada, 
-        // o se queda en el bucket. Para borrarla del bucket habría que hacer un paso extra,
+        // Borramos la noticia (Para borrar la imagen del bucket habría crear en supabase una función,
         // pero por ahora borramos el registro).
         const { error } = await supabase.from('noticias').delete().eq('id', id);
         if (error) throw error;
@@ -200,7 +197,7 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 20, 
     borderTopRightRadius: 20, 
     padding: 20, 
-    height: '90%', // Ocupa casi toda la pantalla para editar cómodamente
+    height: '90%', // Ocupa casi toda la pantalla para editar
   },
 });
 
