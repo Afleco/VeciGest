@@ -16,6 +16,7 @@ import Administracion from './(Screens)/Administracion';
 import Inicio from './(Screens)/Inicio';
 import Login from './(Screens)/Login';
 import MisCuotas from './(Screens)/MisCuotas';
+import Noticias from './(Screens)/Noticias'; // <--- IMPORTANTE: Importar la nueva pantalla
 
 const Drawer = createDrawerNavigator();
 
@@ -83,31 +84,56 @@ function AppNavigation() {
               options={{
                 drawerLabel: 'Inicio',
                 headerTitle: 'Inicio',
+                // Cambiado a Home para diferenciar de Noticias
+                drawerIcon: ({ color, size }) => <Ionicons name="home-outline" size={size} color={color} />,
+              }}
+            />
+
+            {/* --- NUEVA PANTALLA DE NOTICIAS --- */}
+            <Drawer.Screen 
+              name="Noticias" 
+              component={Noticias}
+              options={{
+                drawerLabel: 'Tablón de Noticias',
+                headerTitle: 'Noticias de la Comunidad',
                 drawerIcon: ({ color, size }) => <Ionicons name="newspaper-outline" size={size} color={color} />,
               }}
             />
+
             {!esInquilino && (
               <Drawer.Screen
                 name="MisCuotas"
                 component={MisCuotas}
-                options={{ drawerLabel: 'Mis Recibos', headerTitle: 'Mis Recibos', drawerIcon: ({ color, size }) => <Ionicons name="wallet-outline" size={size} color={color} /> }}
+                options={{ 
+                  drawerLabel: 'Mis Recibos', 
+                  headerTitle: 'Mis Recibos', 
+                  drawerIcon: ({ color, size }) => <Ionicons name="wallet-outline" size={size} color={color} /> 
+                }}
               />
             )}
+            
             {isAdmin && (
               <>
                 <Drawer.Screen
                   name="Administracion"
                   component={Administracion}
-                  options={{ drawerLabel: 'Administración', headerTitle: 'Administración', drawerIcon: ({ color, size }) => <Ionicons name="settings-outline" size={size} color={color} /> }}
+                  options={{ 
+                    drawerLabel: 'Administración', 
+                    headerTitle: 'Administración', 
+                    drawerIcon: ({ color, size }) => <Ionicons name="settings-outline" size={size} color={color} /> 
+                  }}
                 />
                 <Drawer.Screen name="GestionCuotas" 
-                component={GestionCuotas} 
-                options={{ drawerItemStyle: { display: 'none' }, headerTitle: 'Estado de Cuentas' }} />
+                  component={GestionCuotas} 
+                  options={{ drawerItemStyle: { display: 'none' }, headerTitle: 'Estado de Cuentas' }} 
+                />
               </>
             )}
+            
             <Drawer.Screen name="GestionUsuarios" 
-            component={GestionUsuarios} 
-            options={{ drawerItemStyle: { display: 'none' }, headerTitle: 'Gestión de Usuarios' }} />
+              component={GestionUsuarios} 
+              options={{ drawerItemStyle: { display: 'none' }, headerTitle: 'Gestión de Usuarios' }} 
+            />
           </>
         )}
       </Drawer.Navigator>
@@ -196,8 +222,8 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#999',
   },
-  popoverName: { fontSize: 18, fontWeight: 'bold', color: '#000' },
-  popoverRole: { fontSize: 16, color: '#333' },
+  popoverName: { fontSize: 16, fontWeight: 'bold', color: '#000' },
+  popoverRole: { fontSize: 14, color: '#333' },
   popoverAvisos: {
     backgroundColor: '#FFFF00',
     padding: 12,
@@ -210,5 +236,5 @@ const styles = StyleSheet.create({
     padding: 12,
     alignItems: 'center',
   },
-  popoverText: { fontSize: 18, fontWeight: 'bold', color: '#000' },
+  popoverText: { fontSize: 16, fontWeight: 'bold', color: '#000' },
 });
