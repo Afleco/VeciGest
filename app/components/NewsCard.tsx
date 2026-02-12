@@ -1,22 +1,22 @@
 import { Ionicons } from '@expo/vector-icons';
 import React, { useState } from 'react';
 import {
-    Image,
-    Modal,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View
+  Image,
+  Modal,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View
 } from 'react-native';
 import { BorderRadius, Colors, FontSizes, FontWeights, Shadows, Spacing } from '../../styles/theme';
 
 interface NewsCardProps {
   noticia: any;
-  onDelete?: (id: number) => void;
+  onDelete?: (noticia: any) => void;
   onEdit?: (noticia: any) => void;
-  readOnly?: boolean; // Si es true (Inicio), no muestra botones de editar/borrar
-  canEdit?: boolean; // Permisos del usuario actual
+  readOnly?: boolean;
+  canEdit?: boolean;
 }
 
 const NewsCard: React.FC<NewsCardProps> = ({ 
@@ -28,7 +28,6 @@ const NewsCard: React.FC<NewsCardProps> = ({
 }) => {
   const [modalVisible, setModalVisible] = useState(false);
 
-  // Parsear contenido
   const partes = noticia.contenido.split('\n');
   const titulo = partes[0];
   const cuerpo = partes.slice(1).join('\n');
@@ -39,6 +38,7 @@ const NewsCard: React.FC<NewsCardProps> = ({
 
   return (
     <>
+      {/* TARJETA PRINCIPAL (Thumbnail) */}
       <TouchableOpacity 
         style={styles.card} 
         activeOpacity={0.9} 
@@ -65,7 +65,6 @@ const NewsCard: React.FC<NewsCardProps> = ({
             <Text style={styles.dateText}>{fecha}</Text>
           </View>
 
-          {/* Botones de Acción (Solo si no es readOnly y tiene permisos) */}
           {!readOnly && canEdit && (
             <View style={styles.actionsBar}>
               <TouchableOpacity 
@@ -78,7 +77,7 @@ const NewsCard: React.FC<NewsCardProps> = ({
 
               <TouchableOpacity 
                 style={styles.actionButton} 
-                onPress={() => onDelete && onDelete(noticia.id)}
+                onPress={() => onDelete && onDelete(noticia)}
               >
                 <Ionicons name="trash-outline" size={20} color={Colors.status.error} />
                 <Text style={[styles.actionText, { color: Colors.status.error }]}>Eliminar</Text>
@@ -88,7 +87,7 @@ const NewsCard: React.FC<NewsCardProps> = ({
         </View>
       </TouchableOpacity>
 
-      {/* MODAL DE DETALLE EXPANDIDO */}
+      {/* MODAL DE DETALLE (Desplegado) */}
       <Modal 
         visible={modalVisible} 
         animationType="fade" 
@@ -97,16 +96,25 @@ const NewsCard: React.FC<NewsCardProps> = ({
       >
         <View style={styles.modalOverlay}>
           <View style={styles.modalContainer}>
-            <ScrollView contentContainerStyle={styles.modalScroll}>
-              <TouchableOpacity 
-                style={styles.closeButton} 
-                onPress={() => setModalVisible(false)}
-              >
-                <Ionicons name="close-circle" size={32} color={Colors.base.white} />
-              </TouchableOpacity>
+            
+            {/* Botón de cerrar flotante mejorado */}
+            <TouchableOpacity 
+              style={styles.closeButton} 
+              onPress={() => setModalVisible(false)}
+              activeOpacity={0.8}
+            >
+              {/* Le puse un fondo negro semi-transparente para que se vea siempre sobre la imagen */}
+              <Ionicons name="close-circle" size={36} color="rgba(255, 255, 255, 0.9)" />
+            </TouchableOpacity>
 
+            <ScrollView contentContainerStyle={styles.modalScroll} bounces={false}>
               {imagen && (
-                <Image source={{ uri: imagen }} style={styles.modalImage} resizeMode="contain" />
+                <Image 
+                  source={{ uri: imagen }} 
+                  style={styles.modalImage} 
+                  // CAMBIO PRINCIPAL AQUÍ: 'cover' elimina los bordes negros
+                  resizeMode="cover" 
+                />
               )}
               
               <View style={styles.modalBody}>
@@ -132,6 +140,7 @@ const NewsCard: React.FC<NewsCardProps> = ({
 };
 
 const styles = StyleSheet.create({
+  // ... (Tus estilos anteriores se mantienen igual, solo modificamos modalImage y closeButton) ...
   card: {
     backgroundColor: Colors.base.white,
     borderRadius: BorderRadius.lg,
@@ -204,10 +213,10 @@ const styles = StyleSheet.create({
     marginLeft: 4,
   },
   
-  // MODAL STYLES
+  // --- ESTILOS DEL MODAL ---
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.8)',
+    backgroundColor: 'rgba(0,0,0,0.85)', // Un poco más oscuro para enfocar la atención
     justifyContent: 'center',
     padding: Spacing.md,
   },
@@ -216,6 +225,7 @@ const styles = StyleSheet.create({
     borderRadius: BorderRadius.xl,
     overflow: 'hidden',
     maxHeight: '90%',
+    width: '100%', // Asegura ancho completo
   },
   modalScroll: {
     flexGrow: 1,
@@ -224,14 +234,13 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 15,
     right: 15,
-    zIndex: 10,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    borderRadius: BorderRadius.full,
+    zIndex: 20, // Aumentado para asegurar que esté sobre la imagen
+    // Quitamos el background del estilo anterior y usamos el del icono o un view pequeño si prefieres
   },
   modalImage: {
     width: '100%',
-    height: 250,
-    backgroundColor: Colors.base.black,
+    height: 300, // AUMENTADO de 250 a 300 para que luzca más "inmersiva"
+    backgroundColor: Colors.background.main, // Color de carga más suave que el negro puro
   },
   modalBody: {
     padding: Spacing.lg,

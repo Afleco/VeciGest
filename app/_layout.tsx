@@ -55,7 +55,6 @@ function AppNavigation() {
       <StatusBar style="light" />
       <Drawer.Navigator
         drawerContent={(props) => <CustomDrawerContent {...props} />}
-        // Accedemos a { navigation } para poder usar toggleDrawer en el botón personalizado
         screenOptions={({ navigation }) => ({
           headerStyle: { 
             backgroundColor: Colors.background.header, 
@@ -64,24 +63,28 @@ function AppNavigation() {
             shadowOpacity: 0, 
           },
           headerTintColor: Colors.text.white,
+          
+          // --- AJUSTE DE TAMAÑO DE FUENTE ---
           headerTitleStyle: { 
             fontWeight: FontWeights.bold, 
-            fontSize: FontSizes.xxl 
+            // 'lg' (aprox 18px) para que quepan títulos largos
+            fontSize: FontSizes.lg, 
+          },
+          // Aseguramos que el contenedor del título aproveche el espacio
+          headerTitleContainerStyle: {
+            maxWidth: '60%', 
           },
           headerTitleAlign: 'center',
           
-          // --- PERSONALIZACIÓN DEL BOTÓN DRAWER (IZQUIERDA) ---
           headerLeft: () => (
             <TouchableOpacity 
               onPress={() => navigation.toggleDrawer()} 
-              style={{ marginLeft: 20 }} // Margen simétrico con la derecha
+              style={{ marginLeft: 20 }} 
             >
-              
               <Ionicons name="menu" size={35} color={Colors.base.white} />
             </TouchableOpacity>
           ),
           
-          // --- BOTÓN DE USUARIO (DERECHA) ---
           headerRight: () => (
             <TouchableOpacity 
               onPress={() => setMenuVisible(true)} 
@@ -91,7 +94,6 @@ function AppNavigation() {
             </TouchableOpacity>
           ),
 
-          // --- ESTILOS DEL DRAWER ---
           drawerStyle: { backgroundColor: Colors.background.drawer, width: 280 },
           drawerActiveBackgroundColor: Colors.primary.orange,
           drawerActiveTintColor: Colors.base.white,

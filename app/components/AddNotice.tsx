@@ -5,6 +5,7 @@ import {
   ActivityIndicator,
   Alert,
   Image,
+  Platform,
   ScrollView,
   StyleSheet,
   Text,
@@ -34,16 +35,39 @@ const AddNotice: React.FC<AddNoticeProps> = ({ onSuccess, onCancel, noticiaAEdit
       const partes = noticiaAEditar.contenido.split('\n');
       setTitulo(partes[0] || '');
       setCuerpo(partes.slice(1).join('\n') || '');
-      // Si editamos, mostramos la URL que viene de la BD
       setImageUri(noticiaAEditar.imagen_url || null);
     }
   }, [noticiaAEditar]);
 
-  const pickImage = async () => {
+  // --- SELECCIÓN DE IMAGEN ---
+
+  const handleImageSelection = async () => {
+    if (Platform.OS === 'web') {
+      await pickFromGallery();
+      return;
+    }
+
+    Alert.alert(
+      "Añadir imagen",
+      "Selecciona una opción",
+      [
+        { text: "Cancelar", style: "cancel" },
+        { text: "Galería", onPress: pickFromGallery },
+        { text: "Cámara", onPress: takePhoto },
+      ]
+    );
+  };
+
+  const pickFromGallery = async () => {
+    if (Platform.OS !== 'web') {
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== 'granted') return; 
+    }
+
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      mediaTypes: ImagePicker.MediaTypeOptions.Images, 
       allowsEditing: true,
-      quality: 0.5, // Bajamos calidad para subir más rápido
+      quality: 0.7,
     });
 
     if (!result.canceled) {
@@ -51,46 +75,71 @@ const AddNotice: React.FC<AddNoticeProps> = ({ onSuccess, onCancel, noticiaAEdit
     }
   };
 
+  const takePhoto = async () => {
+    const { status } = await ImagePicker.requestCameraPermissionsAsync();
+    if (status !== 'granted') return;
+
+    const result = await ImagePicker.launchCameraAsync({
+      allowsEditing: true,
+      quality: 0.7,
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+    });
+
+    if (!result.canceled) {
+      setImageUri(result.assets[0].uri);
+    }
+  };
+
+  // --- SUBIDA A SUPABASE ---
+
   const uploadImage = async (uri: string): Promise<string | null> => {
     try {
-      //  Si la URI ya es de Supabase (http...), no hay que subir nada
       if (uri.startsWith('http')) return uri;
 
-      //  Preparar el archivo
-      const arrayBuffer = await fetch(uri).then(res => res.arrayBuffer());
       const fileExt = uri.split('.').pop()?.toLowerCase() || 'jpg';
       const fileName = `${Date.now()}.${fileExt}`;
       const filePath = `${fileName}`;
+      
+      const mimeType = fileExt === 'png' ? 'image/png' : 'image/jpeg';
 
-      //  Subir al Bucket 'noticias'
-      const { error: uploadError, data } = await supabase.storage
+      let fileBody;
+
+      if (Platform.OS === 'web') {
+        const response = await fetch(uri);
+        fileBody = await response.blob();
+      } else {
+        const response = await fetch(uri);
+        fileBody = await response.arrayBuffer();
+      }
+
+      const { error: uploadError } = await supabase.storage
         .from('noticias')
-        .upload(filePath, arrayBuffer, {
-          contentType: `image/${fileExt}`,
+        .upload(filePath, fileBody, {
+          contentType: Platform.OS === 'web' ? (fileBody as Blob).type : mimeType,
           upsert: false
         });
 
-      if (uploadError) {
-        throw uploadError;
-      }
+      if (uploadError) throw uploadError;
 
-      // Obtener la URL Pública
       const { data: urlData } = supabase.storage
         .from('noticias')
         .getPublicUrl(filePath);
 
       return urlData.publicUrl;
 
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error subiendo imagen:', error);
-      Alert.alert('Error', 'Falló la subida de la imagen');
+      const msg = 'Error al subir la imagen. Inténtalo de nuevo.';
+      Platform.OS === 'web' ? window.alert(msg) : Alert.alert('Error', msg);
       return null;
     }
   };
 
+  // --- LÓGICA DE GUARDADO ---
   const handleSave = async () => {
     if (!titulo.trim() || !cuerpo.trim()) {
-      Alert.alert('Error', 'Título y descripción obligatorios.');
+      const msg = 'Título y descripción obligatorios.';
+      Platform.OS === 'web' ? window.alert(msg) : Alert.alert('Aviso', msg);
       return;
     }
 
@@ -98,18 +147,33 @@ const AddNotice: React.FC<AddNoticeProps> = ({ onSuccess, onCancel, noticiaAEdit
     try {
       const contenidoCompleto = `${titulo.trim()}\n${cuerpo.trim()}`;
       
-      // GESTIONAR SUBIDA DE IMAGEN
       let finalImageUrl = null;
 
-      // Si hay imagen seleccionada...
+      // Gestionar la nueva imagen (si la hay)
       if (imageUri) {
-        // Si la imagen cambió (es local) o es nueva, la subimos
         if (!imageUri.startsWith('http')) {
+           // Es una imagen nueva local -> Subir
            finalImageUrl = await uploadImage(imageUri);
-           if (!finalImageUrl) throw new Error("No se pudo obtener la URL de la imagen");
+           if (!finalImageUrl) throw new Error("Fallo en la subida de imagen");
         } else {
-           // Si ya era remota (edición sin cambiar foto), la mantenemos
+           // Es la misma imagen que ya estaba en la nube
            finalImageUrl = imageUri;
+        }
+      }
+
+      // Si estamos editando Y la noticia tenía imagen previa...
+      if (noticiaAEditar && noticiaAEditar.imagen_url) {
+        // Comparamos: Si la URL antigua es diferente a la final (o la final es null porque se quitó)
+        if (noticiaAEditar.imagen_url !== finalImageUrl) {
+           // Extraer el nombre del archivo de la URL antigua
+           const oldFileName = noticiaAEditar.imagen_url.split('/').pop();
+           
+           if (oldFileName) {
+             console.log('Eliminando imagen antigua reemplazada:', oldFileName);
+             await supabase.storage
+               .from('noticias')
+               .remove([oldFileName]);
+           }
         }
       }
 
@@ -117,7 +181,7 @@ const AddNotice: React.FC<AddNoticeProps> = ({ onSuccess, onCancel, noticiaAEdit
         contenido: contenidoCompleto,
         email_user: user?.email,
         fecha: new Date().toISOString().split('T')[0],
-        imagen_url: finalImageUrl // Guardamos la URL de Supabase
+        imagen_url: finalImageUrl 
       };
 
       if (noticiaAEditar) {
@@ -136,7 +200,9 @@ const AddNotice: React.FC<AddNoticeProps> = ({ onSuccess, onCancel, noticiaAEdit
       if (onSuccess) onSuccess(); 
       
     } catch (error: any) {
-      Alert.alert('Error', error.message || 'Ocurrió un error al guardar');
+      console.error(error);
+      const msg = error.message || 'Error al guardar';
+      Platform.OS === 'web' ? window.alert(msg) : Alert.alert('Error', msg);
     } finally {
       setLoading(false);
     }
@@ -155,16 +221,20 @@ const AddNotice: React.FC<AddNoticeProps> = ({ onSuccess, onCancel, noticiaAEdit
         value={titulo}
         onChangeText={setTitulo}
         maxLength={100}
+        {...((Platform.OS === 'web' ? { style: [styles.titleInput, { outlineStyle: 'none' }] } : {}) as any)}
       />
 
       <Text style={styles.label}>Imagen (Opcional)</Text>
-      <TouchableOpacity style={styles.imageSelector} onPress={pickImage}>
+      
+      <TouchableOpacity style={styles.imageSelector} onPress={handleImageSelection}>
         {imageUri ? (
           <Image source={{ uri: imageUri }} style={styles.previewImage} resizeMode="cover" />
         ) : (
           <View style={styles.placeholderImage}>
-            <Ionicons name="camera-outline" size={40} color={Colors.text.light} />
-            <Text style={styles.placeholderText}>Toca para adjuntar imagen</Text>
+            <Ionicons name="image-outline" size={40} color={Colors.text.light} />
+            <Text style={styles.placeholderText}>
+              Añadir imagen
+            </Text>
           </View>
         )}
       </TouchableOpacity>
@@ -186,6 +256,7 @@ const AddNotice: React.FC<AddNoticeProps> = ({ onSuccess, onCancel, noticiaAEdit
         value={cuerpo}
         onChangeText={setCuerpo}
         textAlignVertical="top"
+        {...((Platform.OS === 'web' ? { style: [styles.bodyInput, { outlineStyle: 'none' }] } : {}) as any)}
       />
         
       <View style={styles.buttonRow}>
@@ -201,7 +272,7 @@ const AddNotice: React.FC<AddNoticeProps> = ({ onSuccess, onCancel, noticiaAEdit
           {loading ? (
             <ActivityIndicator color={Colors.base.white} />
           ) : (
-            <Text style={styles.buttonText}>{noticiaAEditar ? 'Guardar' : 'Publicar'}</Text>
+            <Text style={styles.buttonText}>{noticiaAEditar ? 'Guardar Cambios' : 'Publicar'}</Text>
           )}
         </TouchableOpacity>
       </View>
@@ -210,7 +281,6 @@ const AddNotice: React.FC<AddNoticeProps> = ({ onSuccess, onCancel, noticiaAEdit
   );
 };
 
-// ... (Los estilos se mantienen igual que en tu código anterior)
 const styles = StyleSheet.create({
   container: { padding: Spacing.sm },
   headerTitle: { fontSize: FontSizes.xl, fontWeight: 'bold', color: Colors.primary.blue, marginBottom: Spacing.lg, textAlign: 'center' },

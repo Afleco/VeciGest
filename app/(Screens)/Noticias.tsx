@@ -2,16 +2,16 @@ import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import React, { useCallback, useState } from 'react';
 import {
-    ActivityIndicator,
-    Alert,
-    FlatList,
-    Modal,
-    Platform,
-    RefreshControl,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View
+  ActivityIndicator,
+  Alert,
+  FlatList,
+  Modal,
+  Platform,
+  RefreshControl,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { supabase } from '../../lib/supabase';
@@ -29,13 +29,11 @@ const Noticias = () => {
   
   const { profile } = useAuth();
   
-  // ROLES PERMITIDOS: Solo Presidente, Vicepresidente y Secretario
   const rolesPermitidos = ['Presidente', 'Vicepresidente', 'Secretario'];
   const tienePermisoEscritura = rolesPermitidos.includes(profile?.rol || '');
 
   const fetchNoticias = async () => {
     try {
-      // Obtenemos noticias y los datos del autor (nombre y rol)
       const { data, error } = await supabase
         .from('noticias')
         .select(`
@@ -54,10 +52,8 @@ const Noticias = () => {
     }
   };
 
-  // --- AUTO-RECARGA AL ENTRAR A LA PANTALLA ---
   useFocusEffect(
     useCallback(() => {
-      setLoading(true);
       fetchNoticias();
     }, [])
   );
@@ -67,18 +63,38 @@ const Noticias = () => {
     fetchNoticias();
   };
 
-  const handleDeleteNotice = (id: number) => {
+  // --- FUNCIÓN DE BORRADO SEGURA ---
+  const handleDeleteNotice = (item: any) => {
     const deleteAction = async () => {
       try {
-        // Borramos la noticia (Para borrar la imagen del bucket habría crear en supabase una función,
-        // pero por ahora borramos el registro).
-        const { error } = await supabase.from('noticias').delete().eq('id', id);
+        // Borrar imagen del Storage (si existe)
+        // Usando la API de Supabase Storage
+        if (item.imagen_url) {
+          // Extraemos el nombre del archivo de la URL
+          const fileName = item.imagen_url.split('/').pop();
+
+          if (fileName) {
+            const { error: storageError } = await supabase.storage
+              .from('noticias')
+              .remove([fileName]);
+            
+            if (storageError) {
+              console.warn('Aviso: No se pudo borrar la imagen del bucket:', storageError.message);
+              // No lanzamos error para permitir que se borre la noticia de todos modos
+              // y no dejar al usuario bloqueado.
+            }
+          }
+        }
+
+        // Borrar registro de la Base de Datos
+        const { error } = await supabase.from('noticias').delete().eq('id', item.id);
+        
         if (error) throw error;
         
         Alert.alert('Éxito', 'Noticia eliminada correctamente');
         fetchNoticias(); 
       } catch (error: any) {
-        Alert.alert('Error', 'No se pudo eliminar la noticia. Verifica tus permisos.');
+        Alert.alert('Error', 'No se pudo eliminar la noticia: ' + error.message);
       }
     };
 
@@ -115,7 +131,7 @@ const Noticias = () => {
               <NewsCard 
                 noticia={item} 
                 canEdit={tienePermisoEscritura}
-                onDelete={handleDeleteNotice}
+                onDelete={handleDeleteNotice} 
                 onEdit={openEditModal}
               />
             )}
@@ -128,7 +144,6 @@ const Noticias = () => {
         )}
       </SafeAreaView>
 
-      {/* Modal para Crear / Editar */}
       <Modal 
         visible={modalVisible} 
         animationType="slide" 
@@ -146,7 +161,6 @@ const Noticias = () => {
         </View>
       </Modal>
 
-      {/* Botón FAB (Solo visible para Directiva) */}
       {tienePermisoEscritura && (
         <TouchableOpacity style={styles.fab} onPress={openCreateModal}>
           <Ionicons name="add" size={32} color={Colors.base.white} />
@@ -162,7 +176,7 @@ const styles = StyleSheet.create({
   },
   listContent: {
     padding: Spacing.lg,
-    paddingBottom: 100, // Espacio para que el FAB no tape la última noticia
+    paddingBottom: 100,
   },
   emptyText: {
     textAlign: 'center',
@@ -197,7 +211,7 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 20, 
     borderTopRightRadius: 20, 
     padding: 20, 
-    height: '90%', // Ocupa casi toda la pantalla para editar
+    height: '90%', 
   },
 });
 
