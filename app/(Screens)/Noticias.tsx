@@ -1,9 +1,11 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
+  Animated,
+  Dimensions,
   FlatList,
   Modal,
   Platform,
@@ -20,6 +22,8 @@ import { Colors, Spacing } from '../../styles/theme';
 import AddNotice from '../components/AddNotice';
 import NewsCard from '../components/NewsCard';
 
+const { height: SCREEN_HEIGHT } = Dimensions.get('window');
+
 const Noticias = () => {
   const [noticias, setNoticias] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -27,6 +31,10 @@ const Noticias = () => {
   const [modalVisible, setModalVisible] = useState(false);
   const [editingNotice, setEditingNotice] = useState<any | null>(null);
   
+  // --- ANIMACIÓN ---
+  // Inicializamos la posición fuera de la pantalla (abajo)
+  const slideAnim = useRef(new Animated.Value(SCREEN_HEIGHT)).current;
+
   const { profile } = useAuth();
   
   const rolesPermitidos = ['Presidente', 'Vicepresidente', 'Secretario'];
@@ -58,50 +66,58 @@ const Noticias = () => {
     }, [])
   );
 
+  // Efecto para animar al ABRIR el modal
+  useEffect(() => {
+    if (modalVisible) {
+      Animated.spring(slideAnim, {
+        toValue: 0, // Sube a su posición original
+        useNativeDriver: true,
+        bounciness: 5, // Un pequeño rebote para que se sienta fluido
+        speed: 12,
+      }).start();
+    }
+  }, [modalVisible]);
+
+  // Función para CERRAR con animación inversa
+  const closeModal = () => {
+    Animated.timing(slideAnim, {
+      toValue: SCREEN_HEIGHT, // Baja fuera de la pantalla
+      duration: 250,
+      useNativeDriver: true,
+    }).start(() => {
+      // Una vez terminada la animación, ocultamos el modal real
+      setModalVisible(false);
+      setEditingNotice(null);
+    });
+  };
+
   const onRefresh = () => {
     setRefreshing(true);
     fetchNoticias();
   };
 
-  // --- FUNCIÓN DE BORRADO SEGURA ---
   const handleDeleteNotice = (item: any) => {
     const deleteAction = async () => {
       try {
-        // Borrar imagen del Storage (si existe)
-        // Usando la API de Supabase Storage
         if (item.imagen_url) {
-          // Extraemos el nombre del archivo de la URL
           const fileName = item.imagen_url.split('/').pop();
-
           if (fileName) {
-            const { error: storageError } = await supabase.storage
-              .from('noticias')
-              .remove([fileName]);
-            
-            if (storageError) {
-              console.warn('Aviso: No se pudo borrar la imagen del bucket:', storageError.message);
-              // No lanzamos error para permitir que se borre la noticia de todos modos
-              // y no dejar al usuario bloqueado.
-            }
+            await supabase.storage.from('noticias').remove([fileName]);
           }
         }
-
-        // Borrar registro de la Base de Datos
         const { error } = await supabase.from('noticias').delete().eq('id', item.id);
-        
         if (error) throw error;
-        
         Alert.alert('Éxito', 'Noticia eliminada correctamente');
         fetchNoticias(); 
       } catch (error: any) {
-        Alert.alert('Error', 'No se pudo eliminar la noticia: ' + error.message);
+        Alert.alert('Error', 'No se pudo eliminar: ' + error.message);
       }
     };
 
     if (Platform.OS === 'web') {
       if (confirm('¿Eliminar esta noticia?')) deleteAction();
     } else {
-      Alert.alert('Eliminar Noticia', '¿Estás seguro de que deseas eliminar esta noticia?', [
+      Alert.alert('Eliminar', '¿Estás seguro?', [
         { text: 'Cancelar', style: 'cancel' },
         { text: 'Eliminar', onPress: deleteAction, style: 'destructive' }
       ]);
@@ -109,11 +125,14 @@ const Noticias = () => {
   };
 
   const openCreateModal = () => {
+    // Reseteamos posición por si acaso (aunque el effect lo maneja)
+    slideAnim.setValue(SCREEN_HEIGHT);
     setEditingNotice(null);
     setModalVisible(true);
   };
 
   const openEditModal = (noticia: any) => {
+    slideAnim.setValue(SCREEN_HEIGHT);
     setEditingNotice(noticia);
     setModalVisible(true);
   };
@@ -144,20 +163,28 @@ const Noticias = () => {
         )}
       </SafeAreaView>
 
+      {/* --- MODAL CON ANIMACIÓN MIXTA --- */}
       <Modal 
         visible={modalVisible} 
-        animationType="slide" 
+        animationType="fade" // El fondo negro hace FADE
         transparent={true} 
-        onRequestClose={() => setModalVisible(false)}
+        onRequestClose={closeModal} 
       >
         <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
+          {/* El contenido hace SLIDE con Animated.View */}
+          <Animated.View 
+            style={[
+              styles.modalContent, 
+              { transform: [{ translateY: slideAnim }] }
+            ]}
+          >
+            {/* Pasamos closeModal tanto al cancelar como al terminar con éxito */}
             <AddNotice 
               noticiaAEditar={editingNotice}
-              onSuccess={() => { setModalVisible(false); fetchNoticias(); }}
-              onCancel={() => setModalVisible(false)}
+              onSuccess={() => { closeModal(); fetchNoticias(); }}
+              onCancel={closeModal}
             />
-          </View>
+          </Animated.View>
         </View>
       </Modal>
 
@@ -201,17 +228,27 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     zIndex: 999 
   },
+  // ESTILOS DEL MODAL
   modalOverlay: { 
     flex: 1, 
     backgroundColor: 'rgba(0,0,0,0.5)', 
-    justifyContent: 'flex-end' 
+    justifyContent: 'flex-end', 
   },
   modalContent: { 
     backgroundColor: Colors.base.white, 
     borderTopLeftRadius: 20, 
     borderTopRightRadius: 20, 
-    padding: 20, 
-    height: '90%', 
+    height: '90%',
+    padding: Spacing.lg,
+    overflow: 'hidden',
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: -2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
   },
 });
 

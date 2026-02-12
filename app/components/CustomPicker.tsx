@@ -6,6 +6,7 @@ import {
   StyleSheet,
   Text,
   TouchableOpacity,
+  TouchableWithoutFeedback, // Importado para detectar toques fuera
   View
 } from 'react-native';
 import { BorderRadius, Colors, FontSizes, FontWeights, Shadows, Spacing } from '../../styles/theme';
@@ -36,7 +37,6 @@ export default function CustomPicker({
 }: CustomPickerProps) {
   const [modalVisible, setModalVisible] = useState(false);
 
-  // Encontrar la etiqueta actual basada en el valor seleccionado
   const selectedOption = options.find((opt) => opt.value === value);
 
   const handleSelect = (val: string) => {
@@ -67,46 +67,55 @@ export default function CustomPicker({
 
       {/* Modal de Selección */}
       <Modal
-        animationType="slide"
+        animationType="fade" // CAMBIO: fade evita que el fondo negro suba
         transparent={true}
         visible={modalVisible}
         onRequestClose={() => setModalVisible(false)}
       >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>{label || 'Seleccionar opción'}</Text>
-              <TouchableOpacity onPress={() => setModalVisible(false)}>
-                <Ionicons name="close-circle" size={30} color={Colors.text.secondary} />
-              </TouchableOpacity>
-            </View>
+        {/* TouchableWithoutFeedback permite cerrar al tocar el fondo negro */}
+        <TouchableWithoutFeedback onPress={() => setModalVisible(false)}>
+          <View style={styles.modalOverlay}>
+            
+            {/* TouchableWithoutFeedback interno para evitar que se cierre al tocar el contenido */}
+            <TouchableWithoutFeedback>
+              <View style={styles.modalContent}>
+                <View style={styles.modalHeader}>
+                  <Text style={styles.modalTitle}>{label || 'Seleccionar opción'}</Text>
+                  <TouchableOpacity onPress={() => setModalVisible(false)}>
+                    <Ionicons name="close-circle" size={30} color={Colors.text.secondary} />
+                  </TouchableOpacity>
+                </View>
 
-            <FlatList
-              data={options}
-              keyExtractor={(item) => item.value}
-              renderItem={({ item }) => (
-                <TouchableOpacity
-                  style={[
-                    styles.optionItem,
-                    item.value === value && styles.selectedOption
-                  ]}
-                  onPress={() => handleSelect(item.value)}
-                >
-                  <Text style={[
-                    styles.optionText,
-                    item.value === value && styles.selectedOptionText
-                  ]}>
-                    {item.label}
-                  </Text>
-                  {item.value === value && (
-                    <Ionicons name="checkmark" size={20} color={Colors.primary.orange} />
+                <FlatList
+                  data={options}
+                  keyExtractor={(item) => item.value}
+                  renderItem={({ item }) => (
+                    <TouchableOpacity
+                      style={[
+                        styles.optionItem,
+                        item.value === value && styles.selectedOption
+                      ]}
+                      onPress={() => handleSelect(item.value)}
+                    >
+                      <Text style={[
+                        styles.optionText,
+                        item.value === value && styles.selectedOptionText
+                      ]}>
+                        {item.label}
+                      </Text>
+                      {item.value === value && (
+                        <Ionicons name="checkmark" size={20} color={Colors.primary.orange} />
+                      )}
+                    </TouchableOpacity>
                   )}
-                </TouchableOpacity>
-              )}
-              ItemSeparatorComponent={() => <View style={styles.separator} />}
-            />
+                  ItemSeparatorComponent={() => <View style={styles.separator} />}
+                  style={{ maxHeight: 300 }} // Limitamos altura de la lista interna
+                />
+              </View>
+            </TouchableWithoutFeedback>
+
           </View>
-        </View>
+        </TouchableWithoutFeedback>
       </Modal>
     </View>
   );
@@ -146,18 +155,21 @@ const styles = StyleSheet.create({
   placeholderText: {
     color: Colors.text.light,
   },
-  // Estilos del Modal
+  // --- ESTILOS DEL MODAL ACTUALIZADOS ---
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'flex-end',
+    justifyContent: 'center', // CAMBIO: Centrado en lugar de flex-end
+    alignItems: 'center',     // CAMBIO: Centrado horizontal
+    padding: Spacing.lg,
   },
   modalContent: {
+    width: '100%',
+    maxWidth: 400, // Responsive: No se estira demasiado en tablets
     backgroundColor: Colors.base.white,
-    borderTopLeftRadius: BorderRadius.xl,
-    borderTopRightRadius: BorderRadius.xl,
+    borderRadius: BorderRadius.lg, // Bordes redondeados completos
     padding: Spacing.lg,
-    maxHeight: '70%', // Ocupa hasta el 70% de la pantalla
+    maxHeight: '80%',
     ...Shadows.large,
   },
   modalHeader: {
@@ -175,7 +187,7 @@ const styles = StyleSheet.create({
     color: Colors.text.primary,
   },
   optionItem: {
-    paddingVertical: Spacing.lg,
+    paddingVertical: Spacing.md, // Un poco más compacto
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -186,7 +198,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.sm,
   },
   optionText: {
-    fontSize: FontSizes.lg,
+    fontSize: FontSizes.md, // Un poco más pequeño para que quepa mejor
     color: Colors.text.primary,
   },
   selectedOptionText: {
