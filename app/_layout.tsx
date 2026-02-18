@@ -1,39 +1,92 @@
 import { Ionicons } from '@expo/vector-icons';
 import { createDrawerNavigator, DrawerContentScrollView, DrawerItemList } from '@react-navigation/drawer';
+import { useNavigationState } from '@react-navigation/native';
 import { StatusBar } from 'expo-status-bar';
 import React, { useState } from 'react';
-import { Image, Modal, StyleSheet, Text, TouchableOpacity, TouchableWithoutFeedback, View } from 'react-native';
+import { Image, Modal, Platform, Pressable, StyleSheet, Text, TouchableOpacity, TouchableWithoutFeedback, View } from 'react-native';
 import { supabase } from '../lib/supabase';
 import { BorderRadius, Colors, FontSizes, FontWeights, Shadows, Spacing } from '../styles/theme';
 
-// Importamos el Provider
 import AuthProvider, { useAuth } from '../providers/AuthProvider';
 
 // Pantallas
 import GestionCuotas from './(Screens)/(admin)/GestionCuotas';
 import GestionUsuarios from './(Screens)/(admin)/GestionUsuarios';
 import Administracion from './(Screens)/Administracion';
+import Avisos from './(Screens)/Avisos';
 import Inicio from './(Screens)/Inicio';
 import Login from './(Screens)/Login';
 import MisCuotas from './(Screens)/MisCuotas';
 import Noticias from './(Screens)/Noticias';
 
 const Drawer = createDrawerNavigator();
+const isWeb = Platform.OS === 'web';
 
 const handleSignOut = async () => {
-    await supabase.auth.signOut();
+  await supabase.auth.signOut();
+};
+
+function WebNavbar({ navigation, isAdmin, esInquilino, setMenuVisible, profile }: any) {
+  const currentRouteName = useNavigationState((state) => state?.routes[state.index].name);
+
+  const NavItem = ({ name, label }: { name: string; label: string }) => {
+    const isActive = currentRouteName === name;
+
+    return (
+      <Pressable
+        onPress={() => navigation.navigate(name)}
+        style={({ hovered }) => [
+          styles.webNavLink,
+          isActive && styles.activeWebNavLink,
+          hovered && styles.hoverWebNavLink,
+        ]}
+      >
+        {({ hovered }) => (
+          <Text style={[
+            styles.webNavLinkText,
+            (isActive || hovered) && styles.activeWebNavLinkText
+          ]}>
+            {label}
+          </Text>
+        )}
+      </Pressable>
+    );
   };
+
+  return (
+    <View style={styles.webHeader}>
+      <View style={styles.webHeaderLeft}>
+        <View style={styles.webLogoContainer}>
+          <Image source={require('../assets/images/iconapp.png')} style={styles.webLogo} resizeMode="contain" />
+        </View>
+        <Text style={styles.webTitle}>VeciGest</Text>
+      </View>
+
+      <View style={styles.webNavLinks}>
+        <NavItem name="Inicio" label="Inicio" />
+        <NavItem name="Noticias" label="Noticias" />
+        <NavItem name="Avisos" label="Avisos" /> {/* ✅ NUEVO */}
+        {!esInquilino && <NavItem name="MisCuotas" label="Mis Recibos" />}
+        {isAdmin && <NavItem name="Administracion" label="Administración" />}
+      </View>
+
+      <Pressable
+        onPress={() => setMenuVisible(true)}
+        style={({ hovered }) => [styles.webProfileBtn, hovered && { opacity: 0.7 }]}
+      >
+        <Text style={styles.webProfileName}>{profile?.nombre}</Text>
+        <Ionicons name="person-circle-outline" size={35} color={Colors.base.white} />
+      </Pressable>
+    </View>
+  );
+}
 
 function CustomDrawerContent(props: any) {
   return (
     <DrawerContentScrollView {...props}>
       <View style={styles.drawerHeader}>
         <View style={styles.logoContainer}>
-          <Image
-            source={require('../assets/images/iconapp.png')}
-            style={styles.drawerLogo}
-            resizeMode="contain"
-          />
+          <Image source={require('../assets/images/iconapp.png')} style={styles.drawerLogo} resizeMode="contain" />
         </View>
         <Text style={styles.drawerTitle}>VeciGest</Text>
       </View>
@@ -47,156 +100,146 @@ function CustomDrawerContent(props: any) {
 function AppNavigation() {
   const { session, isAdmin, profile } = useAuth();
   const [menuVisible, setMenuVisible] = useState(false);
-
   const esInquilino = profile?.rol === 'Inquilino';
+
+  if (!session) {
+    return <Login />;
+  }
 
   return (
     <>
       <StatusBar style="light" />
       <Drawer.Navigator
         drawerContent={(props) => <CustomDrawerContent {...props} />}
-        screenOptions={({ navigation }) => ({
-          headerStyle: { 
-            backgroundColor: Colors.background.header, 
-            height: 120, 
-            elevation: 0, 
-            shadowOpacity: 0, 
+        screenOptions={({ navigation: drawerNav }) => ({
+          header: isWeb
+            ? () => <WebNavbar
+                navigation={drawerNav}
+                isAdmin={isAdmin}
+                esInquilino={esInquilino}
+                setMenuVisible={setMenuVisible}
+                profile={profile}
+              />
+            : undefined,
+          headerStyle: {
+            backgroundColor: Colors.background.header,
+            height: 110,
+            elevation: 0,
+            shadowOpacity: 0
           },
           headerTintColor: Colors.text.white,
-          
-          // --- AJUSTE DE TAMAÑO DE FUENTE ---
-          headerTitleStyle: { 
-            fontWeight: FontWeights.bold, 
-            // 'lg' (aprox 18px) para que quepan títulos largos
-            fontSize: FontSizes.lg, 
-          },
-          // Aseguramos que el contenedor del título aproveche el espacio
-          headerTitleContainerStyle: {
-            maxWidth: '60%', 
-          },
+          headerTitleStyle: { fontWeight: FontWeights.bold, fontSize: FontSizes.lg },
           headerTitleAlign: 'center',
-          
           headerLeft: () => (
-            <TouchableOpacity 
-              onPress={() => navigation.toggleDrawer()} 
-              style={{ marginLeft: 20 }} 
-            >
-              <Ionicons name="menu" size={35} color={Colors.base.white} />
-            </TouchableOpacity>
+            <View style={styles.webHeaderLeft}>
+              <View style={styles.webLogoContainer}>
+                <Image source={require('../assets/images/iconapp.png')} style={styles.webLogo} resizeMode="contain" />
+              </View>
+              <Text style={styles.webTitle}>VeciGest</Text>
+            </View>
           ),
-          
           headerRight: () => (
-            <TouchableOpacity 
-              onPress={() => setMenuVisible(true)} 
-              style={{ marginRight: 20 }} 
-            >
+            <TouchableOpacity onPress={() => setMenuVisible(true)} style={{ marginRight: 20 }}>
               <Ionicons name="person-circle-outline" size={40} color={Colors.base.white} />
             </TouchableOpacity>
           ),
-
-          drawerStyle: { backgroundColor: Colors.background.drawer, width: 280 },
+          drawerStyle: { backgroundColor: Colors.background.drawer, width: isWeb ? 0 : 280 },
           drawerActiveBackgroundColor: Colors.primary.orange,
           drawerActiveTintColor: Colors.base.white,
           drawerInactiveTintColor: Colors.base.white,
-          drawerItemStyle: { borderRadius: BorderRadius.xl, marginHorizontal: Spacing.sm, marginBottom: Spacing.xs },
-          drawerLabelStyle: { fontSize: FontSizes.md, marginLeft: -10, fontWeight: FontWeights.medium },
         })}
       >
-        {!session ? (
-          <Drawer.Screen name="Login" component={Login} options={{ headerShown: false, swipeEnabled: false }} />
-        ) : (
+        <Drawer.Screen
+          name="Inicio"
+          component={Inicio}
+          options={{
+            drawerIcon: ({ color, size }) => <Ionicons name="home-outline" size={size} color={color} />
+          }}
+        />
+
+        <Drawer.Screen
+          name="Noticias"
+          component={Noticias}
+          options={{
+            drawerIcon: ({ color, size }) => <Ionicons name="newspaper-outline" size={size} color={color} />
+          }}
+        />
+
+        {/* ✅ AHORA VISIBLE EN EL DRAWER */}
+        <Drawer.Screen
+          name="Avisos"
+          component={Avisos}
+          options={{
+            headerTitle: 'Avisos de la Comunidad',
+            drawerIcon: ({ color, size }) => <Ionicons name="notifications-outline" size={size} color={color} />
+          }}
+        />
+
+        {!esInquilino && (
+          <Drawer.Screen
+            name="MisCuotas"
+            component={MisCuotas}
+            options={{
+              drawerIcon: ({ color, size }) => <Ionicons name="wallet-outline" size={size} color={color} />
+            }}
+          />
+        )}
+
+        {isAdmin && (
           <>
             <Drawer.Screen
-              name="Inicio"
-              component={Inicio}
+              name="Administracion"
+              component={Administracion}
               options={{
-                drawerLabel: 'Inicio',
-                headerTitle: 'Inicio',
-                drawerIcon: ({ color, size }) => <Ionicons name="home-outline" size={size} color={color} />,
+                drawerIcon: ({ color, size }) => <Ionicons name="settings-outline" size={size} color={color} />
               }}
             />
-
-            <Drawer.Screen 
-              name="Noticias" 
-              component={Noticias}
-              options={{
-                drawerLabel: 'Tablón de Noticias',
-                headerTitle: 'Noticias de la Comunidad',
-                drawerIcon: ({ color, size }) => <Ionicons name="newspaper-outline" size={size} color={color} />,
-              }}
-            />
-
-            {!esInquilino && (
-              <Drawer.Screen
-                name="MisCuotas"
-                component={MisCuotas}
-                options={{ 
-                  drawerLabel: 'Mis Recibos', 
-                  headerTitle: 'Mis Recibos', 
-                  drawerIcon: ({ color, size }) => <Ionicons name="wallet-outline" size={size} color={color} /> 
-                }}
-              />
-            )}
-            
-            {isAdmin && (
-              <>
-                <Drawer.Screen
-                  name="Administracion"
-                  component={Administracion}
-                  options={{ 
-                    drawerLabel: 'Administración', 
-                    headerTitle: 'Administración', 
-                    drawerIcon: ({ color, size }) => <Ionicons name="settings-outline" size={size} color={color} /> 
-                  }}
-                />
-                <Drawer.Screen name="GestionCuotas" 
-                  component={GestionCuotas} 
-                  options={{ drawerItemStyle: { display: 'none' }, headerTitle: 'Estado de Cuentas' }} 
-                />
-              </>
-            )}
-            
-            <Drawer.Screen name="GestionUsuarios" 
-              component={GestionUsuarios} 
-              options={{ drawerItemStyle: { display: 'none' }, headerTitle: 'Gestión de Usuarios' }} 
+            <Drawer.Screen
+              name="GestionCuotas"
+              component={GestionCuotas}
+              options={{ drawerItemStyle: { display: 'none' } }}
             />
           </>
         )}
+
+        <Drawer.Screen
+          name="GestionUsuarios"
+          component={GestionUsuarios}
+          options={{ drawerItemStyle: { display: 'none' } }}
+        />
       </Drawer.Navigator>
 
-      {/* --- MODAL DE USUARIO --- */}
-      <Modal
-        visible={menuVisible}
-        transparent={true}
-        animationType="fade"
-        onRequestClose={() => setMenuVisible(false)}
-      >
+      {/* 🔹 Modal sigue funcionando */}
+      <Modal visible={menuVisible} transparent animationType="fade" onRequestClose={() => setMenuVisible(false)}>
         <TouchableWithoutFeedback onPress={() => setMenuVisible(false)}>
           <View style={styles.modalOverlay}>
-            <View style={styles.popoverMenu}>
+            <View style={[styles.popoverMenu, isWeb && styles.webPopover]}>
               <View style={styles.popoverHeader}>
-                 <Ionicons name="person-circle" size={40} color={Colors.primary.blue} />
-                 <View style={styles.popoverUserInfo}>
-                    <Text style={styles.popoverName} numberOfLines={1}>
-                      {profile?.nombre || 'Usuario'}
-                    </Text>
-                    <Text style={styles.popoverRole}>{profile?.rol || 'Vecino'}</Text>
-                 </View>
+                <Ionicons name="person-circle" size={40} color={Colors.primary.blue} />
+                <View style={styles.popoverUserInfo}>
+                  <Text style={styles.popoverName}>{profile?.nombre || 'Usuario'}</Text>
+                  <Text style={styles.popoverRole}>{profile?.rol || 'Vecino'}</Text>
+                </View>
               </View>
-              
+
               <View style={styles.divider} />
 
-              <TouchableOpacity 
-                style={styles.popoverItem} 
-                onPress={() => { setMenuVisible(false); /* TODO: Navegar a avisos */ }}
+              <TouchableOpacity
+                style={styles.popoverItem}
+                onPress={() => {
+                  setMenuVisible(false);
+                }}
               >
                 <Ionicons name="notifications-outline" size={22} color={Colors.text.primary} />
                 <Text style={styles.popoverText}>Avisos</Text>
               </TouchableOpacity>
 
-              <TouchableOpacity 
-                style={styles.popoverItem} 
-                onPress={() => { setMenuVisible(false); handleSignOut() }}
+              <TouchableOpacity
+                style={styles.popoverItem}
+                onPress={() => {
+                  setMenuVisible(false);
+                  handleSignOut();
+                }}
               >
                 <Ionicons name="log-out-outline" size={22} color={Colors.status.error} />
                 <Text style={[styles.popoverText, { color: Colors.status.error }]}>Cerrar Sesión</Text>
@@ -219,77 +262,151 @@ export default function Index() {
 }
 
 const styles = StyleSheet.create({
-  drawerHeader: { 
-    flexDirection: 'row', 
-    alignItems: 'center', 
-    padding: Spacing.xl, 
-    paddingTop: 40, 
-    marginBottom: Spacing.md, 
-    borderBottomWidth: 1, 
-    borderBottomColor: 'rgba(255, 255, 255, 0.2)' 
+  webHeader: {
+    flexDirection: 'row',
+    height: 70,
+    backgroundColor: Colors.background.header,
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 40,
+    ...Shadows.medium,
+  },
+  webHeaderLeft: {
+    flexDirection: 'row',
+    alignItems: 'center'
+  },
+  webLogoContainer: {
+    backgroundColor: '#FFFFFF',
+    padding: 6,
+    borderRadius: 8,
+    marginRight: 15,
+    ...Shadows.small,
+  },
+  webLogo: {
+    width: 35,
+    height: 35
+  },
+  webTitle: {
+    color: Colors.base.white,
+    fontSize: 22,
+    fontWeight: 'bold'
+  },
+  webNavLinks: {
+    flexDirection: 'row',
+    flex: 1,
+    justifyContent: 'center'
+  },
+  webNavLink: {
+    marginHorizontal: 15,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: BorderRadius.md,
+    borderBottomWidth: 3,
+    borderBottomColor: 'transparent',
+    // @ts-ignore
+    cursor: Platform.OS === 'web' ? 'pointer' : 'default',
+  },
+  webNavLinkText: {
+    color: 'rgba(255, 255, 255, 0.7)',
+    fontSize: 16,
+    fontWeight: '500'
+  },
+  activeWebNavLink: {
+    borderBottomColor: Colors.primary.orange,
+  },
+  activeWebNavLinkText: {
+    color: Colors.base.white,
+    fontWeight: 'bold',
+  },
+  hoverWebNavLink: {
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  webProfileBtn: {
+    flexDirection: 'row',
+    alignItems: 'center'
+  },
+  webProfileName: {
+    color: Colors.base.white,
+    marginRight: 10,
+    fontWeight: '500'
+  },
+  webPopover: {
+    top: 75,
+    right: 40
+  },
+  drawerHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: Spacing.xl,
+    paddingTop: 40,
+    marginBottom: Spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255, 255, 255, 0.2)'
   },
   logoContainer: {
-    backgroundColor: Colors.base.white, 
-    borderRadius: BorderRadius.sm, 
-    padding: Spacing.sm, 
-    marginRight: Spacing.md, 
-    elevation: 3 
+    backgroundColor: Colors.base.white,
+    borderRadius: BorderRadius.sm,
+    padding: Spacing.sm,
+    marginRight: Spacing.md,
+    elevation: 3
   },
-  drawerLogo: {width: 35, height: 35 },
-  drawerTitle: { 
-    fontSize: FontSizes.xl, 
-    fontWeight: FontWeights.bold, 
-    color: Colors.base.white 
+  drawerLogo: {
+    width: 35,
+    height: 35
   },
-  modalOverlay: { 
-    flex: 1, 
-    backgroundColor: 'rgba(0,0,0,0.3)' 
+  drawerTitle: {
+    fontSize: FontSizes.xl,
+    fontWeight: FontWeights.bold,
+    color: Colors.base.white
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.3)'
   },
   popoverMenu: {
     position: 'absolute',
     top: 60,
     right: 15,
-    width: 220, 
+    width: 220,
     backgroundColor: Colors.base.white,
     borderRadius: BorderRadius.lg,
-    ...Shadows.medium, 
+    ...Shadows.medium,
     paddingVertical: Spacing.sm,
   },
   popoverHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: Spacing.md,
-    paddingBottom: Spacing.sm,
-    paddingTop: Spacing.sm,
+    paddingVertical: Spacing.sm
   },
   popoverUserInfo: {
     marginLeft: Spacing.sm,
-    flex: 1,
+    flex: 1
   },
-  popoverName: { 
-    fontSize: FontSizes.md, 
-    fontWeight: 'bold', 
-    color: Colors.text.primary 
+  popoverName: {
+    fontSize: FontSizes.md,
+    fontWeight: 'bold',
+    color: Colors.text.primary
   },
-  popoverRole: { 
-    fontSize: FontSizes.xs, 
-    color: Colors.text.secondary 
+  popoverRole: {
+    fontSize: FontSizes.xs,
+    color: Colors.text.secondary
   },
   divider: {
     height: 1,
     backgroundColor: Colors.background.main,
-    marginVertical: Spacing.xs,
+    marginVertical: Spacing.xs
   },
   popoverItem: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: Spacing.md,
-    paddingHorizontal: Spacing.md,
+    paddingHorizontal: Spacing.md
   },
-  popoverText: { 
-    fontSize: FontSizes.md, 
-    fontWeight: '500', 
+  popoverText: {
+    fontSize: FontSizes.md,
+    fontWeight: '500',
     color: Colors.text.primary,
-    marginLeft: Spacing.md,
+    marginLeft: Spacing.md
   },
 });

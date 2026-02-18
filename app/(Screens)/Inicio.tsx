@@ -2,7 +2,6 @@ import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import React, { useCallback, useState } from 'react';
 import {
-  ActivityIndicator,
   RefreshControl,
   ScrollView,
   StyleSheet,
@@ -18,25 +17,22 @@ import NewsCard from '../components/NewsCard';
 
 const Inicio = () => {
   const [noticias, setNoticias] = useState<any[]>([]);
+  const [avisos, setAvisos] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const navigation = useNavigation<any>();
-  
   const { profile, user } = useAuth();
 
-  const fetchNoticiasRecientes = async () => {
+  const fetchData = async () => {
     try {
-      const { data, error } = await supabase
-        .from('noticias')
-        .select(`
-          *,
-          profiles:email_user ( nombre, rol )
-        `)
-        .order('id', { ascending: false })
-        .limit(4); // Solo las últimas 4
+      setLoading(true);
+      const [newsRes, avisosRes] = await Promise.all([
+        supabase.from('noticias').select('*, profiles:email_user(nombre, rol)').order('id', { ascending: false }).limit(3),
+        supabase.from('avisos').select('*, profiles:correo_user(nombre, rol)').order('id', { ascending: false }).limit(3)
+      ]);
 
-      if (error) throw error;
-      setNoticias(data || []);
+      setNoticias(newsRes.data || []);
+      setAvisos(avisosRes.data || []);
     } catch (error: any) {
       console.error('Error:', error.message);
     } finally {
@@ -45,25 +41,35 @@ const Inicio = () => {
     }
   };
 
-  useFocusEffect(
-    useCallback(() => {
-      fetchNoticiasRecientes();
-    }, [])
-  );
+  useFocusEffect(useCallback(() => { fetchData(); }, []));
 
-  const onRefresh = () => {
-    setRefreshing(true);
-    fetchNoticiasRecientes();
+  //Definimos los campos para las tarjetas de noticias y avisos
+  const renderSafeCard = (item: any, isAviso: boolean) => {
+    const safeData = {
+      ...item,
+      titulo: item.titulo || "Sin título",
+      contenido: item.contenido || "",
+      imagen_url: item.imagen_url,
+      created_at: item.fecha || item.created_at || new Date().toISOString(),
+      profiles: item.profiles || { nombre: "Anónimo", rol: "Vecino" }
+    };
+
+    if (isAviso) {
+      safeData.imagen_url = null;
+    }
+
+    return (
+      <View key={item.id} style={styles.cardWrapper}>
+        <NewsCard noticia={safeData} readOnly={true} />
+      </View>
+    );
   };
 
   return (
     <View style={{ flex: 1, backgroundColor: Colors.background.main }}>
-      <SafeAreaView style={styles.container}>
-        <ScrollView 
-          style={styles.scrollView}
-          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
-        >
-          {/* Bienvenida */}
+      <SafeAreaView style={styles.container} edges={['top']}>
+        <ScrollView refreshControl={<RefreshControl refreshing={refreshing} onRefresh={fetchData} />}>
+          
           <View style={styles.welcomeCard}>
             <Ionicons name="person-circle-outline" size={60} color={Colors.primary.orange} />
             <Text style={styles.welcomeText}>¡Bienvenido!</Text>
@@ -71,33 +77,32 @@ const Inicio = () => {
             {profile?.rol && <Text style={styles.roleLabel}>{profile.rol}</Text>}
           </View>
 
-          {/* Sección Noticias Recientes */}
-          <View style={styles.section}>
-            <View style={styles.sectionHeader}>
-              <View style={{flexDirection: 'row', alignItems: 'center'}}>
-                <Ionicons name="newspaper-outline" size={24} color={Colors.primary.blue} />
-                <Text style={styles.sectionTitle}>Últimas Noticias</Text>
+          <View style={styles.columnsContainer}>
+            {/* COLUMNA IZQUIERDA: NOTICIAS */}
+            <View style={styles.column}>
+              <View style={styles.columnHeader}>
+                <Ionicons name="newspaper-outline" size={20} color={Colors.primary.blue} />
+                <Text style={styles.columnTitle}>Noticias</Text>
               </View>
-              {/* Navegación a la pantalla completa de Noticias */}
+              {noticias.map(item => renderSafeCard(item, false))}
               <TouchableOpacity onPress={() => navigation.navigate('Noticias')}>
-                <Text style={styles.seeAllText}>Ver todas</Text>
+                <Text style={styles.seeMore}>Ver todas</Text>
               </TouchableOpacity>
             </View>
 
-            {loading ? (
-              <ActivityIndicator size="large" color={Colors.primary.blue} style={{ marginTop: 20 }} />
-            ) : noticias.length > 0 ? (
-              noticias.map((item) => (
-                <NewsCard 
-                  key={item.id} 
-                  noticia={item} 
-                  readOnly={true} // Modo solo lectura para el Inicio
-                />
-              ))
-            ) : (
-              <Text style={styles.emptyText}>No hay noticias recientes.</Text>
-            )}
+            {/* COLUMNA DERECHA: AVISOS */}
+            <View style={[styles.column, styles.divider]}>
+              <View style={styles.columnHeader}>
+                <Ionicons name="megaphone-outline" size={20} color={Colors.primary.orange} />
+                <Text style={styles.columnTitle}>Avisos</Text>
+              </View>
+              {avisos.map(item => renderSafeCard(item, true))}
+              <TouchableOpacity onPress={() => navigation.navigate('Avisos')}>
+                <Text style={styles.seeMore}>Ver todos</Text>
+              </TouchableOpacity>
+            </View>
           </View>
+
         </ScrollView>
       </SafeAreaView>
     </View>
@@ -105,61 +110,54 @@ const Inicio = () => {
 };
 
 const styles = StyleSheet.create({
-  container: { 
-    flex: 1, 
-  },
-  scrollView: { 
-    flex: 1 
-  },
-  section: { 
-    margin: Spacing.lg 
-  },
-  sectionHeader: { 
-    flexDirection: 'row', 
-    alignItems: 'center', 
-    justifyContent: 'space-between',
-    marginBottom: Spacing.md 
-  },
-  sectionTitle: { 
-    fontSize: FontSizes.xl, 
-    fontWeight: FontWeights.bold, 
-    marginLeft: Spacing.sm, 
-    color: Colors.text.primary 
-  },
-  seeAllText: {
-    color: Colors.primary.blue,
-    fontWeight: 'bold',
-    fontSize: FontSizes.sm,
-  },
+  container: { flex: 1 },
   welcomeCard: { 
     backgroundColor: Colors.background.card, 
     margin: Spacing.lg, 
-    padding: Spacing.xxl, 
+    padding: Spacing.xl, 
     borderRadius: BorderRadius.lg, 
     alignItems: 'center', 
     ...Shadows.medium 
   },
-  welcomeText: { 
-    fontSize: FontSizes.xxl, 
+  welcomeText: { fontSize: FontSizes.xxl, fontWeight: FontWeights.bold, color: Colors.text.primary },
+  userName: { fontSize: FontSizes.lg, color: Colors.primary.blue },
+  roleLabel: { fontSize: FontSizes.xs, color: Colors.text.secondary, fontStyle: 'italic' },
+  
+  columnsContainer: { 
+    flexDirection: 'row', 
+    paddingHorizontal: Spacing.md,
+    paddingBottom: Spacing.xl
+  },
+  column: { 
+    flex: 1, 
+    paddingHorizontal: Spacing.sm 
+  },
+  columnHeader: { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    marginBottom: Spacing.md,
+    justifyContent: 'center'
+  },
+  columnTitle: { 
+    fontSize: FontSizes.md, 
     fontWeight: FontWeights.bold, 
-    color: Colors.text.primary, 
-    marginTop: Spacing.md 
+    marginLeft: 5,
+    color: Colors.text.primary 
   },
-  userName: { 
-    fontSize: FontSizes.lg, 
-    color: Colors.primary.blue, 
-    marginTop: Spacing.xs 
+  seeMore: {
+    textAlign: 'center',
+    color: Colors.primary.blue,
+    fontWeight: 'bold',
+    marginTop: Spacing.sm,
+    fontSize: FontSizes.xs
   },
-  roleLabel: { 
-    fontSize: FontSizes.xs, 
-    color: Colors.text.secondary, 
-    fontStyle: 'italic', 
-    marginTop: 4 
+  divider: { 
+    borderLeftWidth: 1, 
+    borderLeftColor: '#eee' 
   },
-  emptyText: { 
-    textAlign: 'center', 
-    color: Colors.text.light, 
-    marginTop: 20 
+  cardWrapper: { 
+    marginBottom: 12,
+    width: '100%' 
   },
 });
 
