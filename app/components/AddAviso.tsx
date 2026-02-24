@@ -98,16 +98,16 @@ const AddAviso: React.FC<AddAvisoProps> = ({ onSuccess, onCancel, avisoAEditar }
           {avisoAEditar ? 'Editar Aviso' : 'Nuevo Aviso'}
         </Text>
 
-        <Text style={styles.label}>Título del Aviso</Text>
+        <Text style={styles.label}>Título</Text>
         <TextInput
           style={styles.titleInput}
-          placeholder="Ej: Corte de agua, Reunión..."
+          placeholder="Título del aviso..."
           value={titulo}
           onChangeText={setTitulo}
           maxLength={100}
         />
 
-        <Text style={styles.label}>Cuerpo del Aviso</Text>
+        <Text style={styles.label}>Descripción</Text>
         <TextInput
           style={styles.bodyInput}
           placeholder="Escribe los detalles aquí..."

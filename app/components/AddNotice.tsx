@@ -5,7 +5,7 @@ import {
   ActivityIndicator,
   Alert,
   Image,
-  KeyboardAvoidingView, // IMPORTANTE
+  KeyboardAvoidingView,
   Platform,
   ScrollView,
   StyleSheet,
@@ -172,7 +172,7 @@ const AddNotice: React.FC<AddNoticeProps> = ({ onSuccess, onCancel, noticiaAEdit
         <Text style={styles.label}>Título</Text>
         <TextInput
           style={styles.titleInput}
-          placeholder="Título de la noticia"
+          placeholder="Título de la noticia..."
           value={titulo}
           onChangeText={setTitulo}
           maxLength={100}
