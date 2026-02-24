@@ -28,7 +28,7 @@ const Inicio = () => {
       setLoading(true);
       const [newsRes, avisosRes] = await Promise.all([
         supabase.from('noticias').select('*, profiles:email_user(nombre, rol)').order('id', { ascending: false }).limit(3),
-        supabase.from('avisos').select('*, profiles:correo_user(nombre, rol)').order('id', { ascending: false }).limit(3)
+        supabase.from('avisos').select('*, profiles:email_user(nombre, rol)').order('id', { ascending: false }).limit(3)
       ]);
 
       setNoticias(newsRes.data || []);

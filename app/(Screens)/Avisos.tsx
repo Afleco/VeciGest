@@ -45,7 +45,7 @@ const Avisos = () => {
         .from('avisos')
         .select(`
           *,
-          profiles:correo_user ( nombre, rol )
+          profiles:email_user ( nombre, rol )
         `)
         .order('id', { ascending: false });
 
@@ -124,7 +124,7 @@ const Avisos = () => {
             keyExtractor={(item) => item.id.toString()}
             renderItem={({ item }) => {
               // Lógica de permisos combinada
-              const esAutor = user?.email === item.correo_user;
+              const esAutor = user?.email === item.email_user;
               const tienePermiso = esDirectiva || esAutor;
 
               return (

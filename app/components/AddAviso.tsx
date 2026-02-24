@@ -57,7 +57,7 @@ const AddAviso: React.FC<AddAvisoProps> = ({ onSuccess, onCancel, avisoAEditar }
 
       const datos = {
         contenido: contenidoCompleto, // Columna actualizada
-        correo_user: user?.email,
+        email_user: user?.email,
         fecha: fechaHoy, // Evita el error 'null value violates not-null constraint'
       };
 
