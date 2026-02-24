@@ -3,7 +3,7 @@ import { createDrawerNavigator, DrawerContentScrollView, DrawerItemList } from '
 import { useNavigationState } from '@react-navigation/native';
 import { StatusBar } from 'expo-status-bar';
 import React, { useState } from 'react';
-import { Image, Modal, Platform, Pressable, StyleSheet, Text, TouchableOpacity, TouchableWithoutFeedback, View } from 'react-native';
+import { Image, Modal, Platform, Pressable, StyleSheet, Text, TouchableOpacity, TouchableWithoutFeedback, useWindowDimensions, View } from 'react-native';
 import { supabase } from '../lib/supabase';
 import { BorderRadius, Colors, FontSizes, FontWeights, Shadows, Spacing } from '../styles/theme';
 
@@ -101,6 +101,11 @@ function AppNavigation() {
   const { session, isAdmin, profile } = useAuth();
   const [menuVisible, setMenuVisible] = useState(false);
   const esInquilino = profile?.rol === 'Inquilino';
+  
+  // OBTENEMOS EL ANCHO DE LA PANTALLA EN TIEMPO REAL
+  const { width } = useWindowDimensions();
+  // NUEVO BREAKPOINT A 1000px
+  const isDesktop = width >= 1000; 
 
   if (!session) {
     return <Login />;
@@ -112,7 +117,7 @@ function AppNavigation() {
       <Drawer.Navigator
         drawerContent={(props) => <CustomDrawerContent {...props} />}
         screenOptions={({ navigation: drawerNav }) => ({
-          header: isWeb
+          header: isDesktop
             ? () => <WebNavbar
                 navigation={drawerNav}
                 isAdmin={isAdmin}
@@ -123,27 +128,25 @@ function AppNavigation() {
             : undefined,
           headerStyle: {
             backgroundColor: Colors.background.header,
-            height: 110,
+            height: isDesktop ? 70 : 100, 
             elevation: 0,
             shadowOpacity: 0
           },
           headerTintColor: Colors.text.white,
+          // Al definir el estilo del texto pero no sobrescribir el componente,
+          // React Navigation pondrá automáticamente el nombre de la pantalla
           headerTitleStyle: { fontWeight: FontWeights.bold, fontSize: FontSizes.lg },
           headerTitleAlign: 'center',
-          headerLeft: () => (
-            <View style={styles.webHeaderLeft}>
-              <View style={styles.webLogoContainer}>
-                <Image source={require('../assets/images/iconapp.png')} style={styles.webLogo} resizeMode="contain" />
-              </View>
-              <Text style={styles.webTitle}>VeciGest</Text>
-            </View>
-          ),
+
+          // El icono de drawer (headerLeft) se pone solo cuando el header no está sobrescrito
+          
           headerRight: () => (
             <TouchableOpacity onPress={() => setMenuVisible(true)} style={{ marginRight: 20 }}>
               <Ionicons name="person-circle-outline" size={40} color={Colors.base.white} />
             </TouchableOpacity>
           ),
-          drawerStyle: { backgroundColor: Colors.background.drawer, width: isWeb ? 0 : 280 },
+          
+          drawerStyle: { backgroundColor: Colors.background.drawer, width: isDesktop ? 0 : 280 },
           drawerActiveBackgroundColor: Colors.primary.orange,
           drawerActiveTintColor: Colors.base.white,
           drawerInactiveTintColor: Colors.base.white,
@@ -165,12 +168,11 @@ function AppNavigation() {
           }}
         />
 
-        {/* ✅ AHORA VISIBLE EN EL DRAWER */}
         <Drawer.Screen
           name="Avisos"
           component={Avisos}
           options={{
-            headerTitle: 'Avisos de la Comunidad',
+            headerTitle: 'Avisos de la Comunidad', // Este texto saldrá arriba en móvil
             drawerIcon: ({ color, size }) => <Ionicons name="notifications-outline" size={size} color={color} />
           }}
         />
@@ -180,6 +182,7 @@ function AppNavigation() {
             name="MisCuotas"
             component={MisCuotas}
             options={{
+              headerTitle: 'Mis Recibos', // Personalizamos el título aquí si queremos
               drawerIcon: ({ color, size }) => <Ionicons name="wallet-outline" size={size} color={color} />
             }}
           />
@@ -191,13 +194,17 @@ function AppNavigation() {
               name="Administracion"
               component={Administracion}
               options={{
+                headerTitle: 'Administración',
                 drawerIcon: ({ color, size }) => <Ionicons name="settings-outline" size={size} color={color} />
               }}
             />
             <Drawer.Screen
               name="GestionCuotas"
               component={GestionCuotas}
-              options={{ drawerItemStyle: { display: 'none' } }}
+              options={{ 
+                headerTitle: 'Gestión de Cuotas',
+                drawerItemStyle: { display: 'none' } 
+              }}
             />
           </>
         )}
@@ -205,15 +212,17 @@ function AppNavigation() {
         <Drawer.Screen
           name="GestionUsuarios"
           component={GestionUsuarios}
-          options={{ drawerItemStyle: { display: 'none' } }}
+          options={{ 
+            headerTitle: 'Gestión de Usuarios',
+            drawerItemStyle: { display: 'none' } 
+          }}
         />
       </Drawer.Navigator>
 
-      {/* 🔹 Modal sigue funcionando */}
       <Modal visible={menuVisible} transparent animationType="fade" onRequestClose={() => setMenuVisible(false)}>
         <TouchableWithoutFeedback onPress={() => setMenuVisible(false)}>
           <View style={styles.modalOverlay}>
-            <View style={[styles.popoverMenu, isWeb && styles.webPopover]}>
+            <View style={[styles.popoverMenu, isDesktop && styles.webPopover]}>
               <View style={styles.popoverHeader}>
                 <Ionicons name="person-circle" size={40} color={Colors.primary.blue} />
                 <View style={styles.popoverUserInfo}>
