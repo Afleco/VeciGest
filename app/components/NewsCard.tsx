@@ -7,6 +7,7 @@ import {
   StyleSheet,
   Text,
   TouchableOpacity,
+  TouchableWithoutFeedback,
   View
 } from 'react-native';
 import { BorderRadius, Colors, FontSizes, FontWeights, Shadows, Spacing } from '../../styles/theme';
@@ -45,7 +46,12 @@ const NewsCard: React.FC<NewsCardProps> = ({
         onPress={() => setModalVisible(true)}
       >
         {imagen && (
-          <Image source={{ uri: imagen }} style={styles.cardImage} resizeMode="cover" />
+          // Usamos aspectRatio en lugar de height fija para evitar deformación
+          <Image 
+            source={{ uri: imagen }} 
+            style={styles.cardImage} 
+            resizeMode="cover" 
+          />
         )}
         
         <View style={styles.cardContent}>
@@ -60,7 +66,7 @@ const NewsCard: React.FC<NewsCardProps> = ({
           <View style={styles.footer}>
             <View style={styles.authorInfo}>
               <Ionicons name="person-circle-outline" size={16} color={Colors.text.secondary} />
-              <Text style={styles.authorText}> {autorNombre} ({autorRol})</Text>
+              <Text style={styles.authorText} numberOfLines={1}> {autorNombre} ({autorRol})</Text>
             </View>
             <Text style={styles.dateText}>{fecha}</Text>
           </View>
@@ -94,63 +100,59 @@ const NewsCard: React.FC<NewsCardProps> = ({
         transparent={true}
         onRequestClose={() => setModalVisible(false)}
       >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContainer}>
+        <TouchableWithoutFeedback onPress={() => setModalVisible(false)}>
+          <View style={styles.modalOverlay}>
             
-            {/* Botón de cerrar flotante mejorado */}
-            <TouchableOpacity 
-              style={styles.closeButton} 
-              onPress={() => setModalVisible(false)}
-              activeOpacity={0.8}
-            >
-              {/* Le puse un fondo negro semi-transparente para que se vea siempre sobre la imagen */}
-              <Ionicons name="close-circle" size={36} color="rgba(255, 255, 255, 0.9)" />
-            </TouchableOpacity>
+            <TouchableWithoutFeedback>
+              <View style={styles.modalContainer}>
+                <ScrollView contentContainerStyle={styles.modalScroll} bounces={false}>
+                  {imagen && (
+                    <Image 
+                      source={{ uri: imagen }} 
+                      style={styles.modalImage} 
+                      resizeMode="cover" 
+                    />
+                  )}
+                  
+                  <View style={styles.modalBody}>
+                    <Text style={styles.modalTitle}>{titulo}</Text>
+                    
+                    <View style={styles.metaContainer}>
+                       <View style={styles.badge}>
+                          <Text style={styles.badgeText}>{autorRol}</Text>
+                       </View>
+                       <Text style={styles.modalDate}>Publicado por {autorNombre} el {fecha}</Text>
+                    </View>
 
-            <ScrollView contentContainerStyle={styles.modalScroll} bounces={false}>
-              {imagen && (
-                <Image 
-                  source={{ uri: imagen }} 
-                  style={styles.modalImage} 
-                  // CAMBIO PRINCIPAL AQUÍ: 'cover' elimina los bordes negros
-                  resizeMode="cover" 
-                />
-              )}
-              
-              <View style={styles.modalBody}>
-                <Text style={styles.modalTitle}>{titulo}</Text>
-                
-                <View style={styles.metaContainer}>
-                   <View style={styles.badge}>
-                      <Text style={styles.badgeText}>{autorRol}</Text>
-                   </View>
-                   <Text style={styles.modalDate}>Publicado por {autorNombre} el {fecha}</Text>
-                </View>
-
-                <View style={styles.divider} />
-                
-                <Text style={styles.modalDescription}>{cuerpo}</Text>
+                    <View style={styles.divider} />
+                    
+                    <Text style={styles.modalDescription}>{cuerpo}</Text>
+                  </View>
+                </ScrollView>
               </View>
-            </ScrollView>
+            </TouchableWithoutFeedback>
+
           </View>
-        </View>
+        </TouchableWithoutFeedback>
       </Modal>
     </>
   );
 };
 
 const styles = StyleSheet.create({
-  // ... (Tus estilos anteriores se mantienen igual, solo modificamos modalImage y closeButton) ...
   card: {
     backgroundColor: Colors.base.white,
     borderRadius: BorderRadius.lg,
     marginBottom: Spacing.lg,
     ...Shadows.medium,
     overflow: 'hidden',
+    width: '100%',
+    maxWidth: 700, 
+    alignSelf: 'center', 
   },
   cardImage: {
     width: '100%',
-    height: 150,
+    aspectRatio: 16 / 9, // <-- Mantiene la proporción panorámica
   },
   cardContent: {
     padding: Spacing.md,
@@ -183,15 +185,19 @@ const styles = StyleSheet.create({
   authorInfo: {
     flexDirection: 'row',
     alignItems: 'center',
+    flex: 1, // Toma el espacio disponible sin empujar a la fecha
+    marginRight: Spacing.sm, // pequeño margen para separar la fecha
   },
   authorText: {
     fontSize: FontSizes.xs,
     color: Colors.text.secondary,
     fontWeight: FontWeights.medium,
+    flexShrink: 1, // Permite que el texto se acorte si falta espacio
   },
   dateText: {
     fontSize: FontSizes.xs,
     color: Colors.text.light,
+    flexShrink: 0, //Protege a la fecha para que jamás se encoja o deforme
   },
   actionsBar: {
     flexDirection: 'row',
@@ -216,8 +222,9 @@ const styles = StyleSheet.create({
   // --- ESTILOS DEL MODAL ---
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.85)', // Un poco más oscuro para enfocar la atención
+    backgroundColor: 'rgba(0,0,0,0.85)', 
     justifyContent: 'center',
+    alignItems: 'center',
     padding: Spacing.md,
   },
   modalContainer: {
@@ -225,22 +232,22 @@ const styles = StyleSheet.create({
     borderRadius: BorderRadius.xl,
     overflow: 'hidden',
     maxHeight: '90%',
-    width: '100%', // Asegura ancho completo
+    width: '100%',
+    maxWidth: 800,
   },
   modalScroll: {
     flexGrow: 1,
   },
-  closeButton: {
-    position: 'absolute',
-    top: 15,
-    right: 15,
-    zIndex: 20, // Aumentado para asegurar que esté sobre la imagen
-    // Quitamos el background del estilo anterior y usamos el del icono o un view pequeño si prefieres
-  },
+  // closeButton: {  <-- ELIMINADO EL ESTILO DEL BOTÓN
+  //   position: 'absolute',
+  //   top: 15,
+  //   right: 15,
+  //   zIndex: 20, 
+  // },
   modalImage: {
     width: '100%',
-    height: 300, // AUMENTADO de 250 a 300 para que luzca más "inmersiva"
-    backgroundColor: Colors.background.main, // Color de carga más suave que el negro puro
+    height: 300, 
+    backgroundColor: Colors.background.main, 
   },
   modalBody: {
     padding: Spacing.lg,
