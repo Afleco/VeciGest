@@ -26,7 +26,7 @@ interface AddNoticeProps {
 
 const AddNotice: React.FC<AddNoticeProps> = ({ onSuccess, onCancel, noticiaAEditar }) => {
   const [titulo, setTitulo] = useState('');
-  const [cuerpo, setCuerpo] = useState('');
+  const [descripcion, setDescripcion] = useState('');
   const [imageUri, setImageUri] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const { user } = useAuth();
@@ -35,7 +35,7 @@ const AddNotice: React.FC<AddNoticeProps> = ({ onSuccess, onCancel, noticiaAEdit
     if (noticiaAEditar) {
       const partes = noticiaAEditar.contenido.split('\n');
       setTitulo(partes[0] || '');
-      setCuerpo(partes.slice(1).join('\n') || '');
+      setDescripcion(partes.slice(1).join('\n') || '');
       setImageUri(noticiaAEditar.imagen_url || null);
     }
   }, [noticiaAEditar]);
@@ -105,14 +105,14 @@ const AddNotice: React.FC<AddNoticeProps> = ({ onSuccess, onCancel, noticiaAEdit
   };
 
   const handleSave = async () => {
-    if (!titulo.trim() || !cuerpo.trim()) {
+    if (!titulo.trim() || !descripcion.trim()) {
       const msg = 'Título y descripción obligatorios.';
       Platform.OS === 'web' ? window.alert(msg) : Alert.alert('Aviso', msg);
       return;
     }
     setLoading(true);
     try {
-      const contenidoCompleto = `${titulo.trim()}\n${cuerpo.trim()}`;
+      const contenidoCompleto = `${titulo.trim()}\n${descripcion.trim()}`;
       let finalImageUrl = null;
 
       if (imageUri) {
@@ -169,13 +169,16 @@ const AddNotice: React.FC<AddNoticeProps> = ({ onSuccess, onCancel, noticiaAEdit
           {noticiaAEditar ? 'Editar Noticia' : 'Nueva Noticia'}
         </Text>
 
-        <Text style={styles.label}>Título</Text>
+        <View style={styles.labelRow}>
+          <Text style={styles.label}>Título</Text>
+          <Text style={styles.charCount}>{titulo.length}/50</Text>
+        </View>
         <TextInput
           style={styles.titleInput}
           placeholder="Título de la noticia..."
           value={titulo}
           onChangeText={setTitulo}
-          maxLength={100}
+          maxLength={50} // <-- Límite de 50 caracteres
         />
 
         <Text style={styles.label}>Imagen (Opcional)</Text>
@@ -196,14 +199,18 @@ const AddNotice: React.FC<AddNoticeProps> = ({ onSuccess, onCancel, noticiaAEdit
           </TouchableOpacity>
         )}
 
-        <Text style={styles.label}>Descripción</Text>
+        <View style={styles.labelRow}>
+          <Text style={styles.label}>Descripción</Text>
+          <Text style={styles.charCount}>{descripcion.length}/1000</Text>
+        </View>
         <TextInput
           style={styles.bodyInput}
           placeholder="Escribe los detalles aquí..."
           multiline
-          value={cuerpo}
-          onChangeText={setCuerpo}
+          value={descripcion}
+          onChangeText={setDescripcion}
           textAlignVertical="top"
+          maxLength={1000} // <-- Límite de 1000 caracteres
         />
           
         <View style={styles.buttonRow}>
@@ -227,7 +234,22 @@ const AddNotice: React.FC<AddNoticeProps> = ({ onSuccess, onCancel, noticiaAEdit
 const styles = StyleSheet.create({
   container: { padding: Spacing.sm, flex: 1 }, // flex: 1 importante
   headerTitle: { fontSize: FontSizes.xl, fontWeight: 'bold', color: Colors.primary.blue, marginBottom: Spacing.lg, textAlign: 'center' },
-  label: { fontSize: FontSizes.sm, fontWeight: FontWeights.bold, color: Colors.text.primary, marginBottom: 6 },
+  labelRow: { 
+    flexDirection: 'row', 
+    justifyContent: 'space-between', 
+    alignItems: 'flex-end', 
+    marginBottom: 6 
+  },
+  label: { 
+    fontSize: FontSizes.sm, 
+    fontWeight: FontWeights.bold, 
+    color: Colors.text.primary 
+  },
+  charCount: { 
+    fontSize: 12, 
+    color: Colors.text.light,
+    fontWeight: '500' 
+  },
   titleInput: { backgroundColor: '#f9f9f9', borderRadius: BorderRadius.md, padding: Spacing.md, fontSize: FontSizes.md, borderWidth: 1, borderColor: '#e0e0e0', marginBottom: Spacing.lg },
   imageSelector: { marginBottom: Spacing.sm, borderRadius: BorderRadius.md, overflow: 'hidden' },
   previewImage: { width: '100%', height: 200, borderRadius: BorderRadius.md },

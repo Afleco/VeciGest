@@ -26,7 +26,7 @@ interface AddAvisoProps {
 
 const AddAviso: React.FC<AddAvisoProps> = ({ onSuccess, onCancel, avisoAEditar }) => {
   const [titulo, setTitulo] = useState(''); 
-  const [texto, setTexto] = useState('');
+  const [descripcion, setDescripcion] = useState('');
   const [imageUri, setImageUri] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const { user } = useAuth();
@@ -35,7 +35,7 @@ const AddAviso: React.FC<AddAvisoProps> = ({ onSuccess, onCancel, avisoAEditar }
     if (avisoAEditar) {
       const partes = (avisoAEditar.contenido || '').split('\n');
       setTitulo(partes[0] || '');
-      setTexto(partes.slice(1).join('\n') || '');
+      setDescripcion(partes.slice(1).join('\n') || '');
       setImageUri(avisoAEditar.imagen_url || null);
     }
   }, [avisoAEditar]);
@@ -112,7 +112,7 @@ const AddAviso: React.FC<AddAvisoProps> = ({ onSuccess, onCancel, avisoAEditar }
   };
 
   const handleSave = async () => {
-    if (!titulo.trim() || !texto.trim()) {
+    if (!titulo.trim() || !descripcion.trim()) {
       const msg = 'El título y el contenido son obligatorios.';
       Platform.OS === 'web' ? window.alert(msg) : Alert.alert('Aviso', msg);
       return;
@@ -120,7 +120,7 @@ const AddAviso: React.FC<AddAvisoProps> = ({ onSuccess, onCancel, avisoAEditar }
 
     setLoading(true);
     try {
-      const contenidoCompleto = `${titulo.trim()}\n${texto.trim()}`;
+      const contenidoCompleto = `${titulo.trim()}\n${descripcion.trim()}`;
       const fechaHoy = new Date().toISOString().split('T')[0];
       
       let finalImageUrl = null;
@@ -177,13 +177,16 @@ const AddAviso: React.FC<AddAvisoProps> = ({ onSuccess, onCancel, avisoAEditar }
           {avisoAEditar ? 'Editar Aviso' : 'Nuevo Aviso'}
         </Text>
 
-        <Text style={styles.label}>Título</Text>
+        <View style={styles.labelRow}>
+          <Text style={styles.label}>Título</Text>
+          <Text style={styles.charCount}>{titulo.length}/50</Text>
+        </View>
         <TextInput
           style={styles.titleInput}
           placeholder="Título del aviso..."
           value={titulo}
           onChangeText={setTitulo}
-          maxLength={100}
+          maxLength={50} // <-- Límite de 50 caracteres
         />
 
         {/* --- SELECTOR DE IMAGEN (Igual que Noticias) --- */}
@@ -205,14 +208,18 @@ const AddAviso: React.FC<AddAvisoProps> = ({ onSuccess, onCancel, avisoAEditar }
           </TouchableOpacity>
         )}
 
-        <Text style={styles.label}>Descripción</Text>
+        <View style={styles.labelRow}>
+          <Text style={styles.label}>Descripción</Text>
+          <Text style={styles.charCount}>{descripcion.length}/500</Text>
+        </View>
         <TextInput
           style={styles.bodyInput}
           placeholder="Escribe los detalles aquí..."
           multiline
-          value={texto}
-          onChangeText={setTexto}
+          value={descripcion}
+          onChangeText={setDescripcion}
           textAlignVertical="top"
+          maxLength={400} // <-- Límite de 500 caracteres
         />
           
         <View style={styles.buttonRow}>
@@ -240,7 +247,22 @@ const AddAviso: React.FC<AddAvisoProps> = ({ onSuccess, onCancel, avisoAEditar }
 const styles = StyleSheet.create({
   container: { padding: Spacing.sm, flex: 1 },
   headerTitle: { fontSize: FontSizes.xl, fontWeight: 'bold', color: Colors.primary.orange, marginBottom: Spacing.lg, textAlign: 'center' },
-  label: { fontSize: FontSizes.sm, fontWeight: FontWeights.bold, color: Colors.text.primary, marginBottom: 6 },
+ labelRow: { 
+    flexDirection: 'row', 
+    justifyContent: 'space-between', 
+    alignItems: 'flex-end', 
+    marginBottom: 6 
+  },
+  label: { 
+    fontSize: FontSizes.sm, 
+    fontWeight: FontWeights.bold, 
+    color: Colors.text.primary 
+  },
+  charCount: { 
+    fontSize: 12, 
+    color: Colors.text.light,
+    fontWeight: '500' 
+  },
   titleInput: { backgroundColor: '#f9f9f9', borderRadius: BorderRadius.md, padding: Spacing.md, fontSize: FontSizes.md, borderWidth: 1, borderColor: '#e0e0e0', marginBottom: Spacing.lg },
   imageSelector: { marginBottom: Spacing.sm, borderRadius: BorderRadius.md, overflow: 'hidden' },
   previewImage: { width: '100%', height: 200, borderRadius: BorderRadius.md },
