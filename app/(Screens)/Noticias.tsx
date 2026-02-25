@@ -16,7 +16,7 @@ import {
   View,
   useWindowDimensions
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../providers/AuthProvider';
 import { BorderRadius, Colors, Shadows, Spacing } from '../../styles/theme';
@@ -38,25 +38,22 @@ const Noticias = () => {
   const rolesPermitidos = ['Presidente', 'Vicepresidente', 'Secretario', 'Administrador'];
   const tienePermisoEscritura = rolesPermitidos.includes(profile?.rol || '');
 
-  // --- LÓGICA RESPONSIVE ---
   const { width } = useWindowDimensions();
   const numColumns = width >= 1024 ? 3 : width >= 768 ? 2 : 1;
+  
+  const insets = useSafeAreaInsets(); // <-- OBTENEMOS LOS BORDES DEL MÓVIL
 
-  // Calcula el ancho del fondo de color según el número de tarjetas
   const getGridMaxWidth = (itemsCount: number) => {
-    if (numColumns === 1) return 700; // En móvil o tablet estrecha, max 700px
+    if (numColumns === 1) return 700; 
     const maxItemsInRow = Math.min(itemsCount === 0 ? 1 : itemsCount, numColumns);
-    return maxItemsInRow * 420; // 400px por tarjeta + 20px para gaps y paddings
+    return maxItemsInRow * 420; 
   };
 
   const fetchNoticias = async () => {
     try {
       const { data, error } = await supabase
         .from('noticias')
-        .select(`
-          *,
-          profiles:email_user ( nombre, rol )
-        `)
+        .select(`*, profiles:email_user ( nombre, rol )`)
         .order('id', { ascending: false });
 
       if (error) throw error;
@@ -69,11 +66,7 @@ const Noticias = () => {
     }
   };
 
-  useFocusEffect(
-    useCallback(() => {
-      fetchNoticias();
-    }, [])
-  );
+  useFocusEffect(useCallback(() => { fetchNoticias(); }, []));
 
   useEffect(() => {
     if (modalVisible) {
@@ -144,7 +137,8 @@ const Noticias = () => {
 
   return (
     <View style={{ flex: 1, backgroundColor: Colors.background.main }}>
-      <SafeAreaView style={styles.container} edges={['top']}>
+      {/* CAMBIO: Usamos un View normal en lugar de SafeAreaView para evitar la franja */}
+      <View style={styles.container}>
         {loading && !refreshing ? (
           <ActivityIndicator size="large" color={Colors.primary.blue} style={{ marginTop: 20 }} />
         ) : (
@@ -155,7 +149,6 @@ const Noticias = () => {
             numColumns={numColumns}
             columnWrapperStyle={numColumns > 1 ? styles.row : undefined}
             renderItem={({ item }) => (
-              // Limitamos el ancho de la tarjeta para que no se estire sola al final de la fila
               <View style={[styles.cardWrapper, numColumns > 1 && { maxWidth: 400 }]}>
                 <NewsCard 
                   noticia={item} 
@@ -165,12 +158,12 @@ const Noticias = () => {
                 />
               </View>
             )}
-            // NUEVO: Asignamos el maxWidth calculado dinámicamente
             style={[styles.flatList, { maxWidth: getGridMaxWidth(noticias.length) }]}
+            // Sumamos el inset.bottom al padding/margin final de la lista
             contentContainerStyle={
               noticias.length > 0 
-                ? [styles.coloredContainer, { marginBottom: 80 }]
-                : { padding: Spacing.lg, paddingBottom: 100 }
+                ? [styles.coloredContainer, { marginBottom: 80 + insets.bottom }]
+                : { padding: Spacing.lg, paddingBottom: 100 + insets.bottom }
             }
             refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
             ListEmptyComponent={
@@ -178,7 +171,7 @@ const Noticias = () => {
             }
           />
         )}
-      </SafeAreaView>
+      </View>
 
       <Modal 
         visible={modalVisible} 
@@ -203,7 +196,10 @@ const Noticias = () => {
       </Modal>
 
       {tienePermisoEscritura && (
-        <TouchableOpacity style={styles.fab} onPress={openCreateModal}>
+        <TouchableOpacity 
+          style={[styles.fab, { bottom: 20 + insets.bottom }]} // <-- POSICIÓN DINÁMICA
+          onPress={openCreateModal}
+        >
           <Ionicons name="add" size={32} color={Colors.base.white} />
         </TouchableOpacity>
       )}
@@ -212,13 +208,8 @@ const Noticias = () => {
 };
 
 const styles = StyleSheet.create({
-  container: { 
-    flex: 1, 
-  },
-  flatList: {
-    width: '100%',
-    alignSelf: 'center', // Mantiene el bloque siempre centrado
-  },
+  container: { flex: 1 },
+  flatList: { width: '100%', alignSelf: 'center' },
   coloredContainer: {
     backgroundColor: Colors.primary.green,
     padding: Spacing.md,
@@ -226,23 +217,13 @@ const styles = StyleSheet.create({
     borderRadius: BorderRadius.lg,
     ...Shadows.small,
   },
-  row: {
-    gap: Spacing.md, 
-    justifyContent: 'center',
-  },
-  cardWrapper: {
-    flex: 1, 
-  },
-  emptyText: {
-    textAlign: 'center',
-    color: Colors.text.light,
-    marginTop: 50,
-    fontSize: 16,
-  },
+  row: { gap: Spacing.md, justifyContent: 'center' },
+  cardWrapper: { flex: 1 },
+  emptyText: { textAlign: 'center', color: Colors.text.light, marginTop: 50, fontSize: 16 },
   fab: { 
     position: 'absolute', 
     right: 20, 
-    bottom: Platform.OS === 'ios' ? 50 : 80, // Se adapta según el móvil
+    // bottom eliminado de aquí
     backgroundColor: Colors.primary.orange, 
     width: 60, 
     height: 60, 
@@ -256,11 +237,7 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     zIndex: 999 
   },
-  modalOverlay: { 
-    flex: 1, 
-    backgroundColor: 'rgba(0,0,0,0.5)', 
-    justifyContent: 'flex-end', 
-  },
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
   modalContent: { 
     backgroundColor: Colors.base.white, 
     borderTopLeftRadius: 20, 

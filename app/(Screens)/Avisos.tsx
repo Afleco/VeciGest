@@ -16,7 +16,7 @@ import {
   View,
   useWindowDimensions
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../providers/AuthProvider';
 import { BorderRadius, Colors, Shadows, Spacing } from '../../styles/theme';
@@ -38,11 +38,11 @@ const Avisos = () => {
   const rolesPermitidos = ['Presidente', 'Vicepresidente', 'Secretario', 'Administrador'];
   const esDirectiva = rolesPermitidos.includes(profile?.rol || '');
 
-  // --- LÓGICA RESPONSIVE ---
   const { width } = useWindowDimensions();
   const numColumns = width >= 1024 ? 3 : width >= 768 ? 2 : 1;
 
-  // Calcula el ancho del fondo de color según el número de tarjetas
+  const insets = useSafeAreaInsets(); // <-- OBTENEMOS LOS BORDES DEL MÓVIL
+
   const getGridMaxWidth = (itemsCount: number) => {
     if (numColumns === 1) return 700;
     const maxItemsInRow = Math.min(itemsCount === 0 ? 1 : itemsCount, numColumns);
@@ -54,10 +54,7 @@ const Avisos = () => {
       setLoading(true);
       const { data, error } = await supabase
         .from('avisos')
-        .select(`
-          *,
-          profiles:email_user ( nombre, rol )
-        `)
+        .select(`*, profiles:email_user ( nombre, rol )`)
         .order('id', { ascending: false });
 
       if (error) throw error;
@@ -70,11 +67,7 @@ const Avisos = () => {
     }
   };
 
-  useFocusEffect(
-    useCallback(() => {
-      fetchAvisos();
-    }, [])
-  );
+  useFocusEffect(useCallback(() => { fetchAvisos(); }, []));
 
   useEffect(() => {
     if (modalVisible) {
@@ -132,7 +125,8 @@ const Avisos = () => {
 
   return (
     <View style={{ flex: 1, backgroundColor: Colors.background.main }}>
-      <SafeAreaView style={styles.container} edges={['top']}>
+      {/* CAMBIO: Usamos un View normal en lugar de SafeAreaView */}
+      <View style={styles.container}>
         {loading && !refreshing ? (
           <ActivityIndicator size="large" color={Colors.primary.blue} style={{ marginTop: 20 }} />
         ) : (
@@ -147,7 +141,6 @@ const Avisos = () => {
               const tienePermiso = esDirectiva || esAutor;
 
               return (
-                // Limitamos el ancho de la tarjeta para que no se estire sola
                 <View style={[styles.cardWrapper, numColumns > 1 && { maxWidth: 400 }]}>
                   <NewsCard
                     noticia={item}
@@ -158,12 +151,12 @@ const Avisos = () => {
                 </View>
               );
             }}
-            // Asignamos el maxWidth calculado
             style={[styles.flatList, { maxWidth: getGridMaxWidth(avisos.length) }]}
+            // Sumamos el inset.bottom al contenedor
             contentContainerStyle={
               avisos.length > 0
-                ? [styles.coloredContainer, { marginBottom: 80 }]
-                : { padding: Spacing.lg, paddingBottom: 100 }
+                ? [styles.coloredContainer, { marginBottom: 80 + insets.bottom }]
+                : { padding: Spacing.lg, paddingBottom: 100 + insets.bottom }
             }
             refreshControl={<RefreshControl refreshing={refreshing} onRefresh={fetchAvisos} />}
             ListEmptyComponent={
@@ -171,7 +164,7 @@ const Avisos = () => {
             }
           />
         )}
-      </SafeAreaView>
+      </View>
 
       <Modal visible={modalVisible} transparent={true} onRequestClose={closeModal} animationType="none">
         <View style={styles.modalOverlay}>
@@ -185,7 +178,10 @@ const Avisos = () => {
         </View>
       </Modal>
 
-      <TouchableOpacity style={styles.fab} onPress={() => setModalVisible(true)}>
+      <TouchableOpacity 
+        style={[styles.fab, { bottom: 20 + insets.bottom }]} // <-- POSICIÓN DINÁMICA
+        onPress={() => setModalVisible(true)}
+      >
         <Ionicons name="add" size={30} color="#FFFFFF" />
       </TouchableOpacity>
     </View>
@@ -194,10 +190,7 @@ const Avisos = () => {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  flatList: {
-    width: '100%',
-    alignSelf: 'center', 
-  },
+  flatList: { width: '100%', alignSelf: 'center' },
   coloredContainer: {
     backgroundColor: Colors.primary.orange, 
     padding: Spacing.md,
@@ -205,18 +198,13 @@ const styles = StyleSheet.create({
     borderRadius: BorderRadius.lg,
     ...Shadows.small,
   },
-  row: {
-    gap: Spacing.md, 
-    justifyContent: 'center',
-  },
-  cardWrapper: {
-    flex: 1, 
-  },
+  row: { gap: Spacing.md, justifyContent: 'center' },
+  cardWrapper: { flex: 1 },
   emptyText: { textAlign: 'center', color: Colors.text.light, marginTop: 50, fontSize: 16 },
   fab: { 
     position: 'absolute', 
     right: 20, 
-    bottom: Platform.OS === 'ios' ? 50 : 80, // Se adapta según el móvil
+    // bottom eliminado de aquí
     backgroundColor: Colors.primary.green, 
     width: 60, 
     height: 60, 

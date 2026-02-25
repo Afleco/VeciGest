@@ -128,7 +128,7 @@ const MisCuotas = () => {
   }
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
+    <View style={styles.container}>
       {/* Resumen de Deuda */}
       <View style={styles.summaryContainer}>
         <Text style={styles.summaryLabel}>Deuda Total Pendiente</Text>
@@ -160,7 +160,7 @@ const MisCuotas = () => {
           }
         />
       </View>
-    </SafeAreaView>
+    </View>
   );
 };
 

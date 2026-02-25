@@ -1,15 +1,14 @@
 import { Ionicons } from '@expo/vector-icons';
 import React, { useEffect, useState } from 'react';
 import {
-    ActivityIndicator,
-    FlatList,
-    RefreshControl,
-    StyleSheet,
-    Text,
-    TextInput,
-    View
+  ActivityIndicator,
+  FlatList,
+  RefreshControl,
+  StyleSheet,
+  Text,
+  TextInput,
+  View
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { supabase } from '../../../lib/supabase';
 import { BorderRadius, Colors, FontSizes, FontWeights, Shadows, Spacing } from '../../../styles/theme';
 
@@ -144,7 +143,7 @@ const GestionCuotas = () => {
   );
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
+    <View style={styles.container}>
       <View style={styles.summaryHeader}>
         <Text style={styles.summaryLabel}>Deuda Total Comunidad</Text>
         <Text style={styles.summaryAmount}>{formatCurrency(totalComunidad)}</Text>
@@ -179,7 +178,7 @@ const GestionCuotas = () => {
             />
         )}
       </View>
-    </SafeAreaView>
+    </View>
   );
 };
 

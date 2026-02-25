@@ -9,7 +9,7 @@ import {
   TouchableOpacity,
   View
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../providers/AuthProvider';
 import { BorderRadius, Colors, FontSizes, FontWeights, Shadows, Spacing } from '../../styles/theme';
@@ -22,6 +22,8 @@ const Inicio = () => {
   const [refreshing, setRefreshing] = useState(false);
   const navigation = useNavigation<any>();
   const { profile, user } = useAuth();
+  
+  const insets = useSafeAreaInsets(); // <-- OBTENEMOS LOS BORDES DEL MÓVIL
 
   const fetchData = async () => {
     try {
@@ -43,7 +45,6 @@ const Inicio = () => {
 
   useFocusEffect(useCallback(() => { fetchData(); }, []));
 
-  //Definimos los campos para las tarjetas de noticias y avisos
   const renderSafeCard = (item: any) => {
     const safeData = {
       ...item,
@@ -63,8 +64,13 @@ const Inicio = () => {
 
   return (
     <View style={{ flex: 1, backgroundColor: Colors.background.main }}>
-      <SafeAreaView style={styles.container} edges={['top']}>
-        <ScrollView refreshControl={<RefreshControl refreshing={refreshing} onRefresh={fetchData} />}>
+      {/* CAMBIO: Usamos un View normal en lugar de SafeAreaView */}
+      <View style={styles.container}>
+        {/* Usamos el inset.bottom aquí para el espaciado general de la pantalla Inicio */}
+        <ScrollView 
+          contentContainerStyle={{ paddingBottom: insets.bottom }} 
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={fetchData} />}
+        >
           
           <View style={styles.welcomeCard}>
             <Ionicons name="person-circle-outline" size={60} color={Colors.primary.orange} />
@@ -76,13 +82,11 @@ const Inicio = () => {
           <View style={styles.columnsContainer}>
             {/* COLUMNA IZQUIERDA: NOTICIAS */}
             <View style={styles.column}>
-              {/* Título por fuera del color */}
               <View style={styles.columnHeader}>
                 <Ionicons name="newspaper-outline" size={20} color={Colors.primary.blue} />
                 <Text style={styles.columnTitle}>Noticias</Text>
               </View>
 
-              {/* Si hay noticias, pintamos la caja de fondo verde. Si no, solo el texto sin fondo */}
               {noticias.length > 0 ? (
                 <View style={styles.columnNoticiasContent}>
                   {noticias.map(item => renderSafeCard(item))}
@@ -98,13 +102,11 @@ const Inicio = () => {
 
             {/* COLUMNA DERECHA: AVISOS */}
             <View style={styles.column}>
-              {/* Título por fuera del color */}
               <View style={styles.columnHeader}>
                 <Ionicons name="megaphone-outline" size={20} color={Colors.primary.orange} />
                 <Text style={styles.columnTitle}>Avisos</Text>
               </View>
 
-              {/* Si hay avisos, pintamos la caja de fondo naranja. Si no, solo el texto sin fondo */}
               {avisos.length > 0 ? (
                 <View style={styles.columnAvisosContent}>
                   {avisos.map(item => renderSafeCard(item))}
@@ -120,7 +122,7 @@ const Inicio = () => {
           </View>
 
         </ScrollView>
-      </SafeAreaView>
+      </View>
     </View>
   );
 };
@@ -160,7 +162,6 @@ const styles = StyleSheet.create({
     marginLeft: 5,
     color: Colors.text.primary 
   },
-// --- CAJAS DE FONDO PARA LAS CARDS ---
   columnNoticiasContent: {
     backgroundColor: Colors.primary.green,
     padding: 6,
@@ -168,7 +169,6 @@ const styles = StyleSheet.create({
     borderRadius: BorderRadius.md,
     ...Shadows.small,
     marginBottom: Spacing.sm,
-    // NUEVO: Límite de ancho y centrado
     width: '100%',
     maxWidth: 700,
     alignSelf: 'center',
@@ -180,7 +180,6 @@ const styles = StyleSheet.create({
     borderRadius: BorderRadius.md,
     ...Shadows.small,
     marginBottom: Spacing.sm,
-    // NUEVO: Límite de ancho y centrado
     width: '100%',
     maxWidth: 700,
     alignSelf: 'center',
@@ -196,11 +195,11 @@ const styles = StyleSheet.create({
     color: Colors.primary.blue,
     fontWeight: 'bold',
     marginTop: Spacing.sm,
-    marginBottom: Spacing.lg,
+    marginBottom: Spacing.lg, // espacio por debajo del botón
     fontSize: FontSizes.xs
   },
   cardWrapper: { 
-    marginBottom: 8, // Reducido un poco para aprovechar espacio vertical
+    marginBottom: 8, 
     width: '100%',
   },
 });
