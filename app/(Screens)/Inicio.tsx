@@ -160,22 +160,30 @@ const styles = StyleSheet.create({
     marginLeft: 5,
     color: Colors.text.primary 
   },
-  // --- CAJAS DE FONDO PARA LAS CARDS ---
+// --- CAJAS DE FONDO PARA LAS CARDS ---
   columnNoticiasContent: {
     backgroundColor: Colors.primary.green,
-    padding: 6, // Reducido para que la tarjeta ocupe más espacio
+    padding: 6,
     paddingTop: 8,
     borderRadius: BorderRadius.md,
     ...Shadows.small,
     marginBottom: Spacing.sm,
+    // NUEVO: Límite de ancho y centrado
+    width: '100%',
+    maxWidth: 700,
+    alignSelf: 'center',
   },
   columnAvisosContent: {
     backgroundColor: Colors.primary.orange,
-    padding: 6, // Reducido para que la tarjeta ocupe más espacio
+    padding: 6,
     paddingTop: 8,
     borderRadius: BorderRadius.md,
     ...Shadows.small,
     marginBottom: Spacing.sm,
+    // NUEVO: Límite de ancho y centrado
+    width: '100%',
+    maxWidth: 700,
+    alignSelf: 'center',
   },
   emptyText: {
     textAlign: 'center',
@@ -192,7 +200,7 @@ const styles = StyleSheet.create({
   },
   cardWrapper: { 
     marginBottom: 8, // Reducido un poco para aprovechar espacio vertical
-    width: '100%' 
+    width: '100%',
   },
 });
 

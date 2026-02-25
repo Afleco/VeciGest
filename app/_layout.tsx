@@ -104,8 +104,8 @@ function AppNavigation() {
   
   // OBTENEMOS EL ANCHO DE LA PANTALLA EN TIEMPO REAL
   const { width } = useWindowDimensions();
-  // BREAKPOINT A 1000px (Pantallas superiores a 1000px de ancho se quita el drawer)
-  const isDesktop = width >= 1000; 
+  // BREAKPOINT A 1025px (Pantallas superiores a 1000px de ancho se quita el drawer)
+  const isDesktop = width >= 1025; 
 
   if (!session) {
     return <Login />;
