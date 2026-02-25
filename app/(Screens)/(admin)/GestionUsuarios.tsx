@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import React from 'react';
-import { useSafeAreaInsets } from 'react-native-safe-area-context'; // <-- NUEVO IMPORT
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors, FontSizes } from '../../../styles/theme';
 
 // Importar las pantallas de gestión
