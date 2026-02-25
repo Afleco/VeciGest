@@ -13,12 +13,13 @@ import {
   StyleSheet,
   Text,
   TouchableOpacity,
-  View
+  View,
+  useWindowDimensions
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../providers/AuthProvider';
-import { Colors, Spacing } from '../../styles/theme';
+import { BorderRadius, Colors, Shadows, Spacing } from '../../styles/theme';
 import AddNotice from '../components/AddNotice';
 import NewsCard from '../components/NewsCard';
 
@@ -31,14 +32,22 @@ const Noticias = () => {
   const [modalVisible, setModalVisible] = useState(false);
   const [editingNotice, setEditingNotice] = useState<any | null>(null);
   
-  // --- ANIMACIÓN ---
-  // Inicializamos la posición fuera de la pantalla (abajo)
   const slideAnim = useRef(new Animated.Value(SCREEN_HEIGHT)).current;
-
   const { profile } = useAuth();
   
   const rolesPermitidos = ['Presidente', 'Vicepresidente', 'Secretario', 'Administrador'];
   const tienePermisoEscritura = rolesPermitidos.includes(profile?.rol || '');
+
+  // --- LÓGICA RESPONSIVE AVANZADA ---
+  const { width } = useWindowDimensions();
+  const numColumns = width >= 1024 ? 3 : width >= 768 ? 2 : 1;
+
+  // NUEVO: Calcula el ancho del fondo de color según el número de tarjetas
+  const getGridMaxWidth = (itemsCount: number) => {
+    if (numColumns === 1) return 700; // En móvil o tablet estrecha, max 700px
+    const maxItemsInRow = Math.min(itemsCount === 0 ? 1 : itemsCount, numColumns);
+    return maxItemsInRow * 420; // 400px por tarjeta + 20px para gaps y paddings
+  };
 
   const fetchNoticias = async () => {
     try {
@@ -66,26 +75,23 @@ const Noticias = () => {
     }, [])
   );
 
-  // Efecto para animar al ABRIR el modal
   useEffect(() => {
     if (modalVisible) {
       Animated.spring(slideAnim, {
-        toValue: 0, // Sube a su posición original
+        toValue: 0, 
         useNativeDriver: true,
-        bounciness: 5, // pequeño rebote para que se sienta fluido
+        bounciness: 5, 
         speed: 12,
       }).start();
     }
   }, [modalVisible]);
 
-  // Función para CERRAR con animación inversa
   const closeModal = () => {
     Animated.timing(slideAnim, {
-      toValue: SCREEN_HEIGHT, // Baja fuera de la pantalla
+      toValue: SCREEN_HEIGHT, 
       duration: 250,
       useNativeDriver: true,
     }).start(() => {
-      // Una vez terminada la animación, ocultamos el modal real
       setModalVisible(false);
       setEditingNotice(null);
     });
@@ -125,7 +131,6 @@ const Noticias = () => {
   };
 
   const openCreateModal = () => {
-    // Reseteamos posición por si acaso (aunque el effect lo maneja)
     slideAnim.setValue(SCREEN_HEIGHT);
     setEditingNotice(null);
     setModalVisible(true);
@@ -144,17 +149,29 @@ const Noticias = () => {
           <ActivityIndicator size="large" color={Colors.primary.blue} style={{ marginTop: 20 }} />
         ) : (
           <FlatList
+            key={`grid-${numColumns}`} 
             data={noticias}
             keyExtractor={(item) => item.id.toString()}
+            numColumns={numColumns}
+            columnWrapperStyle={numColumns > 1 ? styles.row : undefined}
             renderItem={({ item }) => (
-              <NewsCard 
-                noticia={item} 
-                canEdit={tienePermisoEscritura}
-                onDelete={handleDeleteNotice} 
-                onEdit={openEditModal}
-              />
+              // NUEVO: Limitamos el ancho de la tarjeta para que no se estire sola al final de la fila
+              <View style={[styles.cardWrapper, numColumns > 1 && { maxWidth: 400 }]}>
+                <NewsCard 
+                  noticia={item} 
+                  canEdit={tienePermisoEscritura}
+                  onDelete={handleDeleteNotice} 
+                  onEdit={openEditModal}
+                />
+              </View>
             )}
-            contentContainerStyle={styles.listContent}
+            // NUEVO: Asignamos el maxWidth calculado dinámicamente
+            style={[styles.flatList, { maxWidth: getGridMaxWidth(noticias.length) }]}
+            contentContainerStyle={
+              noticias.length > 0 
+                ? [styles.coloredContainer, { marginBottom: 80 }]
+                : { padding: Spacing.lg, paddingBottom: 100 }
+            }
             refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
             ListEmptyComponent={
               <Text style={styles.emptyText}>No hay noticias publicadas aún.</Text>
@@ -163,22 +180,19 @@ const Noticias = () => {
         )}
       </SafeAreaView>
 
-      {/* --- MODAL CON ANIMACIÓN MIXTA --- */}
       <Modal 
         visible={modalVisible} 
-        animationType="fade" // El fondo negro hace FADE
+        animationType="fade" 
         transparent={true} 
         onRequestClose={closeModal} 
       >
         <View style={styles.modalOverlay}>
-          {/* El contenido hace SLIDE con Animated.View */}
           <Animated.View 
             style={[
               styles.modalContent, 
               { transform: [{ translateY: slideAnim }] }
             ]}
           >
-            {/* Pasamos closeModal tanto al cancelar como al terminar con éxito */}
             <AddNotice 
               noticiaAEditar={editingNotice}
               onSuccess={() => { closeModal(); fetchNoticias(); }}
@@ -201,9 +215,23 @@ const styles = StyleSheet.create({
   container: { 
     flex: 1, 
   },
-  listContent: {
-    padding: Spacing.lg,
-    paddingBottom: 100,
+  flatList: {
+    width: '100%',
+    alignSelf: 'center', // Mantiene el bloque siempre centrado
+  },
+  coloredContainer: {
+    backgroundColor: Colors.primary.green,
+    padding: Spacing.md,
+    margin: Spacing.md,
+    borderRadius: BorderRadius.lg,
+    ...Shadows.small,
+  },
+  row: {
+    gap: Spacing.md, 
+    justifyContent: 'center',
+  },
+  cardWrapper: {
+    flex: 1, 
   },
   emptyText: {
     textAlign: 'center',
@@ -228,7 +256,6 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     zIndex: 999 
   },
-  // ESTILOS DEL MODAL
   modalOverlay: { 
     flex: 1, 
     backgroundColor: 'rgba(0,0,0,0.5)', 
@@ -242,10 +269,7 @@ const styles = StyleSheet.create({
     padding: Spacing.lg,
     overflow: 'hidden',
     shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: -2,
-    },
+    shadowOffset: { width: 0, height: -2 },
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
     elevation: 5,

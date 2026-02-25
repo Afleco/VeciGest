@@ -13,12 +13,13 @@ import {
   StyleSheet,
   Text,
   TouchableOpacity,
-  View
+  View,
+  useWindowDimensions
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../providers/AuthProvider';
-import { Colors, Spacing } from '../../styles/theme';
+import { BorderRadius, Colors, Shadows, Spacing } from '../../styles/theme';
 import AddAviso from '../components/AddAviso';
 import NewsCard from '../components/NewsCard';
 
@@ -32,11 +33,21 @@ const Avisos = () => {
   const [editingAviso, setEditingAviso] = useState<any | null>(null);
   const slideAnim = useRef(new Animated.Value(SCREEN_HEIGHT)).current;
 
-  // Extraemos 'user' para comparar el email y 'profile' para el rol
   const { profile, user } = useAuth();
   
   const rolesPermitidos = ['Presidente', 'Vicepresidente', 'Secretario', 'Administrador'];
   const esDirectiva = rolesPermitidos.includes(profile?.rol || '');
+
+  // --- LÓGICA RESPONSIVE AVANZADA ---
+  const { width } = useWindowDimensions();
+  const numColumns = width >= 1024 ? 3 : width >= 768 ? 2 : 1;
+
+  // NUEVO: Calcula el ancho del fondo de color según el número de tarjetas
+  const getGridMaxWidth = (itemsCount: number) => {
+    if (numColumns === 1) return 700;
+    const maxItemsInRow = Math.min(itemsCount === 0 ? 1 : itemsCount, numColumns);
+    return maxItemsInRow * 420;
+  };
 
   const fetchAvisos = async () => {
     try {
@@ -87,17 +98,15 @@ const Avisos = () => {
     });
   };
 
-const handleDeleteAviso = async (item: any) => {
+  const handleDeleteAviso = async (item: any) => {
     const deleteAction = async () => {
       try {
-        // Borrar imagen del bucket si existe
         if (item.imagen_url) {
           const fileName = item.imagen_url.split('/').pop();
           if (fileName) {
             await supabase.storage.from('avisos').remove([fileName]);
           }
         }
-        // Borrar el registro de la BD
         const { error } = await supabase.from('avisos').delete().eq('id', item.id);
         if (error) throw error;
         fetchAvisos();
@@ -128,26 +137,35 @@ const handleDeleteAviso = async (item: any) => {
           <ActivityIndicator size="large" color={Colors.primary.blue} style={{ marginTop: 20 }} />
         ) : (
           <FlatList
+            key={`grid-${numColumns}`} 
             data={avisos}
             keyExtractor={(item) => item.id.toString()}
+            numColumns={numColumns}
+            columnWrapperStyle={numColumns > 1 ? styles.row : undefined}
             renderItem={({ item }) => {
-              // Lógica de permisos combinada
               const esAutor = user?.email === item.email_user;
               const tienePermiso = esDirectiva || esAutor;
 
               return (
-                <NewsCard
-                  noticia={item}
-                  canEdit={tienePermiso}
-                  onDelete={() => handleDeleteAviso(item)}
-                  onEdit={() => openEditModal(item)}
-                />
+                // NUEVO: Limitamos el ancho de la tarjeta para que no se estire sola
+                <View style={[styles.cardWrapper, numColumns > 1 && { maxWidth: 400 }]}>
+                  <NewsCard
+                    noticia={item}
+                    canEdit={tienePermiso}
+                    onDelete={() => handleDeleteAviso(item)}
+                    onEdit={() => openEditModal(item)}
+                  />
+                </View>
               );
             }}
-            contentContainerStyle={styles.listContent}
-            refreshControl={
-              <RefreshControl refreshing={refreshing} onRefresh={fetchAvisos} />
+            // NUEVO: Asignamos el maxWidth calculado
+            style={[styles.flatList, { maxWidth: getGridMaxWidth(avisos.length) }]}
+            contentContainerStyle={
+              avisos.length > 0
+                ? [styles.coloredContainer, { marginBottom: 80 }]
+                : { padding: Spacing.lg, paddingBottom: 100 }
             }
+            refreshControl={<RefreshControl refreshing={refreshing} onRefresh={fetchAvisos} />}
             ListEmptyComponent={
               <Text style={styles.emptyText}>No hay avisos hoy.</Text>
             }
@@ -168,7 +186,7 @@ const handleDeleteAviso = async (item: any) => {
       </Modal>
 
       <TouchableOpacity style={styles.fab} onPress={() => setModalVisible(true)}>
-        <Ionicons name="add" size={32} color={Colors.base.white} />
+        <Ionicons name="add" size={30} color="#FFFFFF" />
       </TouchableOpacity>
     </View>
   );
@@ -176,13 +194,30 @@ const handleDeleteAviso = async (item: any) => {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  listContent: { padding: Spacing.lg, paddingBottom: 100 },
+  flatList: {
+    width: '100%',
+    alignSelf: 'center', 
+  },
+  coloredContainer: {
+    backgroundColor: Colors.primary.orange, 
+    padding: Spacing.md,
+    margin: Spacing.md,
+    borderRadius: BorderRadius.lg,
+    ...Shadows.small,
+  },
+  row: {
+    gap: Spacing.md, 
+    justifyContent: 'center',
+  },
+  cardWrapper: {
+    flex: 1, 
+  },
   emptyText: { textAlign: 'center', color: Colors.text.light, marginTop: 50, fontSize: 16 },
   fab: { 
     position: 'absolute', 
     right: 20, 
     bottom: 20, 
-    backgroundColor: Colors.primary.orange, 
+    backgroundColor: Colors.primary.green, 
     width: 60, 
     height: 60, 
     borderRadius: 35, 
