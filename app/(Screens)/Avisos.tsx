@@ -168,7 +168,7 @@ const handleDeleteAviso = async (item: any) => {
       </Modal>
 
       <TouchableOpacity style={styles.fab} onPress={() => setModalVisible(true)}>
-        <Ionicons name="megaphone-outline" size={30} color="#FFFFFF" />
+        <Ionicons name="add" size={32} color={Colors.base.white} />
       </TouchableOpacity>
     </View>
   );
@@ -183,8 +183,8 @@ const styles = StyleSheet.create({
     right: 20, 
     bottom: 20, 
     backgroundColor: Colors.primary.orange, 
-    width: 65, 
-    height: 65, 
+    width: 60, 
+    height: 60, 
     borderRadius: 35, 
     justifyContent: 'center', 
     alignItems: 'center', 
