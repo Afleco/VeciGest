@@ -3,11 +3,11 @@ import React, { useState } from 'react';
 import {
   Image,
   Modal,
+  Pressable,
   ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
-  TouchableWithoutFeedback,
   View
 } from 'react-native';
 import { BorderRadius, Colors, FontSizes, FontWeights, Shadows, Spacing } from '../../styles/theme';
@@ -100,40 +100,44 @@ const NewsCard: React.FC<NewsCardProps> = ({
         transparent={true}
         onRequestClose={() => setModalVisible(false)}
       >
-        <TouchableWithoutFeedback onPress={() => setModalVisible(false)}>
-          <View style={styles.modalOverlay}>
-            
-            <TouchableWithoutFeedback>
-              <View style={styles.modalContainer}>
-                <ScrollView contentContainerStyle={styles.modalScroll} bounces={false}>
-                  {imagen && (
-                    <Image 
-                      source={{ uri: imagen }} 
-                      style={styles.modalImage} 
-                      resizeMode="contain" 
-                    />
-                  )}
-                  
-                  <View style={styles.modalBody}>
-                    <Text style={styles.modalTitle}>{titulo}</Text>
-                    
-                    <View style={styles.metaContainer}>
-                       <View style={styles.badge}>
-                          <Text style={styles.badgeText}>{autorRol}</Text>
-                       </View>
-                       <Text style={styles.modalDate}>Publicado por {autorNombre} el {fecha}</Text>
-                    </View>
+        {/* Contenedor principal que centra todo y tiene el fondo negro */}
+        <View style={styles.modalOverlay}>
+          
+          {/* Solución para Scroll en mobile -> botón invisible que ocupa todo el fondo por detrás. 
+                 Si tocas fuera de la caja blanca, esto lo detecta y cierra el modal. */}
+          <Pressable 
+            style={StyleSheet.absoluteFill} 
+            onPress={() => setModalVisible(false)} 
+          />
+          
+          <View style={styles.modalContainer}>
+            <ScrollView contentContainerStyle={styles.modalScroll} bounces={false}>
+              {imagen && (
+                <Image 
+                  source={{ uri: imagen }} 
+                  style={styles.modalImage} 
+                  resizeMode="contain" 
+                />
+              )}
+              
+              <View style={styles.modalBody}>
+                <Text style={styles.modalTitle}>{titulo}</Text>
+                
+                <View style={styles.metaContainer}>
+                   <View style={styles.badge}>
+                      <Text style={styles.badgeText}>{autorRol}</Text>
+                   </View>
+                   <Text style={styles.modalDate}>Publicado por {autorNombre} el {fecha}</Text>
+                </View>
 
-                    <View style={styles.divider} />
-                    
-                    <Text style={styles.modalDescription}>{cuerpo}</Text>
-                  </View>
-                </ScrollView>
+                <View style={styles.divider} />
+                
+                <Text style={styles.modalDescription}>{cuerpo}</Text>
               </View>
-            </TouchableWithoutFeedback>
-
+            </ScrollView>
           </View>
-        </TouchableWithoutFeedback>
+
+        </View>
       </Modal>
     </>
   );
@@ -142,8 +146,8 @@ const NewsCard: React.FC<NewsCardProps> = ({
 const styles = StyleSheet.create({
   card: {
     backgroundColor: Colors.base.white,
-    borderRadius: BorderRadius.lg,
-    marginBottom: Spacing.lg,
+    borderRadius: BorderRadius.md,
+    marginBottom: Spacing.xs,
     ...Shadows.medium,
     overflow: 'hidden',
     width: '100%',
@@ -220,7 +224,7 @@ const styles = StyleSheet.create({
   },
   
   // --- ESTILOS DEL MODAL ---
-  modalOverlay: {
+modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.85)', 
     justifyContent: 'center',
@@ -231,12 +235,16 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.base.white,
     borderRadius: BorderRadius.xl,
     overflow: 'hidden',
-    maxHeight: '90%',
+    flexShrink: 1, // Permite que el contenedor se encoja si la pantalla es pequeña
+    maxHeight: '75%', // Un pelín menos del 90% suele dar mejor resultado en móviles para no chocar con las barras de estado
+    // ---------------------
     width: '100%',
     maxWidth: 800,
   },
   modalScroll: {
-    flexGrow: 1,
+    flexGrow: 1, 
+    paddingBottom: Spacing.xl, // Añade espacio al final para que el texto no se pegue al borde inferior al hacer scroll
+    // ---------------------
   },
   modalImage: {
     width: '100%',
