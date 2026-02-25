@@ -147,7 +147,7 @@ const styles = StyleSheet.create({
   card: {
     backgroundColor: Colors.base.white,
     borderRadius: BorderRadius.md,
-    marginBottom: Spacing.xs,
+    marginBottom: Spacing.md,
     ...Shadows.medium,
     overflow: 'hidden',
     width: '100%',
@@ -226,7 +226,7 @@ const styles = StyleSheet.create({
   // --- ESTILOS DEL MODAL ---
 modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.85)', 
+    backgroundColor: 'rgba(0,0,0,0.5)', 
     justifyContent: 'center',
     alignItems: 'center',
     padding: Spacing.md,

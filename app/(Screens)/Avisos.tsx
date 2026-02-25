@@ -38,11 +38,11 @@ const Avisos = () => {
   const rolesPermitidos = ['Presidente', 'Vicepresidente', 'Secretario', 'Administrador'];
   const esDirectiva = rolesPermitidos.includes(profile?.rol || '');
 
-  // --- LÓGICA RESPONSIVE AVANZADA ---
+  // --- LÓGICA RESPONSIVE ---
   const { width } = useWindowDimensions();
   const numColumns = width >= 1024 ? 3 : width >= 768 ? 2 : 1;
 
-  // NUEVO: Calcula el ancho del fondo de color según el número de tarjetas
+  // Calcula el ancho del fondo de color según el número de tarjetas
   const getGridMaxWidth = (itemsCount: number) => {
     if (numColumns === 1) return 700;
     const maxItemsInRow = Math.min(itemsCount === 0 ? 1 : itemsCount, numColumns);
@@ -147,7 +147,7 @@ const Avisos = () => {
               const tienePermiso = esDirectiva || esAutor;
 
               return (
-                // NUEVO: Limitamos el ancho de la tarjeta para que no se estire sola
+                // Limitamos el ancho de la tarjeta para que no se estire sola
                 <View style={[styles.cardWrapper, numColumns > 1 && { maxWidth: 400 }]}>
                   <NewsCard
                     noticia={item}
@@ -158,7 +158,7 @@ const Avisos = () => {
                 </View>
               );
             }}
-            // NUEVO: Asignamos el maxWidth calculado
+            // Asignamos el maxWidth calculado
             style={[styles.flatList, { maxWidth: getGridMaxWidth(avisos.length) }]}
             contentContainerStyle={
               avisos.length > 0
@@ -216,7 +216,7 @@ const styles = StyleSheet.create({
   fab: { 
     position: 'absolute', 
     right: 20, 
-    bottom: 20, 
+    bottom: Platform.OS === 'ios' ? 50 : 80, // Se adapta según el móvil
     backgroundColor: Colors.primary.green, 
     width: 60, 
     height: 60, 

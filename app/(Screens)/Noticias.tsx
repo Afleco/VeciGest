@@ -38,11 +38,11 @@ const Noticias = () => {
   const rolesPermitidos = ['Presidente', 'Vicepresidente', 'Secretario', 'Administrador'];
   const tienePermisoEscritura = rolesPermitidos.includes(profile?.rol || '');
 
-  // --- LÓGICA RESPONSIVE AVANZADA ---
+  // --- LÓGICA RESPONSIVE ---
   const { width } = useWindowDimensions();
   const numColumns = width >= 1024 ? 3 : width >= 768 ? 2 : 1;
 
-  // NUEVO: Calcula el ancho del fondo de color según el número de tarjetas
+  // Calcula el ancho del fondo de color según el número de tarjetas
   const getGridMaxWidth = (itemsCount: number) => {
     if (numColumns === 1) return 700; // En móvil o tablet estrecha, max 700px
     const maxItemsInRow = Math.min(itemsCount === 0 ? 1 : itemsCount, numColumns);
@@ -155,7 +155,7 @@ const Noticias = () => {
             numColumns={numColumns}
             columnWrapperStyle={numColumns > 1 ? styles.row : undefined}
             renderItem={({ item }) => (
-              // NUEVO: Limitamos el ancho de la tarjeta para que no se estire sola al final de la fila
+              // Limitamos el ancho de la tarjeta para que no se estire sola al final de la fila
               <View style={[styles.cardWrapper, numColumns > 1 && { maxWidth: 400 }]}>
                 <NewsCard 
                   noticia={item} 
@@ -242,7 +242,7 @@ const styles = StyleSheet.create({
   fab: { 
     position: 'absolute', 
     right: 20, 
-    bottom: 20, 
+    bottom: Platform.OS === 'ios' ? 50 : 80, // Se adapta según el móvil
     backgroundColor: Colors.primary.orange, 
     width: 60, 
     height: 60, 

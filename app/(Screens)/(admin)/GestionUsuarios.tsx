@@ -1,6 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import React from 'react';
+import { useSafeAreaInsets } from 'react-native-safe-area-context'; // <-- NUEVO IMPORT
 import { Colors, FontSizes } from '../../../styles/theme';
 
 // Importar las pantallas de gestión
@@ -12,6 +13,8 @@ import ListarUsuarios from './(Usuarios)/ListarUsuarios';
 const Tab = createBottomTabNavigator();
 
 const GestionUsuarios = () => {
+  const insets = useSafeAreaInsets(); // <-- DETECTA EL BORDE INFERIOR DEL MÓVIL
+
   return (
     <Tab.Navigator
       screenOptions={{
@@ -22,8 +25,8 @@ const GestionUsuarios = () => {
           backgroundColor: Colors.base.white,
           borderTopWidth: 1,
           borderTopColor: Colors.background.main,
-          height: 60,
-          paddingBottom: 8,
+          height: 60 + insets.bottom, // <-- SUMA EL ESPACIO EXTRA DEL MÓVIL
+          paddingBottom: 8 + insets.bottom, // <-- SUMA EL ESPACIO EXTRA DEL MÓVIL
           paddingTop: 8,
         },
         tabBarLabelStyle: {

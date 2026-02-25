@@ -196,6 +196,7 @@ const styles = StyleSheet.create({
     color: Colors.primary.blue,
     fontWeight: 'bold',
     marginTop: Spacing.sm,
+    marginBottom: Spacing.lg,
     fontSize: FontSizes.xs
   },
   cardWrapper: { 
