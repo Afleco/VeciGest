@@ -65,7 +65,7 @@ function WebNavbar({ navigation, isAdmin, esInquilino, setMenuVisible, profile }
       <View style={styles.webNavLinks}>
         <NavItem name="Inicio" label="Inicio" />
         <NavItem name="Noticias" label="Noticias" />
-        <NavItem name="Avisos" label="Avisos" /> {/* ✅ NUEVO */}
+        <NavItem name="Avisos" label="Avisos" />
         {!esInquilino && <NavItem name="MisCuotas" label="Mis Recibos" />}
         {isAdmin && <NavItem name="Administracion" label="Administración" />}
       </View>
@@ -104,7 +104,7 @@ function AppNavigation() {
   
   // OBTENEMOS EL ANCHO DE LA PANTALLA EN TIEMPO REAL
   const { width } = useWindowDimensions();
-  // NUEVO BREAKPOINT A 1000px (Pantallas superiores a 1000px de ancho se quita el drawer)
+  // BREAKPOINT A 1000px (Pantallas superiores a 1000px de ancho se quita el drawer)
   const isDesktop = width >= 1000; 
 
   if (!session) {

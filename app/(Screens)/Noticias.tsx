@@ -37,7 +37,7 @@ const Noticias = () => {
 
   const { profile } = useAuth();
   
-  const rolesPermitidos = ['Presidente', 'Vicepresidente', 'Secretario'];
+  const rolesPermitidos = ['Presidente', 'Vicepresidente', 'Secretario', 'Administrador'];
   const tienePermisoEscritura = rolesPermitidos.includes(profile?.rol || '');
 
   const fetchNoticias = async () => {
@@ -72,7 +72,7 @@ const Noticias = () => {
       Animated.spring(slideAnim, {
         toValue: 0, // Sube a su posición original
         useNativeDriver: true,
-        bounciness: 5, // Un pequeño rebote para que se sienta fluido
+        bounciness: 5, // pequeño rebote para que se sienta fluido
         speed: 12,
       }).start();
     }

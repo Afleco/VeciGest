@@ -35,7 +35,7 @@ const Avisos = () => {
   // Extraemos 'user' para comparar el email y 'profile' para el rol
   const { profile, user } = useAuth();
   
-  const rolesPermitidos = ['Presidente', 'Vicepresidente', 'Secretario'];
+  const rolesPermitidos = ['Presidente', 'Vicepresidente', 'Secretario', 'Administrador'];
   const esDirectiva = rolesPermitidos.includes(profile?.rol || '');
 
   const fetchAvisos = async () => {
@@ -87,10 +87,18 @@ const Avisos = () => {
     });
   };
 
-  const handleDeleteAviso = async (id: number) => {
+const handleDeleteAviso = async (item: any) => {
     const deleteAction = async () => {
       try {
-        const { error } = await supabase.from('avisos').delete().eq('id', id);
+        // Borrar imagen del bucket si existe
+        if (item.imagen_url) {
+          const fileName = item.imagen_url.split('/').pop();
+          if (fileName) {
+            await supabase.storage.from('avisos').remove([fileName]);
+          }
+        }
+        // Borrar el registro de la BD
+        const { error } = await supabase.from('avisos').delete().eq('id', item.id);
         if (error) throw error;
         fetchAvisos();
       } catch (error: any) {
@@ -131,7 +139,7 @@ const Avisos = () => {
                 <NewsCard
                   noticia={item}
                   canEdit={tienePermiso}
-                  onDelete={() => handleDeleteAviso(item.id)}
+                  onDelete={() => handleDeleteAviso(item)}
                   onEdit={() => openEditModal(item)}
                 />
               );

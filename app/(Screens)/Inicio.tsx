@@ -44,7 +44,7 @@ const Inicio = () => {
   useFocusEffect(useCallback(() => { fetchData(); }, []));
 
   //Definimos los campos para las tarjetas de noticias y avisos
-  const renderSafeCard = (item: any, isAviso: boolean) => {
+  const renderSafeCard = (item: any) => {
     const safeData = {
       ...item,
       titulo: item.titulo || "Sin título",
@@ -53,10 +53,6 @@ const Inicio = () => {
       created_at: item.fecha || item.created_at || new Date().toISOString(),
       profiles: item.profiles || { nombre: "Anónimo", rol: "Vecino" }
     };
-
-    if (isAviso) {
-      safeData.imagen_url = null;
-    }
 
     return (
       <View key={item.id} style={styles.cardWrapper}>
@@ -80,23 +76,43 @@ const Inicio = () => {
           <View style={styles.columnsContainer}>
             {/* COLUMNA IZQUIERDA: NOTICIAS */}
             <View style={styles.column}>
+              {/* Título por fuera del color */}
               <View style={styles.columnHeader}>
                 <Ionicons name="newspaper-outline" size={20} color={Colors.primary.blue} />
                 <Text style={styles.columnTitle}>Noticias</Text>
               </View>
-              {noticias.map(item => renderSafeCard(item, false))}
+
+              {/* Si hay noticias, pintamos la caja de fondo verde. Si no, solo el texto sin fondo */}
+              {noticias.length > 0 ? (
+                <View style={styles.columnNoticiasContent}>
+                  {noticias.map(item => renderSafeCard(item))}
+                </View>
+              ) : (
+                <Text style={styles.emptyText}>No hay noticias recientes.</Text>
+              )}
+
               <TouchableOpacity onPress={() => navigation.navigate('Noticias')}>
                 <Text style={styles.seeMore}>Ver todas</Text>
               </TouchableOpacity>
             </View>
 
             {/* COLUMNA DERECHA: AVISOS */}
-            <View style={[styles.column, styles.divider]}>
+            <View style={styles.column}>
+              {/* Título por fuera del color */}
               <View style={styles.columnHeader}>
                 <Ionicons name="megaphone-outline" size={20} color={Colors.primary.orange} />
                 <Text style={styles.columnTitle}>Avisos</Text>
               </View>
-              {avisos.map(item => renderSafeCard(item, true))}
+
+              {/* Si hay avisos, pintamos la caja de fondo naranja. Si no, solo el texto sin fondo */}
+              {avisos.length > 0 ? (
+                <View style={styles.columnAvisosContent}>
+                  {avisos.map(item => renderSafeCard(item))}
+                </View>
+              ) : (
+                <Text style={styles.emptyText}>No hay avisos recientes.</Text>
+              )}
+
               <TouchableOpacity onPress={() => navigation.navigate('Avisos')}>
                 <Text style={styles.seeMore}>Ver todos</Text>
               </TouchableOpacity>
@@ -125,17 +141,17 @@ const styles = StyleSheet.create({
   
   columnsContainer: { 
     flexDirection: 'row', 
-    paddingHorizontal: Spacing.md,
+    paddingHorizontal: Spacing.xs,
     paddingBottom: Spacing.xl
   },
   column: { 
     flex: 1, 
-    paddingHorizontal: Spacing.sm 
+    paddingHorizontal: 4 
   },
   columnHeader: { 
     flexDirection: 'row', 
     alignItems: 'center', 
-    marginBottom: Spacing.md,
+    marginBottom: Spacing.sm, 
     justifyContent: 'center'
   },
   columnTitle: { 
@@ -144,6 +160,29 @@ const styles = StyleSheet.create({
     marginLeft: 5,
     color: Colors.text.primary 
   },
+  // --- CAJAS DE FONDO PARA LAS CARDS ---
+  columnNoticiasContent: {
+    backgroundColor: Colors.primary.green,
+    padding: 6, // Reducido para que la tarjeta ocupe más espacio
+    paddingTop: 8,
+    borderRadius: BorderRadius.md,
+    ...Shadows.small,
+    marginBottom: Spacing.sm,
+  },
+  columnAvisosContent: {
+    backgroundColor: Colors.primary.orange,
+    padding: 6, // Reducido para que la tarjeta ocupe más espacio
+    paddingTop: 8,
+    borderRadius: BorderRadius.md,
+    ...Shadows.small,
+    marginBottom: Spacing.sm,
+  },
+  emptyText: {
+    textAlign: 'center',
+    color: Colors.text.light,
+    fontStyle: 'italic',
+    marginVertical: Spacing.lg,
+  },
   seeMore: {
     textAlign: 'center',
     color: Colors.primary.blue,
@@ -151,12 +190,8 @@ const styles = StyleSheet.create({
     marginTop: Spacing.sm,
     fontSize: FontSizes.xs
   },
-  divider: { 
-    borderLeftWidth: 1, 
-    borderLeftColor: '#eee' 
-  },
   cardWrapper: { 
-    marginBottom: 12,
+    marginBottom: 8, // Reducido un poco para aprovechar espacio vertical
     width: '100%' 
   },
 });

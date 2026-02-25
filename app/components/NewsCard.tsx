@@ -110,7 +110,7 @@ const NewsCard: React.FC<NewsCardProps> = ({
                     <Image 
                       source={{ uri: imagen }} 
                       style={styles.modalImage} 
-                      resizeMode="cover" 
+                      resizeMode="contain" 
                     />
                   )}
                   
@@ -238,15 +238,9 @@ const styles = StyleSheet.create({
   modalScroll: {
     flexGrow: 1,
   },
-  // closeButton: {  <-- ELIMINADO EL ESTILO DEL BOTÓN
-  //   position: 'absolute',
-  //   top: 15,
-  //   right: 15,
-  //   zIndex: 20, 
-  // },
   modalImage: {
     width: '100%',
-    height: 300, 
+    aspectRatio: 16 / 9, 
     backgroundColor: Colors.background.main, 
   },
   modalBody: {
