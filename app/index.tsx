@@ -1,25 +1,7 @@
-import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+// Este archivo actúa únicamente como punto de anclaje (ruta raíz '/') exigido por Expo Router.
+// No devuelve ninguna interfaz gráfica (return null) porque el enrutamiento visual 
+// y la protección de sesiones están delegados íntegramente en el archivo _layout.tsx.
 
 export default function Index() {
-  return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Bienvenido a VeciGest</Text>
-      <Text>Selecciona una opción del Drawer para navegar.</Text>
-    </View>
-  );
+  return null;
 }
-
-const styles = StyleSheet.create({
-  container: { 
-    flex: 1, 
-    justifyContent: 'center', 
-    alignItems: 'center', 
-    padding: 16 
-  },
-  title: { 
-    fontSize: 24, 
-    fontWeight: 'bold', 
-    marginBottom: 12 
-  },
-});
