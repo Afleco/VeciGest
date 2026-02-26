@@ -2,18 +2,20 @@ import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import { useCallback, useState } from 'react';
 import {
-    ActivityIndicator,
-    FlatList,
-    RefreshControl,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  FlatList,
+  Platform,
+  RefreshControl,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { supabase } from '../../../../lib/supabase';
 import { BorderRadius, Colors, FontSizes, FontWeights, Shadows, Spacing } from '../../../../styles/theme';
+import CustomPicker from '../../../components/CustomPicker'; // <-- IMPORTAMOS EL COMPONENTE
 
 interface Usuario {
   email: string;
@@ -29,6 +31,7 @@ const ListarUsuarios = () => {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [filtroVivienda, setFiltroVivienda] = useState('Todas'); // <-- NUEVO ESTADO PARA EL FILTRO
 
   useFocusEffect(
     useCallback(() => {
@@ -58,11 +61,28 @@ const ListarUsuarios = () => {
     cargarUsuarios();
   };
 
-  const usuariosFiltrados = usuarios.filter((usuario) =>
-    usuario.nombre.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    usuario.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    usuario.rol.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  // Extraer dinámicamente las viviendas únicas de los usuarios cargados
+  const viviendasUnicas = Array.from(new Set(usuarios.map(u => u.vivienda_id).filter(Boolean))).sort();
+  const opcionesVivienda = [
+    { label: 'Todas las viviendas', value: 'Todas' },
+    { label: 'Sin asignar', value: 'Sin asignar' },
+    ...viviendasUnicas.map(v => ({ label: `Vivienda ${v}`, value: v }))
+  ];
+
+  // Lógica combinada: Filtra por texto Y por la vivienda seleccionada
+  const usuariosFiltrados = usuarios.filter((usuario) => {
+    const coincideTexto = 
+      usuario.nombre.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      usuario.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      usuario.rol.toLowerCase().includes(searchQuery.toLowerCase());
+      
+    const coincideVivienda = 
+      filtroVivienda === 'Todas' ? true :
+      filtroVivienda === 'Sin asignar' ? !usuario.vivienda_id :
+      usuario.vivienda_id === filtroVivienda;
+
+    return coincideTexto && coincideVivienda;
+  });
 
   const getRolColor = (rol: string) => {
     switch (rol) {
@@ -113,23 +133,36 @@ const ListarUsuarios = () => {
     <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.header}>
         <Text style={styles.title}>Usuarios de la Comunidad</Text>
-        <Text style={styles.subtitle}>Total: {usuarios.length} usuarios</Text>
+        <Text style={styles.subtitle}>Total: {usuariosFiltrados.length} usuarios</Text>
       </View>
 
-      <View style={styles.searchContainer}>
-        <Ionicons name="search-outline" size={20} color={Colors.text.light} style={styles.searchIcon} />
-        <TextInput
-          style={styles.searchInput}
-          placeholder="Buscar por nombre, email o rol..."
-          placeholderTextColor={Colors.text.light}
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-        />
-        {searchQuery.length > 0 && (
-          <TouchableOpacity onPress={() => setSearchQuery('')}>
-            <Ionicons name="close-circle" size={20} color={Colors.text.light} />
-          </TouchableOpacity>
-        )}
+      <View style={styles.filtrosContainer}>
+        {/* Barra de búsqueda */}
+        <View style={styles.searchContainer}>
+          <Ionicons name="search-outline" size={20} color={Colors.text.light} style={styles.searchIcon} />
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Buscar por nombre, email o rol..."
+            placeholderTextColor={Colors.text.light}
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+          />
+          {searchQuery.length > 0 && (
+            <TouchableOpacity onPress={() => setSearchQuery('')}>
+              <Ionicons name="close-circle" size={20} color={Colors.text.light} />
+            </TouchableOpacity>
+          )}
+        </View>
+
+        {/* Nuevo Picker de Vivienda */}
+        <View style={styles.pickerContainer}>
+          <CustomPicker
+            value={filtroVivienda}
+            options={opcionesVivienda}
+            onChange={setFiltroVivienda}
+            icon="home-outline"
+          />
+        </View>
       </View>
 
       <FlatList
@@ -187,13 +220,17 @@ const styles = StyleSheet.create({
     color: Colors.text.secondary,
     marginTop: Spacing.xs,
   },
+  filtrosContainer: {
+    padding: Spacing.lg,
+    paddingBottom: Spacing.md,
+  },
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: Colors.base.white,
-    margin: Spacing.lg,
     paddingHorizontal: Spacing.lg,
     borderRadius: BorderRadius.lg,
+    marginBottom: Spacing.md,
     ...Shadows.small,
   },
   searchIcon: {
@@ -204,6 +241,10 @@ const styles = StyleSheet.create({
     height: 45,
     fontSize: FontSizes.md,
     color: Colors.text.primary,
+    ...Platform.select({ web: { outlineStyle: 'none' } as any }),
+  },
+  pickerContainer: {
+    // Envolvemos el picker para no aplicar márgenes externos directos en el CustomPicker
   },
   listContainer: {
     padding: Spacing.lg,

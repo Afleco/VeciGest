@@ -17,15 +17,14 @@ import { supabase } from '../../../../lib/supabase';
 import { BorderRadius, Colors, FontSizes, FontWeights, Shadows, Spacing } from '../../../../styles/theme';
 import CustomPicker from '../../../components/CustomPicker';
 
-// Necesitamos las URL y Key para crear el cliente temporal
 const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL || "";
 const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_KEY || ""; 
-
 
 const CrearUsuario = () => {
   const [nombre, setNombre] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState(''); // <-- NUEVO ESTADO
   const [viviendaId, setViviendaId] = useState('');
   const [rol, setRol] = useState('');
   const [loading, setLoading] = useState(false);
@@ -91,30 +90,40 @@ const CrearUsuario = () => {
     setNombre('');
     setEmail('');
     setPassword('');
+    setConfirmPassword(''); // <-- LIMPIAR ESTADO
     setViviendaId('');
     setRol(roles.length > 0 ? roles[0] : '');
   };
 
   const handleCrearUsuario = async () => {
-    if (!nombre.trim() || !email.trim() || !password || !rol) {
-      showAlert('Error', 'Por favor completa los campos obligatorios');
+    // NUEVO: Verificar que todos los campos y confirmPassword estén rellenos
+    if (!nombre.trim() || !email.trim() || !password || !confirmPassword || !rol) {
+      showAlert('Error', 'Por favor completa todos los campos obligatorios');
+      return;
+    }
+
+    // NUEVO: Validar que coincidan
+    if (password !== confirmPassword) {
+      showAlert('Error', 'Las contraseñas no coinciden. Por favor, verifícalas.');
+      return;
+    }
+
+    if (password.length < 6) {
+      showAlert('Error', 'La contraseña debe tener al menos 6 caracteres.');
       return;
     }
 
     setLoading(true);
 
     try {
-      // Creamos un cliente que NO guarda sesión
-      // Así, al hacer signUp, no sobrescribe la sesión de Admin que esté activa.
       const tempSupabase = createClient(supabaseUrl, supabaseAnonKey, {
         auth: {
           autoRefreshToken: false,
-          persistSession: false, // Aquí no queremos mantener la sesión
+          persistSession: false, 
           detectSessionInUrl: false,
         },
       });
 
-      // Crear usuario en Auth usando el cliente temporal
       const { data: authData, error: authError } = await tempSupabase.auth.signUp({
         email: email.trim(),
         password: password,
@@ -123,23 +132,18 @@ const CrearUsuario = () => {
       if (authError) throw authError;
       if (!authData.user) throw new Error('No se pudo crear el usuario en Auth');
 
-      // Insertar el perfil en la tabla pública
-      // AQUÍ usamos el cliente principal 'supabase' (Admin) porque el tempClient 
-      // es el nuevo usuario y  no tendrá permisos para asignarse roles
       const { error: insertError } = await supabase
         .from('usuarios')
         .insert({
           email: email.trim(),
           vivienda_id: viviendaId || null,
-          password: password, // Opcional guardarla aquí (por ahora) ?? Esto se quitará en producción  // QUITAR EN PRODUCCIÓN
+          password: password, 
           nombre: nombre.trim(),
           rol: rol,
-          auth_id: authData.user.id, // Usamos el ID generado por el cliente temporal
+          auth_id: authData.user.id, 
         });
 
       if (insertError) {
-        // Si falla la inserción en la BD, intenta borrar el usuario de Auth para no dejar basura
-        // (Esto requeriría una Edge Function para ser perfecto, pero por ahora lanzamos error)
         console.error('Error insertando perfil:', insertError);
         throw new Error('El usuario se creó en Auth pero falló al crear el perfil.');
       }
@@ -155,7 +159,6 @@ const CrearUsuario = () => {
     }
   };
 
-  // Preparar opciones para los Pickers
   const opcionesVivienda = [
     { label: 'Sin vivienda asignada', value: '' },
     ...viviendas.map(v => ({ label: `Vivienda ${v.unidad}`, value: v.unidad }))
@@ -225,6 +228,23 @@ const CrearUsuario = () => {
                 placeholderTextColor={Colors.text.light}
                 value={password}
                 onChangeText={setPassword}
+                secureTextEntry
+                editable={!loading}
+              />
+            </View>
+          </View>
+
+          {/* Confirmar Contraseña (NUEVO INPUT) */}
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Confirmar Contraseña *</Text>
+            <View style={styles.inputContainer}>
+              <Ionicons name="lock-closed-outline" size={20} color={Colors.text.light} style={styles.inputIcon} />
+              <TextInput
+                style={styles.input}
+                placeholder="Repite la contraseña"
+                placeholderTextColor={Colors.text.light}
+                value={confirmPassword}
+                onChangeText={setConfirmPassword}
                 secureTextEntry
                 editable={!loading}
               />
@@ -338,6 +358,7 @@ const styles = StyleSheet.create({
     height: 50,
     fontSize: FontSizes.md,
     color: Colors.text.primary,
+    ...Platform.select({ web: { outlineStyle: 'none' } as any }),
   },
   helperText: {
     fontSize: FontSizes.xs,

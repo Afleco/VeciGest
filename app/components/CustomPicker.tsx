@@ -67,7 +67,7 @@ export default function CustomPicker({
 
       {/* Modal de Selección */}
       <Modal
-        animationType="fade" // CAMBIO: fade evita que el fondo negro suba
+        animationType="fade" // fade evita que el fondo negro suba
         transparent={true}
         visible={modalVisible}
         onRequestClose={() => setModalVisible(false)}
@@ -155,12 +155,12 @@ const styles = StyleSheet.create({
   placeholderText: {
     color: Colors.text.light,
   },
-  // --- ESTILOS DEL MODAL ACTUALIZADOS ---
+  // --- ESTILOS DEL MODAL ---
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'center', // CAMBIO: Centrado en lugar de flex-end
-    alignItems: 'center',     // CAMBIO: Centrado horizontal
+    justifyContent: 'center', // Centrado en lugar de flex-end
+    alignItems: 'center',     // Centrado horizontal
     padding: Spacing.lg,
   },
   modalContent: {
@@ -169,7 +169,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.base.white,
     borderRadius: BorderRadius.lg, // Bordes redondeados completos
     padding: Spacing.lg,
-    maxHeight: '80%',
+    maxHeight: '50%',
     ...Shadows.large,
   },
   modalHeader: {
