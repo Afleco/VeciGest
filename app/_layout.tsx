@@ -93,7 +93,7 @@ function CustomDrawerContent(props: any) {
 }
 
 function AppNavigation() {
-  // EXTRAEMOS 'logout' DE NUESTRO PROVIDER A PRUEBA DE FALLOS
+  // EXTRAEMOS 'logout' DEL PROVIDER
   const { session, isAdmin, profile, logout } = useAuth();
   const [menuVisible, setMenuVisible] = useState(false);
   const esInquilino = profile?.rol === 'Inquilino';
