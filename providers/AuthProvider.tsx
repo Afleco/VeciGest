@@ -10,6 +10,7 @@ type UserProfile = {
   rol: string;
   vivienda_id: string | null;
   email: string;
+  auth_id: string;
 };
 
 type AuthData = {
@@ -19,7 +20,7 @@ type AuthData = {
   profile: UserProfile | null;
   isAdmin: boolean;
   refreshProfile: () => Promise<void>;
-  logout: () => Promise<void>; // <-- FUNCIÓN PARA CERRAR SESIÓN Y ENVIAR AL LOGIN AUNQUE ESTA YA NO EXISTA
+  logout: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthData>({
@@ -29,7 +30,7 @@ const AuthContext = createContext<AuthData>({
   profile: null,
   isAdmin: false,
   refreshProfile: async () => {},
-  logout: async () => {}, // <-- INICIALIZAMOS
+  logout: async () => {},
 });
 
 interface Props {
@@ -41,27 +42,98 @@ export default function AuthProvider(props: Props) {
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
 
+  const handleLogout = async () => {
+    try {
+      await supabase.auth.signOut();
+    } catch (error) {
+      console.warn("Error de Supabase ignorado:", error);
+    } finally {
+      setSession(null);
+      setProfile(null);
+
+      if (Platform.OS === 'web') {
+        if (typeof window !== 'undefined') window.localStorage.clear();
+      } else {
+        try {
+          const keys = await AsyncStorage.getAllKeys();
+          const authKeys = keys.filter(k => k.includes('supabase') || k.includes('sb-'));
+          await AsyncStorage.multiRemove(authKeys);
+        } catch (e) {
+          console.error("Error limpiando storage:", e);
+        }
+      }
+    }
+  };
+
   const fetchProfile = async (userId: string) => {
     try {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('usuarios')
         .select('*')
         .eq('auth_id', userId)
         .single();
       
-      if (data) setProfile(data);
+      if (error && error.code === 'PGRST116') {
+        console.warn('El perfil ya no existe. Expulsando...');
+        await handleLogout();
+        return null; // Devolvemos null para saber que falló
+      }
+
+      if (data) {
+        setProfile(data);
+        return data; // Devolvemos los datos para usarlos en initAuth
+      }
     } catch (e) {
       console.error('Error cargando perfil:', e);
     }
+    return null;
   };
 
   useEffect(() => {
+    let realtimeChannel: any;
+
     async function initAuth() {
       try {
         const { data } = await supabase.auth.getSession();
         setSession(data.session);
+        
         if (data.session) {
-          await fetchProfile(data.session.user.id);
+          const userProfile = await fetchProfile(data.session.user.id);
+
+          // Solo nos suscribimos si el perfil existe realmente
+          if (userProfile) {
+            realtimeChannel = supabase.channel(`perfil-${data.session.user.id}`)
+              .on(
+                'postgres_changes',
+                { 
+                  event: 'DELETE', 
+                  schema: 'public', 
+                  table: 'usuarios', 
+                  filter: `auth_id=eq.${data.session.user.id}` 
+                },
+                () => {
+                  console.warn('¡Realtime detectó DELETE! Expulsando...');
+                  handleLogout();
+                }
+              )
+              .on(
+                'postgres_changes',
+                { 
+                  event: 'UPDATE', 
+                  schema: 'public', 
+                  table: 'usuarios', 
+                  filter: `auth_id=eq.${data.session.user.id}` 
+                },
+                (payload) => {
+                  console.log('¡Realtime detectó UPDATE! Nuevo rol:', payload.new.rol);
+                  setProfile(payload.new as UserProfile);
+                }
+              )
+              .subscribe((status) => {
+                // Esto dice si engancha con el servidor
+                console.log("Estado de Realtime de Supabase:", status); 
+              });
+          }
         }
       } catch (e) {
         console.warn("Error auth:", e);
@@ -85,47 +157,24 @@ export default function AuthProvider(props: Props) {
     });
 
     const appStateListener = AppState.addEventListener('change', (state) => {
-        if (state === 'active') supabase.auth.startAutoRefresh();
-        else supabase.auth.stopAutoRefresh();
+      if (state === 'active') {
+        supabase.auth.startAutoRefresh();
+        supabase.auth.getSession().then(({ data }) => {
+          if (data.session) fetchProfile(data.session.user.id);
+        });
+      } else {
+        supabase.auth.stopAutoRefresh();
+      }
     });
 
     return () => {
       authListener?.subscription.unsubscribe();
       appStateListener.remove();
+      if (realtimeChannel) supabase.removeChannel(realtimeChannel);
     };
   }, []);
 
   const isAdmin = profile?.rol === 'Administrador' || profile?.rol === 'Presidente' || profile?.rol === 'Vicepresidente';
-
-  // --- NUESTRA DE LOGOUT ---
-  const handleLogout = async () => {
-    try {
-      // Intentamos el cierre normal en el servidor
-      await supabase.auth.signOut();
-    } catch (error) {
-      console.warn("Error de Supabase ignorado:", error);
-    } finally {
-      // Limpiamos el estado en memoria para que React eche al Login directamente
-      setSession(null);
-      setProfile(null);
-
-      // Destruimos cualquier rastro del token en el almacenamiento del dispositivo
-      if (Platform.OS === 'web') {
-        if (typeof window !== 'undefined') {
-          window.localStorage.clear();
-        }
-      } else {
-        try {
-          const keys = await AsyncStorage.getAllKeys();
-          // Buscamos las llaves que usa Supabase internamente
-          const authKeys = keys.filter(k => k.includes('supabase') || k.includes('sb-'));
-          await AsyncStorage.multiRemove(authKeys);
-        } catch (e) {
-          console.error("Error limpiando storage:", e);
-        }
-      }
-    }
-  };
 
   if (loading) {
     return (
@@ -143,7 +192,7 @@ export default function AuthProvider(props: Props) {
         profile,
         isAdmin,
         refreshProfile: async () => { if(session) await fetchProfile(session.user.id) },
-        logout: handleLogout // <-- EXPONEMOS LA FUNCIÓN
+        logout: handleLogout
     }}>
       {props.children}
     </AuthContext.Provider>
