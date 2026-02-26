@@ -88,7 +88,7 @@ const LoginScreen: React.FC = () => {
       if (error) throw error;
       
       setResetStep(2); 
-      showAlert('Revisa tu correo', 'Te hemos enviado un código de seguridad.');
+      showAlert('Revisa el correo introducido', 'Si pertenece a una cuenta registrada te hemos enviado un código de seguridad.');
     } catch (error: any) {
       showAlert('Error', 'No se pudo enviar el correo. Verifica que la dirección es correcta.');
     } finally {
