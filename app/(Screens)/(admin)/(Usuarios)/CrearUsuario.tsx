@@ -131,7 +131,7 @@ const CrearUsuario = () => {
         .insert({
           email: email.trim(),
           vivienda_id: viviendaId || null,
-          password: password, // Opcional guardarla aquí (por ahora) ?? Esto se quitará en producción
+          password: password, // Opcional guardarla aquí (por ahora) ?? Esto se quitará en producción  // QUITAR EN PRODUCCIÓN
           nombre: nombre.trim(),
           rol: rol,
           auth_id: authData.user.id, // Usamos el ID generado por el cliente temporal
@@ -144,7 +144,7 @@ const CrearUsuario = () => {
         throw new Error('El usuario se creó en Auth pero falló al crear el perfil.');
       }
 
-      showAlert('Éxito', 'Usuario creado correctamente. Tu sesión sigue activa.');
+      showAlert('Éxito', 'Usuario creado correctamente.');
       limpiarFormulario();
       
     } catch (error: any) {
