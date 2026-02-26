@@ -64,7 +64,7 @@ const Inicio = () => {
 
   return (
     <View style={{ flex: 1, backgroundColor: Colors.background.main }}>
-      {/* CAMBIO: Usamos un View normal en lugar de SafeAreaView */}
+      {/* Usamos un View normal en lugar de SafeAreaView para poder arreglar el scroll de la card desplegada en mobile */}
       <View style={styles.container}>
         {/* Usamos el inset.bottom aquí para el espaciado general de la pantalla Inicio */}
         <ScrollView 

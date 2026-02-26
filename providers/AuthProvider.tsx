@@ -1,6 +1,7 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Session } from "@supabase/supabase-js";
 import { createContext, useContext, useEffect, useState } from "react";
-import { ActivityIndicator, AppState, View } from "react-native";
+import { ActivityIndicator, AppState, Platform, View } from "react-native";
 import { supabase } from "../lib/supabase";
 import { Colors } from "../styles/theme";
 
@@ -18,6 +19,7 @@ type AuthData = {
   profile: UserProfile | null;
   isAdmin: boolean;
   refreshProfile: () => Promise<void>;
+  logout: () => Promise<void>; // <-- FUNCIÓN PARA CERRAR SESIÓN Y ENVIAR AL LOGIN AUNQUE ESTA YA NO EXISTA
 };
 
 const AuthContext = createContext<AuthData>({
@@ -27,6 +29,7 @@ const AuthContext = createContext<AuthData>({
   profile: null,
   isAdmin: false,
   refreshProfile: async () => {},
+  logout: async () => {}, // <-- INICIALIZAMOS
 });
 
 interface Props {
@@ -94,7 +97,36 @@ export default function AuthProvider(props: Props) {
 
   const isAdmin = profile?.rol === 'Administrador' || profile?.rol === 'Presidente' || profile?.rol === 'Vicepresidente';
 
-  // Spinner mientras carga estado inicial
+  // --- NUESTRA DE LOGOUT ---
+  const handleLogout = async () => {
+    try {
+      // Intentamos el cierre normal en el servidor
+      await supabase.auth.signOut();
+    } catch (error) {
+      console.warn("Error de Supabase ignorado:", error);
+    } finally {
+      // Limpiamos el estado en memoria para que React eche al Login directamente
+      setSession(null);
+      setProfile(null);
+
+      // Destruimos cualquier rastro del token en el almacenamiento del dispositivo
+      if (Platform.OS === 'web') {
+        if (typeof window !== 'undefined') {
+          window.localStorage.clear();
+        }
+      } else {
+        try {
+          const keys = await AsyncStorage.getAllKeys();
+          // Buscamos las llaves que usa Supabase internamente
+          const authKeys = keys.filter(k => k.includes('supabase') || k.includes('sb-'));
+          await AsyncStorage.multiRemove(authKeys);
+        } catch (e) {
+          console.error("Error limpiando storage:", e);
+        }
+      }
+    }
+  };
+
   if (loading) {
     return (
         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: Colors.base.white }}>
@@ -110,7 +142,8 @@ export default function AuthProvider(props: Props) {
         user: session?.user || null, 
         profile,
         isAdmin,
-        refreshProfile: async () => { if(session) await fetchProfile(session.user.id) }
+        refreshProfile: async () => { if(session) await fetchProfile(session.user.id) },
+        logout: handleLogout // <-- EXPONEMOS LA FUNCIÓN
     }}>
       {props.children}
     </AuthContext.Provider>

@@ -4,7 +4,6 @@ import { useNavigationState } from '@react-navigation/native';
 import { StatusBar } from 'expo-status-bar';
 import React, { useState } from 'react';
 import { Image, Modal, Platform, Pressable, StyleSheet, Text, TouchableOpacity, TouchableWithoutFeedback, useWindowDimensions, View } from 'react-native';
-import { supabase } from '../lib/supabase';
 import { BorderRadius, Colors, FontSizes, FontWeights, Shadows, Spacing } from '../styles/theme';
 
 import AuthProvider, { useAuth } from '../providers/AuthProvider';
@@ -21,10 +20,6 @@ import Noticias from './(Screens)/Noticias';
 
 const Drawer = createDrawerNavigator();
 const isWeb = Platform.OS === 'web';
-
-const handleSignOut = async () => {
-  await supabase.auth.signOut();
-};
 
 function WebNavbar({ navigation, isAdmin, esInquilino, setMenuVisible, profile }: any) {
   const currentRouteName = useNavigationState((state) => state?.routes[state.index].name);
@@ -98,7 +93,8 @@ function CustomDrawerContent(props: any) {
 }
 
 function AppNavigation() {
-  const { session, isAdmin, profile } = useAuth();
+  // EXTRAEMOS 'logout' DE NUESTRO PROVIDER A PRUEBA DE FALLOS
+  const { session, isAdmin, profile, logout } = useAuth();
   const [menuVisible, setMenuVisible] = useState(false);
   const esInquilino = profile?.rol === 'Inquilino';
   
@@ -243,11 +239,12 @@ function AppNavigation() {
                 <Text style={styles.popoverText}>Avisos</Text>
               </TouchableOpacity>
 
+              {/* BOTÓN DE LOGOUT */}
               <TouchableOpacity
                 style={styles.popoverItem}
                 onPress={() => {
                   setMenuVisible(false);
-                  handleSignOut();
+                  logout(); // LLAMADA A FUNCIÓN DEL AUTHPROVIDER 
                 }}
               >
                 <Ionicons name="log-out-outline" size={22} color={Colors.status.error} />
