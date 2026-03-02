@@ -13,6 +13,7 @@ import GestionCuotas from './(Screens)/(admin)/GestionCuotas';
 import GestionUsuarios from './(Screens)/(admin)/GestionUsuarios';
 import Administracion from './(Screens)/Administracion';
 import Avisos from './(Screens)/Avisos';
+import Chats from './(Screens)/Chats';
 import Inicio from './(Screens)/Inicio';
 import Login from './(Screens)/Login';
 import MisCuotas from './(Screens)/MisCuotas';
@@ -61,6 +62,7 @@ function WebNavbar({ navigation, isAdmin, esInquilino, setMenuVisible, profile }
         <NavItem name="Inicio" label="Inicio" />
         <NavItem name="Noticias" label="Noticias" />
         <NavItem name="Avisos" label="Avisos" />
+        <NavItem name="Chats" label="Chats" />
         {!esInquilino && <NavItem name="MisCuotas" label="Mis Recibos" />}
         {isAdmin && <NavItem name="Administracion" label="Administración" />}
       </View>
@@ -151,6 +153,14 @@ function AppNavigation() {
         <Drawer.Screen
           name="Inicio"
           component={Inicio}
+          options={{
+            drawerIcon: ({ color, size }) => <Ionicons name="home-outline" size={size} color={color} />
+          }}
+        />
+
+        <Drawer.Screen
+          name="Chats"
+          component={Chats}
           options={{
             drawerIcon: ({ color, size }) => <Ionicons name="home-outline" size={size} color={color} />
           }}
