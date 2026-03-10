@@ -1,4 +1,4 @@
-import { Ionicons } from '@expo/vector-icons'; // Viene con Expo
+import { Ionicons } from '@expo/vector-icons';
 import { StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
 
 interface Props {

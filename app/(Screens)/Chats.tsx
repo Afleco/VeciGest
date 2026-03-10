@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { FlatList, KeyboardAvoidingView, Platform, SafeAreaView, StyleSheet } from 'react-native';
-import { supabase } from '../../lib/supabase'; // Asegúrate de que la ruta sea correcta
+import { supabase } from '../../lib/supabase';
 import { ChatInput } from '../components/ChatInput';
 import { MessageBubble } from '../components/MessageBubble';
 import { useGlobalChat } from '../hooks/GlobalChat';
 
-// 1. IMPORTANTE: El nombre de la función debe coincidir y usar "export default"
+// El nombre de la función debe coincidir y usar "export default"
 export default function Chats() {
   const [nuevoMensaje, setNuevoMensaje] = useState('');
   const [userEmail, setUserEmail] = useState<string | null>(null);
@@ -62,6 +62,6 @@ export default function Chats() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#E5DDD5', // Color de fondo tipo WhatsApp
+    backgroundColor: '#E5DDD5', 
   }
 });
