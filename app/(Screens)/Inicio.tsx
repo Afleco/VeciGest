@@ -2,11 +2,14 @@ import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import React, { useCallback, useState } from 'react';
 import {
+  FlatList,
+  Platform,
   RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
+  useWindowDimensions,
   View
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -23,14 +26,16 @@ const Inicio = () => {
   const navigation = useNavigation<any>();
   const { profile, user } = useAuth();
   
-  const insets = useSafeAreaInsets(); // <-- OBTENEMOS LOS BORDES DEL MÓVIL
+  const insets = useSafeAreaInsets();
+  const { width } = useWindowDimensions();
+  const isDesktop = width >= 1024;
 
   const fetchData = async () => {
     try {
       setLoading(true);
       const [newsRes, avisosRes] = await Promise.all([
-        supabase.from('noticias').select('*, profiles:email_user(nombre, rol)').order('id', { ascending: false }).limit(3),
-        supabase.from('avisos').select('*, profiles:email_user(nombre, rol)').order('id', { ascending: false }).limit(3)
+        supabase.from('noticias').select('*, profiles:email_user(nombre, rol)').order('id', { ascending: false }).limit(5),
+        supabase.from('avisos').select('*, profiles:email_user(nombre, rol)').order('id', { ascending: false }).limit(5)
       ]);
 
       setNoticias(newsRes.data || []);
@@ -45,7 +50,8 @@ const Inicio = () => {
 
   useFocusEffect(useCallback(() => { fetchData(); }, []));
 
-  const renderSafeCard = (item: any) => {
+  // Recibimos "isLast" para saber si es la última tarjeta y quitarle el margen sobrante
+  const renderSafeCard = (item: any, isCarousel = false, isLast = false) => {
     const safeData = {
       ...item,
       titulo: item.titulo || "Sin título",
@@ -56,7 +62,15 @@ const Inicio = () => {
     };
 
     return (
-      <View key={item.id} style={styles.cardWrapper}>
+      <View 
+        key={item.id} 
+        style={[
+          styles.cardWrapper, 
+          isCarousel 
+            ? { width: width * 0.75, marginRight: isLast ? 0 : 12, marginBottom: 0 } 
+            : { marginBottom: isLast ? 0 : 12 } // Si es la última tarjeta vertical, no hay margen inferior
+        ]}
+      >
         <NewsCard noticia={safeData} readOnly={true} />
       </View>
     );
@@ -64,11 +78,9 @@ const Inicio = () => {
 
   return (
     <View style={{ flex: 1, backgroundColor: Colors.background.main }}>
-      {/* Usamos un View normal en lugar de SafeAreaView para poder arreglar el scroll de la card desplegada en mobile */}
       <View style={styles.container}>
-        {/* Usamos el inset.bottom aquí para el espaciado general de la pantalla Inicio */}
         <ScrollView 
-          contentContainerStyle={{ paddingBottom: insets.bottom }} 
+          contentContainerStyle={{ paddingBottom: insets.bottom + 20 }} 
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={fetchData} />}
         >
           
@@ -79,47 +91,108 @@ const Inicio = () => {
             {profile?.rol && <Text style={styles.roleLabel}>{profile.rol}</Text>}
           </View>
 
-          <View style={styles.columnsContainer}>
-            {/* COLUMNA IZQUIERDA: NOTICIAS */}
-            <View style={styles.column}>
-              <View style={styles.columnHeader}>
-                <Ionicons name="newspaper-outline" size={20} color={Colors.primary.blue} />
-                <Text style={styles.columnTitle}>Noticias</Text>
+          {isDesktop ? (
+            /* VERSIÓN WEB -- Columnas verticales */
+            <View style={styles.columnsContainer}>
+              {/* NOTICIAS */}
+              <View style={styles.column}>
+                <View style={styles.columnHeader}>
+                  <Ionicons name="newspaper-outline" size={24} color={Colors.primary.blue} />
+                  <Text style={styles.columnTitle}>Últimas Noticias</Text>
+                </View>
+
+                {noticias.length > 0 ? (
+                  <View style={styles.columnNoticiasContent}>
+                    {noticias.map((item, index) => renderSafeCard(item, false, index === noticias.length - 1))}
+                  </View>
+                ) : (
+                  <Text style={styles.emptyText}>No hay noticias recientes.</Text>
+                )}
+
+                <TouchableOpacity style={styles.verTodasButton} onPress={() => navigation.navigate('Noticias')}>
+                  <Text style={styles.verTodasText}>Ver todas las noticias</Text>
+                </TouchableOpacity>
+              </View>
+
+              {/* AVISOS */}
+              <View style={styles.column}>
+                <View style={styles.columnHeader}>
+                  <Ionicons name="megaphone-outline" size={24} color={Colors.primary.orange} />
+                  <Text style={styles.columnTitle}>Avisos Recientes</Text>
+                </View>
+
+                {avisos.length > 0 ? (
+                  <View style={styles.columnAvisosContent}>
+                    {avisos.map((item, index) => renderSafeCard(item, false, index === avisos.length - 1))}
+                  </View>
+                ) : (
+                  <Text style={styles.emptyText}>No hay avisos recientes.</Text>
+                )}
+
+                <TouchableOpacity style={styles.verTodasButton} onPress={() => navigation.navigate('Avisos')}>
+                  <Text style={styles.verTodasText}>Ver todos los avisos</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+
+          ) : (
+            /* Versión Mobile (Carruseles Horizontales Enmarcados) */
+            <View style={styles.carouselContainer}>
+              
+              {/* SECCIÓN NOTICIAS */}
+              <View style={styles.sectionHeader}>
+                <View style={styles.titleRow}>
+                  <Ionicons name="newspaper-outline" size={24} color={Colors.primary.blue} />
+                  <Text style={styles.sectionTitle}>Últimas Noticias</Text>
+                </View>
+                <TouchableOpacity onPress={() => navigation.navigate('Noticias')}>
+                  <Text style={styles.verTodasTextMobile}>Ver todas</Text>
+                </TouchableOpacity>
               </View>
 
               {noticias.length > 0 ? (
-                <View style={styles.columnNoticiasContent}>
-                  {noticias.map(item => renderSafeCard(item))}
+                <View style={styles.carouselBoxGreen}>
+                  <FlatList
+                    horizontal
+                    showsHorizontalScrollIndicator={Platform.OS === 'web'} 
+                    data={noticias}
+                    keyExtractor={item => item.id.toString()}
+                    renderItem={({ item, index }) => renderSafeCard(item, true, index === noticias.length - 1)}
+                    contentContainerStyle={styles.carouselInnerPadding}
+                  />
                 </View>
               ) : (
                 <Text style={styles.emptyText}>No hay noticias recientes.</Text>
               )}
 
-              <TouchableOpacity onPress={() => navigation.navigate('Noticias')}>
-                <Text style={styles.seeMore}>Ver todas</Text>
-              </TouchableOpacity>
-            </View>
-
-            {/* COLUMNA DERECHA: AVISOS */}
-            <View style={styles.column}>
-              <View style={styles.columnHeader}>
-                <Ionicons name="megaphone-outline" size={20} color={Colors.primary.orange} />
-                <Text style={styles.columnTitle}>Avisos</Text>
+              {/* SECCIÓN AVISOS */}
+              <View style={[styles.sectionHeader, { marginTop: Spacing.xl }]}>
+                <View style={styles.titleRow}>
+                  <Ionicons name="megaphone-outline" size={24} color={Colors.primary.orange} />
+                  <Text style={styles.sectionTitle}>Avisos Recientes</Text>
+                </View>
+                <TouchableOpacity onPress={() => navigation.navigate('Avisos')}>
+                  <Text style={styles.verTodasTextMobile}>Ver todos</Text>
+                </TouchableOpacity>
               </View>
 
               {avisos.length > 0 ? (
-                <View style={styles.columnAvisosContent}>
-                  {avisos.map(item => renderSafeCard(item))}
+                <View style={styles.carouselBoxOrange}>
+                  <FlatList
+                    horizontal
+                    showsHorizontalScrollIndicator={Platform.OS === 'web'}
+                    data={avisos}
+                    keyExtractor={item => item.id.toString()}
+                    renderItem={({ item, index }) => renderSafeCard(item, true, index === avisos.length - 1)}
+                    contentContainerStyle={styles.carouselInnerPadding}
+                  />
                 </View>
               ) : (
                 <Text style={styles.emptyText}>No hay avisos recientes.</Text>
               )}
 
-              <TouchableOpacity onPress={() => navigation.navigate('Avisos')}>
-                <Text style={styles.seeMore}>Ver todos</Text>
-              </TouchableOpacity>
             </View>
-          </View>
+          )}
 
         </ScrollView>
       </View>
@@ -130,7 +203,7 @@ const Inicio = () => {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   welcomeCard: { 
-    backgroundColor: Colors.background.card, 
+    backgroundColor: Colors.base.white, 
     margin: Spacing.lg, 
     padding: Spacing.xl, 
     borderRadius: BorderRadius.lg, 
@@ -138,70 +211,67 @@ const styles = StyleSheet.create({
     ...Shadows.medium 
   },
   welcomeText: { fontSize: FontSizes.xxl, fontWeight: FontWeights.bold, color: Colors.text.primary },
-  userName: { fontSize: FontSizes.lg, color: Colors.primary.blue },
-  roleLabel: { fontSize: FontSizes.xs, color: Colors.text.secondary, fontStyle: 'italic' },
+  userName: { fontSize: FontSizes.lg, color: Colors.primary.blue, marginTop: Spacing.xs },
+  roleLabel: { fontSize: FontSizes.xs, color: Colors.text.secondary, fontStyle: 'italic', marginTop: Spacing.xs },
   
-  columnsContainer: { 
-    flexDirection: 'row', 
-    paddingHorizontal: Spacing.xs,
-    paddingBottom: Spacing.xl
+  //  estilos web
+  columnsContainer: { flexDirection: 'row', paddingHorizontal: Spacing.md, paddingBottom: Spacing.xl },
+  column: { flex: 1, paddingHorizontal: Spacing.sm },
+  columnHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: Spacing.md, justifyContent: 'center' },
+  columnTitle: { fontSize: FontSizes.lg, fontWeight: FontWeights.bold, marginLeft: 8, color: Colors.text.primary },
+  
+  // Las cajas verticalespadding exacto de 12 por todos lados, un ancho del 100% y centrado.
+  columnNoticiasContent: { 
+    backgroundColor: Colors.primary.green, 
+    padding: 12, // el padding es simétrico porque la última tarjeta ya no tiene margen inferior
+    borderRadius: BorderRadius.md, 
+    ...Shadows.small, 
+    marginBottom: Spacing.sm,
+    width: '100%',
+    maxWidth: 600, // Evita que se deforme en monitores muy anchos
+    alignSelf: 'center'
   },
-  column: { 
-    flex: 1, 
-    paddingHorizontal: 4 
+  columnAvisosContent: { 
+    backgroundColor: Colors.primary.orange, 
+    padding: 12, 
+    borderRadius: BorderRadius.md, 
+    ...Shadows.small, 
+    marginBottom: Spacing.sm,
+    width: '100%',
+    maxWidth: 600,
+    alignSelf: 'center'
   },
-  columnHeader: { 
-    flexDirection: 'row', 
-    alignItems: 'center', 
-    marginBottom: Spacing.sm, 
-    justifyContent: 'center'
-  },
-  columnTitle: { 
-    fontSize: FontSizes.md, 
-    fontWeight: FontWeights.bold, 
-    marginLeft: 5,
-    color: Colors.text.primary 
-  },
-  columnNoticiasContent: {
+  verTodasButton: { alignSelf: 'center', paddingVertical: Spacing.sm, paddingHorizontal: Spacing.lg, backgroundColor: Colors.base.white, borderRadius: BorderRadius.xl, borderWidth: 1, borderColor: Colors.primary.blue, marginTop: Spacing.sm, marginBottom: Spacing.xl },
+  verTodasText: { color: Colors.primary.blue, fontWeight: 'bold', fontSize: FontSizes.sm },
+
+  // estilos mobile (Carruseles Enmarcados)
+  carouselContainer: { paddingBottom: Spacing.xl },
+  sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: Spacing.lg, marginBottom: Spacing.sm }, 
+  titleRow: { flexDirection: 'row', alignItems: 'center' },
+  sectionTitle: { fontSize: FontSizes.lg, fontWeight: FontWeights.bold, marginLeft: 8, color: Colors.text.primary },
+  verTodasTextMobile: { color: Colors.primary.blue, fontWeight: 'bold', fontSize: FontSizes.sm },
+  
+  carouselBoxGreen: {
     backgroundColor: Colors.primary.green,
-    padding: 6,
-    paddingTop: 8,
+    paddingVertical: 12, 
+    marginHorizontal: Spacing.lg, 
     borderRadius: BorderRadius.md,
     ...Shadows.small,
-    marginBottom: Spacing.sm,
-    width: '100%',
-    maxWidth: 700,
-    alignSelf: 'center',
   },
-  columnAvisosContent: {
+  carouselBoxOrange: {
     backgroundColor: Colors.primary.orange,
-    padding: 6,
-    paddingTop: 8,
+    paddingVertical: 12,
+    marginHorizontal: Spacing.lg,
     borderRadius: BorderRadius.md,
     ...Shadows.small,
-    marginBottom: Spacing.sm,
-    width: '100%',
-    maxWidth: 700,
-    alignSelf: 'center',
   },
-  emptyText: {
-    textAlign: 'center',
-    color: Colors.text.light,
-    fontStyle: 'italic',
-    marginVertical: Spacing.lg,
+  carouselInnerPadding: { 
+    paddingHorizontal: 12, 
   },
-  seeMore: {
-    textAlign: 'center',
-    color: Colors.primary.blue,
-    fontWeight: 'bold',
-    marginTop: Spacing.sm,
-    marginBottom: Spacing.lg, // espacio por debajo del botón
-    fontSize: FontSizes.xs
-  },
-  cardWrapper: { 
-    marginBottom: 8, 
-    width: '100%',
-  },
+  
+  // ESTILOS GENERALES
+  emptyText: { textAlign: 'center', color: Colors.text.light, fontStyle: 'italic', marginVertical: Spacing.lg },
+  cardWrapper: { width: '100%' },
 });
 
 export default Inicio;
