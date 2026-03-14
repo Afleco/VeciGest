@@ -26,205 +26,214 @@ import NewsCard from '../components/NewsCard';
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 const Avisos = () => {
-  const [avisos, setAvisos] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
-  const [modalVisible, setModalVisible] = useState(false);
-  const [editingAviso, setEditingAviso] = useState<any | null>(null);
-  const slideAnim = useRef(new Animated.Value(SCREEN_HEIGHT)).current;
+    const [avisos, setAvisos] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [refreshing, setRefreshing] = useState(false);
+    const [modalVisible, setModalVisible] = useState(false);
+    const [editingAviso, setEditingAviso] = useState<any | null>(null);
+    const slideAnim = useRef(new Animated.Value(SCREEN_HEIGHT)).current;
 
-  const { profile, user } = useAuth();
-  
-  const rolesPermitidos = ['Presidente', 'Vicepresidente', 'Secretario', 'Administrador'];
-  const esDirectiva = rolesPermitidos.includes(profile?.rol || '');
+    const { profile, user } = useAuth();
+    
+    const rolesPermitidos = ['Presidente', 'Vicepresidente', 'Secretario', 'Administrador'];
+    const esDirectiva = rolesPermitidos.includes(profile?.rol || '');
 
-  const { width } = useWindowDimensions();
-  const numColumns = width >= 1024 ? 3 : width >= 768 ? 2 : 1;
+    const { width } = useWindowDimensions();
+    const numColumns = width >= 1024 ? 3 : width >= 768 ? 2 : 1;
 
-  const insets = useSafeAreaInsets(); // <-- OBTENEMOS LOS BORDES DEL MÓVIL
+    const insets = useSafeAreaInsets();
 
-  const getGridMaxWidth = (itemsCount: number) => {
-    if (numColumns === 1) return 700;
-    const maxItemsInRow = Math.min(itemsCount === 0 ? 1 : itemsCount, numColumns);
-    return maxItemsInRow * 420;
-  };
-
-  const fetchAvisos = async () => {
-    try {
-      setLoading(true);
-      const { data, error } = await supabase
-        .from('avisos')
-        .select(`*, profiles:email_user ( nombre, rol )`)
-        .order('id', { ascending: false });
-
-      if (error) throw error;
-      setAvisos(data || []);
-    } catch (error: any) {
-      console.error('Error cargando avisos:', error.message);
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  };
-
-  useFocusEffect(useCallback(() => { fetchAvisos(); }, []));
-
-  useEffect(() => {
-    if (modalVisible) {
-      Animated.spring(slideAnim, {
-        toValue: 0,
-        useNativeDriver: true,
-        bounciness: 5,
-        speed: 12,
-      }).start();
-    }
-  }, [modalVisible]);
-
-  const closeModal = () => {
-    Animated.timing(slideAnim, {
-      toValue: SCREEN_HEIGHT,
-      duration: 250,
-      useNativeDriver: true,
-    }).start(() => {
-      setModalVisible(false);
-      setEditingAviso(null);
-    });
-  };
-
-  const handleDeleteAviso = async (item: any) => {
-    const deleteAction = async () => {
-      try {
-        if (item.imagen_url) {
-          const fileName = item.imagen_url.split('/').pop();
-          if (fileName) {
-            await supabase.storage.from('avisos').remove([fileName]);
-          }
-        }
-        const { error } = await supabase.from('avisos').delete().eq('id', item.id);
-        if (error) throw error;
-        fetchAvisos();
-      } catch (error: any) {
-        Alert.alert('Error', 'No se pudo eliminar: ' + error.message);
-      }
+    const getGridMaxWidth = (itemsCount: number) => {
+        if (numColumns === 1) return 700;
+        const maxItemsInRow = Math.min(itemsCount === 0 ? 1 : itemsCount, numColumns);
+        return maxItemsInRow * 420;
     };
 
-    if (Platform.OS === 'web') {
-      if (confirm('¿Eliminar este aviso?')) deleteAction();
-    } else {
-      Alert.alert('Eliminar', '¿Estás seguro?', [
-        { text: 'Cancelar', style: 'cancel' },
-        { text: 'Eliminar', onPress: deleteAction, style: 'destructive' }
-      ]);
-    }
-  };
+    const fetchAvisos = async () => {
+        try {
+            setLoading(true);
+            const { data, error } = await supabase
+                .from('avisos')
+                .select(`
+                    *,
+                    profiles:usuarios!email_user ( nombre, rol )
+                `)
+                .order('id', { ascending: false });
 
-  const openEditModal = (aviso: any) => {
-    setEditingAviso(aviso);
-    setModalVisible(true);
-  };
+            if (error) throw error;
+            setAvisos(data || []);
+        } catch (error: any) {
+            console.error('Error cargando avisos:', error.message);
+        } finally {
+            setLoading(false);
+            setRefreshing(false);
+        }
+    };
 
-  return (
-    <View style={{ flex: 1, backgroundColor: Colors.background.main }}>
-      {/* CAMBIO: Usamos un View normal en lugar de SafeAreaView */}
-      <View style={styles.container}>
-        {loading && !refreshing ? (
-          <ActivityIndicator size="large" color={Colors.primary.blue} style={{ marginTop: 20 }} />
-        ) : (
-          <FlatList
-            key={`grid-${numColumns}`} 
-            data={avisos}
-            keyExtractor={(item) => item.id.toString()}
-            numColumns={numColumns}
-            columnWrapperStyle={numColumns > 1 ? styles.row : undefined}
-            renderItem={({ item }) => {
-              const esAutor = user?.email === item.email_user;
-              const tienePermiso = esDirectiva || esAutor;
+    useFocusEffect(useCallback(() => { fetchAvisos(); }, []));
 
-              return (
-                <View style={[styles.cardWrapper, numColumns > 1 && { maxWidth: 400 }]}>
-                  <NewsCard
-                    noticia={item}
-                    canEdit={tienePermiso}
-                    onDelete={() => handleDeleteAviso(item)}
-                    onEdit={() => openEditModal(item)}
-                  />
+    useEffect(() => {
+        if (modalVisible) {
+            Animated.spring(slideAnim, {
+                toValue: 0,
+                useNativeDriver: true,
+                bounciness: 5,
+                speed: 12,
+            }).start();
+        }
+    }, [modalVisible]);
+
+    const closeModal = () => {
+        Animated.timing(slideAnim, {
+            toValue: SCREEN_HEIGHT,
+            duration: 250,
+            useNativeDriver: true,
+        }).start(() => {
+            setModalVisible(false);
+            setEditingAviso(null);
+        });
+    };
+
+    const handleDeleteAviso = async (item: any) => {
+        const deleteAction = async () => {
+            try {
+                if (item.imagen_url) {
+                    const fileName = item.imagen_url.split('/').pop();
+                    if (fileName) {
+                        await supabase.storage.from('avisos').remove([fileName]);
+                    }
+                }
+                const { error } = await supabase.from('avisos').delete().eq('id', item.id);
+                if (error) throw error;
+                fetchAvisos();
+            } catch (error: any) {
+                Alert.alert('Error', 'No se pudo eliminar: ' + error.message);
+            }
+        };
+
+        if (Platform.OS === 'web') {
+            if (confirm('¿Eliminar este aviso?')) deleteAction();
+        } else {
+            Alert.alert('Eliminar', '¿Estás seguro?', [
+                { text: 'Cancelar', style: 'cancel' },
+                { text: 'Eliminar', onPress: deleteAction, style: 'destructive' }
+            ]);
+        }
+    };
+
+    const openEditModal = (aviso: any) => {
+        setEditingAviso(aviso);
+        setModalVisible(true);
+    };
+
+    return (
+        <View style={{ flex: 1, backgroundColor: Colors.background.main }}>
+            <View style={styles.container}>
+                {loading && !refreshing ? (
+                    <ActivityIndicator size="large" color={Colors.primary.blue} style={{ marginTop: 20 }} />
+                ) : (
+                    <FlatList
+                        key={`grid-${numColumns}`} 
+                        data={avisos}
+                        keyExtractor={(item) => item.id.toString()}
+                        numColumns={numColumns}
+                        columnWrapperStyle={numColumns > 1 ? styles.row : undefined}
+                        renderItem={({ item }) => {
+                            const esAutor = user?.email === item.email_user;
+                            const tienePermiso = esDirectiva || esAutor;
+
+                            // LÓGICA DE FILTRADO CORREGIDA:
+                            // Si el aviso es una "notificacion" automática, solo lo renderizamos
+                            // si el usuario conectado es el destinatario (esAutor) o es Directiva.
+                            if (item.notificacion === true && !esAutor && !esDirectiva) {
+                                return null;
+                            }
+
+                            return (
+                                <View style={[styles.cardWrapper, numColumns > 1 && { maxWidth: 400 }]}>
+                                    <NewsCard
+                                        noticia={item}
+                                        canEdit={tienePermiso}
+                                        onDelete={() => handleDeleteAviso(item)}
+                                        onEdit={() => openEditModal(item)}
+                                    />
+                                </View>
+                            );
+                        }}
+                        style={[styles.flatList, { maxWidth: getGridMaxWidth(avisos.length) }]}
+                        contentContainerStyle={
+                            avisos.length > 0
+                                ? [styles.coloredContainer, { paddingBottom: 100 + insets.bottom }]
+                                : { padding: Spacing.lg, paddingBottom: 100 + insets.bottom }
+                        }
+                        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={fetchAvisos} />}
+                        ListEmptyComponent={
+                            <Text style={styles.emptyText}>No hay avisos hoy.</Text>
+                        }
+                    />
+                )}
+            </View>
+
+            <Modal visible={modalVisible} transparent={true} onRequestClose={closeModal} animationType="none">
+                <View style={styles.modalOverlay}>
+                    <Animated.View style={[styles.modalContent, { transform: [{ translateY: slideAnim }] }]}>
+                        <AddAviso
+                            avisoAEditar={editingAviso}
+                            onSuccess={() => { closeModal(); fetchAvisos(); }}
+                            onCancel={closeModal}
+                        />
+                    </Animated.View>
                 </View>
-              );
-            }}
-            style={[styles.flatList, { maxWidth: getGridMaxWidth(avisos.length) }]}
-            // Sumamos el inset.bottom al contenedor
-            contentContainerStyle={
-              avisos.length > 0
-                ? [styles.coloredContainer, { marginBottom: 80 + insets.bottom }]
-                : { padding: Spacing.lg, paddingBottom: 100 + insets.bottom }
-            }
-            refreshControl={<RefreshControl refreshing={refreshing} onRefresh={fetchAvisos} />}
-            ListEmptyComponent={
-              <Text style={styles.emptyText}>No hay avisos hoy.</Text>
-            }
-          />
-        )}
-      </View>
+            </Modal>
 
-      <Modal visible={modalVisible} transparent={true} onRequestClose={closeModal} animationType="none">
-        <View style={styles.modalOverlay}>
-          <Animated.View style={[styles.modalContent, { transform: [{ translateY: slideAnim }] }]}>
-            <AddAviso
-              avisoAEditar={editingAviso}
-              onSuccess={() => { closeModal(); fetchAvisos(); }}
-              onCancel={closeModal}
-            />
-          </Animated.View>
+            {esDirectiva && (
+                <TouchableOpacity 
+                    style={[styles.fab, { bottom: 20 + insets.bottom }]} 
+                    onPress={() => setModalVisible(true)}
+                >
+                    <Ionicons name="add" size={30} color="#FFFFFF" />
+                </TouchableOpacity>
+            )}
         </View>
-      </Modal>
-
-      <TouchableOpacity 
-        style={[styles.fab, { bottom: 20 + insets.bottom }]} // <-- POSICIÓN DINÁMICA
-        onPress={() => setModalVisible(true)}
-      >
-        <Ionicons name="add" size={30} color="#FFFFFF" />
-      </TouchableOpacity>
-    </View>
-  );
+    );
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
-  flatList: { width: '100%', alignSelf: 'center' },
-  coloredContainer: {
-    backgroundColor: Colors.primary.orange, 
-    padding: Spacing.md,
-    margin: Spacing.md,
-    borderRadius: BorderRadius.lg,
-    ...Shadows.small,
-  },
-  row: { gap: Spacing.md, justifyContent: 'center' },
-  cardWrapper: { flex: 1 },
-  emptyText: { textAlign: 'center', color: Colors.text.light, marginTop: 50, fontSize: 16 },
-  fab: { 
-    position: 'absolute', 
-    right: 20, 
-    // bottom eliminado de aquí
-    backgroundColor: Colors.primary.green, 
-    width: 60, 
-    height: 60, 
-    borderRadius: 35, 
-    justifyContent: 'center', 
-    alignItems: 'center', 
-    elevation: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4.65,
-  },
-  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
-  modalContent: { 
-    backgroundColor: 'white', 
-    borderTopLeftRadius: 20, 
-    borderTopRightRadius: 20, 
-    height: '75%', 
-    padding: Spacing.lg 
-  },
+    container: { flex: 1 },
+    flatList: { width: '100%', alignSelf: 'center' },
+    coloredContainer: {
+        backgroundColor: Colors.primary.orange, 
+        padding: Spacing.md,
+        margin: Spacing.md,
+        borderRadius: BorderRadius.lg,
+        ...Shadows.small,
+    },
+    row: { gap: Spacing.md, justifyContent: 'center' },
+    cardWrapper: { flex: 1 },
+    emptyText: { textAlign: 'center', color: Colors.text.light, marginTop: 50, fontSize: 16 },
+    fab: { 
+        position: 'absolute', 
+        right: 20, 
+        backgroundColor: Colors.primary.green, 
+        width: 60, 
+        height: 60, 
+        borderRadius: 35, 
+        justifyContent: 'center', 
+        alignItems: 'center', 
+        elevation: 8,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 4.65,
+    },
+    modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
+    modalContent: { 
+        backgroundColor: 'white', 
+        borderTopLeftRadius: 20, 
+        borderTopRightRadius: 20, 
+        height: '75%', 
+        padding: Spacing.lg 
+    },
 });
 
 export default Avisos;

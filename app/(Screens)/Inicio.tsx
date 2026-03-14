@@ -19,187 +19,192 @@ import { BorderRadius, Colors, FontSizes, FontWeights, Shadows, Spacing } from '
 import NewsCard from '../components/NewsCard';
 
 const Inicio = () => {
-  const [noticias, setNoticias] = useState<any[]>([]);
-  const [avisos, setAvisos] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
-  const navigation = useNavigation<any>();
-  const { profile, user } = useAuth();
-  
-  const insets = useSafeAreaInsets();
-  const { width } = useWindowDimensions();
-  const isDesktop = width >= 1024;
+    const [noticias, setNoticias] = useState<any[]>([]);
+    const [avisos, setAvisos] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [refreshing, setRefreshing] = useState(false);
+    const navigation = useNavigation<any>();
+    const { profile, user } = useAuth();
 
-  const fetchData = async () => {
-    try {
-      setLoading(true);
-      const [newsRes, avisosRes] = await Promise.all([
-        supabase.from('noticias').select('*, profiles:email_user(nombre, rol)').order('id', { ascending: false }).limit(5),
-        supabase.from('avisos').select('*, profiles:email_user(nombre, rol)').order('id', { ascending: false }).limit(5)
-      ]);
+    const insets = useSafeAreaInsets();
+    const { width } = useWindowDimensions();
+    const isDesktop = width >= 1024;
 
-      setNoticias(newsRes.data || []);
-      setAvisos(avisosRes.data || []);
-    } catch (error: any) {
-      console.error('Error:', error.message);
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  };
+    // Roles que pueden ver todas las notificaciones
+    const rolesPermitidos = ['Presidente', 'Vicepresidente', 'Secretario', 'Administrador'];
+    const esDirectiva = rolesPermitidos.includes(profile?.rol || '');
 
-  useFocusEffect(useCallback(() => { fetchData(); }, []));
+    const fetchData = async () => {
+        try {
+            setLoading(true);
+            const [newsRes, avisosRes] = await Promise.all([
+                supabase.from('noticias').select('*, profiles:email_user(nombre, rol)').order('id', { ascending: false }).limit(5),
+                supabase.from('avisos').select('*, profiles:email_user(nombre, rol)').order('id', { ascending: false }).limit(20) // Aumentamos límite para filtrar después
+            ]);
 
-  // Recibimos "isLast" para saber si es la última tarjeta y quitarle el margen sobrante
-  const renderSafeCard = (item: any, isCarousel = false, isLast = false) => {
-    const safeData = {
-      ...item,
-      titulo: item.titulo || "Sin título",
-      contenido: item.contenido || "",
-      imagen_url: item.imagen_url,
-      created_at: item.fecha || item.created_at || new Date().toISOString(),
-      profiles: item.profiles || { nombre: "Anónimo", rol: "Vecino" }
+            setNoticias(newsRes.data || []);
+
+            // APLICAMOS EL FILTRADO DE NOTIFICACIONES AQUÍ
+            const avisosFiltrados = (avisosRes.data || []).filter(item => {
+                const esDestinatario = user?.email === item.email_user;
+                
+                // Si es notificación, solo pasa si es el destinatario o directiva
+                if (item.notificacion === true) {
+                    return esDestinatario || esDirectiva;
+                }
+                // Si no es notificación (noticia general), pasa siempre
+                return true;
+            });
+
+            // Tomamos solo los 5 primeros después de filtrar
+            setAvisos(avisosFiltrados.slice(0, 5));
+
+        } catch (error: any) {
+            console.error('Error:', error.message);
+        } finally {
+            setLoading(false);
+            setRefreshing(false);
+        }
+    };
+
+    useFocusEffect(useCallback(() => { fetchData(); }, [user?.email, profile?.rol]));
+
+    const renderSafeCard = (item: any, isCarousel = false, isLast = false) => {
+        const safeData = {
+            ...item,
+            titulo: item.titulo || (item.notificacion ? "Notificación" : "Sin título"),
+            contenido: item.contenido || "",
+            imagen_url: item.imagen_url,
+            created_at: item.fecha || item.created_at || new Date().toISOString(),
+            profiles: item.profiles || { nombre: "Sistema", rol: "Automático" }
+        };
+
+        return (
+            <View
+                key={item.id}
+                style={[
+                    styles.cardWrapper,
+                    isCarousel
+                        ? { width: width * 0.75, marginRight: isLast ? 0 : 12, marginBottom: 0 }
+                        : { marginBottom: isLast ? 0 : 12 }
+                ]}
+            >
+                <NewsCard noticia={safeData} readOnly={true} />
+            </View>
+        );
     };
 
     return (
-      <View 
-        key={item.id} 
-        style={[
-          styles.cardWrapper, 
-          isCarousel 
-            ? { width: width * 0.75, marginRight: isLast ? 0 : 12, marginBottom: 0 } 
-            : { marginBottom: isLast ? 0 : 12 } // Si es la última tarjeta vertical, no hay margen inferior
-        ]}
-      >
-        <NewsCard noticia={safeData} readOnly={true} />
-      </View>
+        <View style={{ flex: 1, backgroundColor: Colors.background.main }}>
+            <View style={styles.container}>
+                <ScrollView
+                    contentContainerStyle={{ paddingBottom: insets.bottom + 20 }}
+                    refreshControl={<RefreshControl refreshing={refreshing} onRefresh={fetchData} />}
+                >
+
+                    <View style={styles.welcomeCard}>
+                        <Ionicons name="person-circle-outline" size={60} color={Colors.primary.orange} />
+                        <Text style={styles.welcomeText}>¡Bienvenido!</Text>
+                        <Text style={styles.userName}>{profile?.nombre || user?.email}</Text>
+                        {profile?.rol && <Text style={styles.roleLabel}>{profile.rol}</Text>}
+                    </View>
+
+                    {isDesktop ? (
+                        <View style={styles.columnsContainer}>
+                            {/* NOTICIAS */}
+                            <View style={styles.column}>
+                                <View style={styles.columnHeader}>
+                                    <Ionicons name="newspaper-outline" size={24} color={Colors.primary.blue} />
+                                    <Text style={styles.columnTitle}>Últimas Noticias</Text>
+                                </View>
+                                {noticias.length > 0 ? (
+                                    <View style={styles.columnNoticiasContent}>
+                                        {noticias.map((item, index) => renderSafeCard(item, false, index === noticias.length - 1))}
+                                    </View>
+                                ) : (
+                                    <Text style={styles.emptyText}>No hay noticias recientes.</Text>
+                                )}
+                                <TouchableOpacity style={styles.verTodasButton} onPress={() => navigation.navigate('Noticias')}>
+                                    <Text style={styles.verTodasText}>Ver todas las noticias</Text>
+                                </TouchableOpacity>
+                            </View>
+
+                            {/* AVISOS Y NOTIFICACIONES */}
+                            <View style={styles.column}>
+                                <View style={styles.columnHeader}>
+                                    <Ionicons name="megaphone-outline" size={24} color={Colors.primary.orange} />
+                                    <Text style={styles.columnTitle}>Avisos y Notificaciones</Text>
+                                </View>
+                                {avisos.length > 0 ? (
+                                    <View style={styles.columnAvisosContent}>
+                                        {avisos.map((item, index) => renderSafeCard(item, false, index === avisos.length - 1))}
+                                    </View>
+                                ) : (
+                                    <Text style={styles.emptyText}>No hay avisos recientes.</Text>
+                                )}
+                                <TouchableOpacity style={styles.verTodasButton} onPress={() => navigation.navigate('Avisos')}>
+                                    <Text style={styles.verTodasText}>Ver todos los avisos</Text>
+                                </TouchableOpacity>
+                            </View>
+                        </View>
+                    ) : (
+                        <View style={styles.carouselContainer}>
+                            {/* SECCIÓN NOTICIAS MOBILE */}
+                            <View style={styles.sectionHeader}>
+                                <View style={styles.titleRow}>
+                                    <Ionicons name="newspaper-outline" size={24} color={Colors.primary.blue} />
+                                    <Text style={styles.sectionTitle}>Últimas Noticias</Text>
+                                </View>
+                                <TouchableOpacity onPress={() => navigation.navigate('Noticias')}>
+                                    <Text style={styles.verTodasTextMobile}>Ver todas</Text>
+                                </TouchableOpacity>
+                            </View>
+                            {noticias.length > 0 ? (
+                                <View style={styles.carouselBoxGreen}>
+                                    <FlatList
+                                        horizontal
+                                        showsHorizontalScrollIndicator={Platform.OS === 'web'}
+                                        data={noticias}
+                                        keyExtractor={item => item.id.toString()}
+                                        renderItem={({ item, index }) => renderSafeCard(item, true, index === noticias.length - 1)}
+                                        contentContainerStyle={styles.carouselInnerPadding}
+                                    />
+                                </View>
+                            ) : (
+                                <Text style={styles.emptyText}>No hay noticias recientes.</Text>
+                            )}
+
+                            {/* SECCIÓN AVISOS / NOTIFICACIONES MOBILE */}
+                            <View style={[styles.sectionHeader, { marginTop: Spacing.xl }]}>
+                                <View style={styles.titleRow}>
+                                    <Ionicons name="megaphone-outline" size={24} color={Colors.primary.orange} />
+                                    <Text style={styles.sectionTitle}>Avisos y Notificaciones</Text>
+                                </View>
+                                <TouchableOpacity onPress={() => navigation.navigate('Avisos')}>
+                                    <Text style={styles.verTodasTextMobile}>Ver todos</Text>
+                                </TouchableOpacity>
+                            </View>
+                            {avisos.length > 0 ? (
+                                <View style={styles.carouselBoxOrange}>
+                                    <FlatList
+                                        horizontal
+                                        showsHorizontalScrollIndicator={Platform.OS === 'web'}
+                                        data={avisos}
+                                        keyExtractor={item => item.id.toString()}
+                                        renderItem={({ item, index }) => renderSafeCard(item, true, index === avisos.length - 1)}
+                                        contentContainerStyle={styles.carouselInnerPadding}
+                                    />
+                                </View>
+                            ) : (
+                                <Text style={styles.emptyText}>No hay avisos recientes.</Text>
+                            )}
+                        </View>
+                    )}
+                </ScrollView>
+            </View>
+        </View>
     );
-  };
-
-  return (
-    <View style={{ flex: 1, backgroundColor: Colors.background.main }}>
-      <View style={styles.container}>
-        <ScrollView 
-          contentContainerStyle={{ paddingBottom: insets.bottom + 20 }} 
-          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={fetchData} />}
-        >
-          
-          <View style={styles.welcomeCard}>
-            <Ionicons name="person-circle-outline" size={60} color={Colors.primary.orange} />
-            <Text style={styles.welcomeText}>¡Bienvenido!</Text>
-            <Text style={styles.userName}>{profile?.nombre || user?.email}</Text>
-            {profile?.rol && <Text style={styles.roleLabel}>{profile.rol}</Text>}
-          </View>
-
-          {isDesktop ? (
-            /* VERSIÓN WEB -- Columnas verticales */
-            <View style={styles.columnsContainer}>
-              {/* NOTICIAS */}
-              <View style={styles.column}>
-                <View style={styles.columnHeader}>
-                  <Ionicons name="newspaper-outline" size={24} color={Colors.primary.blue} />
-                  <Text style={styles.columnTitle}>Últimas Noticias</Text>
-                </View>
-
-                {noticias.length > 0 ? (
-                  <View style={styles.columnNoticiasContent}>
-                    {noticias.map((item, index) => renderSafeCard(item, false, index === noticias.length - 1))}
-                  </View>
-                ) : (
-                  <Text style={styles.emptyText}>No hay noticias recientes.</Text>
-                )}
-
-                <TouchableOpacity style={styles.verTodasButton} onPress={() => navigation.navigate('Noticias')}>
-                  <Text style={styles.verTodasText}>Ver todas las noticias</Text>
-                </TouchableOpacity>
-              </View>
-
-              {/* AVISOS */}
-              <View style={styles.column}>
-                <View style={styles.columnHeader}>
-                  <Ionicons name="megaphone-outline" size={24} color={Colors.primary.orange} />
-                  <Text style={styles.columnTitle}>Avisos Recientes</Text>
-                </View>
-
-                {avisos.length > 0 ? (
-                  <View style={styles.columnAvisosContent}>
-                    {avisos.map((item, index) => renderSafeCard(item, false, index === avisos.length - 1))}
-                  </View>
-                ) : (
-                  <Text style={styles.emptyText}>No hay avisos recientes.</Text>
-                )}
-
-                <TouchableOpacity style={styles.verTodasButton} onPress={() => navigation.navigate('Avisos')}>
-                  <Text style={styles.verTodasText}>Ver todos los avisos</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-
-          ) : (
-            /* Versión Mobile (Carruseles Horizontales Enmarcados) */
-            <View style={styles.carouselContainer}>
-              
-              {/* SECCIÓN NOTICIAS */}
-              <View style={styles.sectionHeader}>
-                <View style={styles.titleRow}>
-                  <Ionicons name="newspaper-outline" size={24} color={Colors.primary.blue} />
-                  <Text style={styles.sectionTitle}>Últimas Noticias</Text>
-                </View>
-                <TouchableOpacity onPress={() => navigation.navigate('Noticias')}>
-                  <Text style={styles.verTodasTextMobile}>Ver todas</Text>
-                </TouchableOpacity>
-              </View>
-
-              {noticias.length > 0 ? (
-                <View style={styles.carouselBoxGreen}>
-                  <FlatList
-                    horizontal
-                    showsHorizontalScrollIndicator={Platform.OS === 'web'} 
-                    data={noticias}
-                    keyExtractor={item => item.id.toString()}
-                    renderItem={({ item, index }) => renderSafeCard(item, true, index === noticias.length - 1)}
-                    contentContainerStyle={styles.carouselInnerPadding}
-                  />
-                </View>
-              ) : (
-                <Text style={styles.emptyText}>No hay noticias recientes.</Text>
-              )}
-
-              {/* SECCIÓN AVISOS */}
-              <View style={[styles.sectionHeader, { marginTop: Spacing.xl }]}>
-                <View style={styles.titleRow}>
-                  <Ionicons name="megaphone-outline" size={24} color={Colors.primary.orange} />
-                  <Text style={styles.sectionTitle}>Avisos Recientes</Text>
-                </View>
-                <TouchableOpacity onPress={() => navigation.navigate('Avisos')}>
-                  <Text style={styles.verTodasTextMobile}>Ver todos</Text>
-                </TouchableOpacity>
-              </View>
-
-              {avisos.length > 0 ? (
-                <View style={styles.carouselBoxOrange}>
-                  <FlatList
-                    horizontal
-                    showsHorizontalScrollIndicator={Platform.OS === 'web'}
-                    data={avisos}
-                    keyExtractor={item => item.id.toString()}
-                    renderItem={({ item, index }) => renderSafeCard(item, true, index === avisos.length - 1)}
-                    contentContainerStyle={styles.carouselInnerPadding}
-                  />
-                </View>
-              ) : (
-                <Text style={styles.emptyText}>No hay avisos recientes.</Text>
-              )}
-
-            </View>
-          )}
-
-        </ScrollView>
-      </View>
-    </View>
-  );
 };
-
 const styles = StyleSheet.create({
   container: { flex: 1 },
   welcomeCard: { 

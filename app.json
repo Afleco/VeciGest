@@ -45,7 +45,8 @@
           "photosPermission": "La app necesita acceder a tus fotos para adjuntarlas a las noticias.",
           "cameraPermission": "La app necesita acceder a la cámara para tomar fotos para las noticias."
         }
-      ]
+      ],
+      "@react-native-community/datetimepicker"
     ],
     "experiments": {
       "typedRoutes": true,

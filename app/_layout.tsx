@@ -18,11 +18,11 @@ import Inicio from './(Screens)/Inicio';
 import Login from './(Screens)/Login';
 import MisCuotas from './(Screens)/MisCuotas';
 import Noticias from './(Screens)/Noticias';
+import CederVoto from './(Screens)/Votos';
 
 const Drawer = createDrawerNavigator();
-const isWeb = Platform.OS === 'web';
 
-function WebNavbar({ navigation, isAdmin, esInquilino, setMenuVisible, profile }: any) {
+function WebNavbar({ navigation, isAdmin, esInquilino, puedeCederVoto, setMenuVisible, profile }: any) {
   const currentRouteName = useNavigationState((state) => state?.routes[state.index].name);
 
   const NavItem = ({ name, label }: { name: string; label: string }) => {
@@ -63,6 +63,10 @@ function WebNavbar({ navigation, isAdmin, esInquilino, setMenuVisible, profile }
         <NavItem name="Noticias" label="Noticias" />
         <NavItem name="Avisos" label="Avisos" />
         <NavItem name="Chats" label="Chats" />
+        
+        {/* Lógica de Ceder Votos para Web */}
+        {puedeCederVoto && <NavItem name="Ceder Votos" label="Ceder Votos" />}
+        
         {!esInquilino && <NavItem name="MisCuotas" label="Mis Recibos" />}
         {isAdmin && <NavItem name="Administracion" label="Administración" />}
       </View>
@@ -95,15 +99,16 @@ function CustomDrawerContent(props: any) {
 }
 
 function AppNavigation() {
-  // EXTRAEMOS 'logout' DEL PROVIDER
   const { session, isAdmin, profile, logout } = useAuth();
   const [menuVisible, setMenuVisible] = useState(false);
-  const esInquilino = profile?.rol === 'Inquilino';
   
-  // OBTENEMOS EL ANCHO DE LA PANTALLA EN TIEMPO REAL
+  // Lógica de roles: Solo Propietario, Presidente, Vicepresidente, Secretario, Tesorero, Administrador
+  const esInquilino = profile?.rol === 'Inquilino';
+  const esVecino = profile?.rol === 'Vecino';
+  const puedeCederVoto = !esInquilino && !esVecino;
+
   const { width } = useWindowDimensions();
-  // BREAKPOINT A 1025px (Pantallas superiores a 1000px de ancho se quita el drawer)
-  const isDesktop = width >= 1025; 
+  const isDesktop = width >= 1025;
 
   if (!session) {
     return <Login />;
@@ -117,33 +122,28 @@ function AppNavigation() {
         screenOptions={({ navigation: drawerNav }) => ({
           header: isDesktop
             ? () => <WebNavbar
-                navigation={drawerNav}
-                isAdmin={isAdmin}
-                esInquilino={esInquilino}
-                setMenuVisible={setMenuVisible}
-                profile={profile}
-              />
+              navigation={drawerNav}
+              isAdmin={isAdmin}
+              esInquilino={esInquilino}
+              puedeCederVoto={puedeCederVoto}
+              setMenuVisible={setMenuVisible}
+              profile={profile}
+            />
             : undefined,
           headerStyle: {
             backgroundColor: Colors.background.header,
-            height: isDesktop ? 70 : 100, 
+            height: isDesktop ? 70 : 100,
             elevation: 0,
             shadowOpacity: 0
           },
           headerTintColor: Colors.text.white,
-          // Al definir el estilo del texto pero no sobrescribir el componente,
-          // React Navigation pondrá automáticamente el nombre de la pantalla
           headerTitleStyle: { fontWeight: FontWeights.bold, fontSize: FontSizes.lg },
           headerTitleAlign: 'center',
-
-          // El icono de drawer (headerLeft) se pone solo cuando el header no está sobrescrito
-          
           headerRight: () => (
             <TouchableOpacity onPress={() => setMenuVisible(true)} style={{ marginRight: 20 }}>
               <Ionicons name="person-circle-outline" size={40} color={Colors.base.white} />
             </TouchableOpacity>
           ),
-          
           drawerStyle: { backgroundColor: Colors.background.drawer, width: isDesktop ? 0 : 280 },
           drawerActiveBackgroundColor: Colors.primary.orange,
           drawerActiveTintColor: Colors.base.white,
@@ -162,7 +162,7 @@ function AppNavigation() {
           name="Chats"
           component={Chats}
           options={{
-            drawerIcon: ({ color, size }) => <Ionicons name="home-outline" size={size} color={color} />
+            drawerIcon: ({ color, size }) => <Ionicons name="chatbubbles-outline" size={size} color={color} />
           }}
         />
 
@@ -178,17 +178,31 @@ function AppNavigation() {
           name="Avisos"
           component={Avisos}
           options={{
-            headerTitle: 'Avisos de la Comunidad', // Este texto saldrá arriba en móvil
+            headerTitle: 'Avisos de la Comunidad',
             drawerIcon: ({ color, size }) => <Ionicons name="notifications-outline" size={size} color={color} />
           }}
         />
+
+        {/* Lógica de Ceder Votos para Móvil */}
+        {puedeCederVoto && (
+          <Drawer.Screen
+            name="Ceder Votos"
+            component={CederVoto}
+            options={{
+              headerTitle: 'Cediendo Voto',
+              drawerIcon: ({ color, size }) => (
+                <Ionicons name="swap-horizontal-outline" size={size} color={color} />
+              ),
+            }}
+          />
+        )}
 
         {!esInquilino && (
           <Drawer.Screen
             name="MisCuotas"
             component={MisCuotas}
             options={{
-              headerTitle: 'Mis Recibos', // Personalizamos el título aquí si queremos
+              headerTitle: 'Mis Recibos',
               drawerIcon: ({ color, size }) => <Ionicons name="wallet-outline" size={size} color={color} />
             }}
           />
@@ -207,22 +221,21 @@ function AppNavigation() {
             <Drawer.Screen
               name="GestionCuotas"
               component={GestionCuotas}
-              options={{ 
+              options={{
                 headerTitle: 'Gestión de Cuotas',
-                drawerItemStyle: { display: 'none' } 
+                drawerItemStyle: { display: 'none' }
+              }}
+            />
+            <Drawer.Screen
+              name="GestionUsuarios"
+              component={GestionUsuarios}
+              options={{
+                headerTitle: 'Gestión de Usuarios',
+                drawerItemStyle: { display: 'none' }
               }}
             />
           </>
         )}
-
-        <Drawer.Screen
-          name="GestionUsuarios"
-          component={GestionUsuarios}
-          options={{ 
-            headerTitle: 'Gestión de Usuarios',
-            drawerItemStyle: { display: 'none' } 
-          }}
-        />
       </Drawer.Navigator>
 
       <Modal visible={menuVisible} transparent animationType="fade" onRequestClose={() => setMenuVisible(false)}>
@@ -231,36 +244,29 @@ function AppNavigation() {
             <View style={[styles.popoverMenu, isDesktop && styles.webPopover]}>
               <View style={styles.popoverHeader}>
                 <Ionicons name="person-circle" size={40} color={Colors.primary.blue} />
-                <View style={styles.popoverUserInfo}>
+                <div style={styles.popoverUserInfo as any}>
                   <Text style={styles.popoverName}>{profile?.nombre || 'Usuario'}</Text>
                   <Text style={styles.popoverRole}>{profile?.rol || 'Vecino'}</Text>
-                </View>
+                </div>
               </View>
 
               <View style={styles.divider} />
 
-              <TouchableOpacity
-                style={styles.popoverItem}
-                onPress={() => {
-                  setMenuVisible(false);
-                }}
-              >
+              <TouchableOpacity style={styles.popoverItem} onPress={() => setMenuVisible(false)}>
                 <Ionicons name="notifications-outline" size={22} color={Colors.text.primary} />
                 <Text style={styles.popoverText}>Avisos</Text>
               </TouchableOpacity>
 
-              {/* BOTÓN DE LOGOUT */}
               <TouchableOpacity
                 style={styles.popoverItem}
                 onPress={() => {
                   setMenuVisible(false);
-                  logout(); // LLAMADA A FUNCIÓN DEL AUTHPROVIDER 
+                  logout();
                 }}
               >
                 <Ionicons name="log-out-outline" size={22} color={Colors.status.error} />
                 <Text style={[styles.popoverText, { color: Colors.status.error }]}>Cerrar Sesión</Text>
               </TouchableOpacity>
-
             </View>
           </View>
         </TouchableWithoutFeedback>

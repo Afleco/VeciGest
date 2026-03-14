@@ -3,6 +3,7 @@ import { useNavigation } from '@react-navigation/native';
 import React, { useEffect, useState } from 'react';
 import {
   Alert,
+  Modal,
   Platform,
   ScrollView,
   StyleSheet,
@@ -13,9 +14,11 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { supabase } from '../../lib/supabase';
 import { BorderRadius, Colors, FontSizes, FontWeights, Shadows, Spacing } from '../../styles/theme';
+import CreateMeeting from '../components/CreateMeeting';
 
 const Administracion = () => {
   const [userRole, setUserRole] = useState('');
+  const [showModalReuniones, setShowModalReuniones] = useState(false);
   const navigation = useNavigation<any>();
 
   useEffect(() => {
@@ -25,7 +28,7 @@ const Administracion = () => {
   const getUserRole = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      
+
       if (user) {
         const { data: userData } = await supabase
           .from('usuarios')
@@ -50,42 +53,37 @@ const Administracion = () => {
     }
   };
 
+  const abrirModalReuniones = () => {
+    setShowModalReuniones(true);
+  };
+
   const adminOptions = [
     {
       id: 1,
+      title: 'Reuniones',
+      description: 'Creación de reuniones de la comunidad',
+      icon: 'calendar-number-outline',
+      color: Colors.primary.orange,
+      action: abrirModalReuniones
+    },
+    {
+      id: 2,
       title: 'Gestión de Usuarios',
       description: 'Administrar vecinos y permisos',
       icon: 'people-outline',
       color: Colors.primary.blue,
       action: () => navigation.navigate('GestionUsuarios')
     },
-    // --- ELIMINADA LA GESTIÓN DE NOTICIAS DE AQUÍ ---
     {
       id: 3,
-      title: 'Gestión de Incidencias',
-      description: 'Ver y gestionar reportes',
-      icon: 'warning-outline',
-      color: Colors.primary.green,
-      action: () => showAlert('Próximamente', 'Gestión de incidencias en desarrollo')
-    },
-    {
-      id: 4,
       title: 'Gestión de Cuotas',
       description: 'Control de pagos y recibos',
       icon: 'cash-outline',
       color: Colors.primary.blue,
-      action: () => navigation.navigate('GestionCuotas') 
+      action: () => navigation.navigate('GestionCuotas')
     },
     {
-      id: 5,
-      title: 'Mensajería',
-      description: 'Comunicación con vecinos',
-      icon: 'chatbubbles-outline',
-      color: Colors.primary.orange,
-      action: () => showAlert('Próximamente', 'Sistema de mensajería en desarrollo')
-    },
-    {
-      id: 6,
+      id: 4,
       title: 'Configuración',
       description: 'Ajustes de la comunidad',
       icon: 'settings-outline',
@@ -111,7 +109,7 @@ const Administracion = () => {
         {/* Opciones de Administración */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Opciones Administrativas</Text>
-          
+
           {adminOptions.map((option) => (
             <TouchableOpacity
               key={option.id}
@@ -135,11 +133,27 @@ const Administracion = () => {
         <View style={styles.infoCard}>
           <Ionicons name="information-circle-outline" size={24} color={Colors.primary.blue} />
           <Text style={styles.infoText}>
-            Como {userRole}, tienes acceso a funciones administrativas de la comunidad. 
+            Como {userRole}, tienes acceso a funciones administrativas de la comunidad.
             Las nuevas funcionalidades se irán habilitando en próximas actualizaciones.
           </Text>
         </View>
       </ScrollView>
+
+      {/* --- MODAL DE REUNIONES --- */}
+      <Modal
+        visible={showModalReuniones}
+        animationType="slide"
+        presentationStyle="pageSheet" // Estilo tarjeta en iOS
+        onRequestClose={() => setShowModalReuniones(false)}
+      >
+        <CreateMeeting 
+          onCancel={() => setShowModalReuniones(false)}
+          onSuccess={() => {
+            setShowModalReuniones(false);
+            showAlert('Éxito', 'Reunión programada correctamente');
+          }}
+        />
+      </Modal>
     </SafeAreaView>
   );
 };
