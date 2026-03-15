@@ -245,7 +245,6 @@ function AppNavigation() {
               <View style={styles.popoverHeader}>
                 <Ionicons name="person-circle" size={40} color={Colors.primary.blue} />
                 <View style={styles.popoverUserInfo}>
-                  {/* ELIMINADO numberOfLines={1} para mostrar nombre completo */}
                   <Text style={styles.popoverName}>{profile?.nombre || 'Usuario'}</Text>
                   <Text style={styles.popoverRole}>{profile?.rol || 'Vecino'}</Text>
                 </View>
@@ -393,8 +392,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 60,
     right: 15,
-    // width: 220, <-- ELIMINADO ANCHO FIJO
-    minWidth: 200, // <-- AÑADIDO ANCHO MÍNIMO PARA ESTÉTICA
+    minWidth: 200, 
     backgroundColor: Colors.base.white,
     borderRadius: BorderRadius.lg,
     ...Shadows.medium,
