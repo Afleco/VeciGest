@@ -2,19 +2,19 @@ import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
-  ActivityIndicator,
-  Alert,
-  Animated,
-  Dimensions,
-  FlatList,
-  Modal,
-  Platform,
-  RefreshControl,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-  useWindowDimensions
+    ActivityIndicator,
+    Alert,
+    Animated,
+    Dimensions,
+    FlatList,
+    Modal,
+    Platform,
+    RefreshControl,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
+    useWindowDimensions
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { supabase } from '../../lib/supabase';
@@ -122,6 +122,7 @@ const Avisos = () => {
     };
 
     const openEditModal = (aviso: any) => {
+        slideAnim.setValue(SCREEN_HEIGHT); // Reset de la animación al editar
         setEditingAviso(aviso);
         setModalVisible(true);
     };
@@ -142,9 +143,6 @@ const Avisos = () => {
                             const esAutor = user?.email === item.email_user;
                             const tienePermiso = esDirectiva || esAutor;
 
-                            // LÓGICA DE FILTRADO CORREGIDA:
-                            // Si el aviso es una "notificacion" automática, solo lo renderizamos
-                            // si el usuario conectado es el destinatario (esAutor) o es Directiva.
                             if (item.notificacion === true && !esAutor && !esDirectiva) {
                                 return null;
                             }
@@ -163,7 +161,7 @@ const Avisos = () => {
                         style={[styles.flatList, { maxWidth: getGridMaxWidth(avisos.length) }]}
                         contentContainerStyle={
                             avisos.length > 0
-                                ? [styles.coloredContainer, { paddingBottom: 100 + insets.bottom }]
+                                ? [styles.coloredContainer, { marginBottom: 80 + insets.bottom }]
                                 : { padding: Spacing.lg, paddingBottom: 100 + insets.bottom }
                         }
                         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={fetchAvisos} />}
@@ -174,7 +172,8 @@ const Avisos = () => {
                 )}
             </View>
 
-            <Modal visible={modalVisible} transparent={true} onRequestClose={closeModal} animationType="none">
+            {/* SOLUCIÓN: Cambiado animationType a "fade" para igualar a Noticias */}
+            <Modal visible={modalVisible} transparent={true} onRequestClose={closeModal} animationType="fade">
                 <View style={styles.modalOverlay}>
                     <Animated.View style={[styles.modalContent, { transform: [{ translateY: slideAnim }] }]}>
                         <AddAviso
@@ -189,9 +188,13 @@ const Avisos = () => {
             {esDirectiva && (
                 <TouchableOpacity 
                     style={[styles.fab, { bottom: 20 + insets.bottom }]} 
-                    onPress={() => setModalVisible(true)}
+                    onPress={() => {
+                        slideAnim.setValue(SCREEN_HEIGHT);
+                        setEditingAviso(null);
+                        setModalVisible(true);
+                    }}
                 >
-                    <Ionicons name="add" size={30} color="#FFFFFF" />
+                    <Ionicons name="add" size={32} color="#FFFFFF" />
                 </TouchableOpacity>
             )}
         </View>
@@ -217,7 +220,7 @@ const styles = StyleSheet.create({
         backgroundColor: Colors.primary.green, 
         width: 60, 
         height: 60, 
-        borderRadius: 35, 
+        borderRadius: 30, 
         justifyContent: 'center', 
         alignItems: 'center', 
         elevation: 8,
@@ -231,8 +234,13 @@ const styles = StyleSheet.create({
         backgroundColor: 'white', 
         borderTopLeftRadius: 20, 
         borderTopRightRadius: 20, 
-        height: '75%', 
-        padding: Spacing.lg 
+        height: '90%', 
+        padding: Spacing.lg,
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: -2 },
+        shadowOpacity: 0.25,
+        shadowRadius: 3.84,
+        elevation: 5,
     },
 });
 
