@@ -206,7 +206,7 @@ const AddReunion: React.FC<AddReunionProps> = ({ onSuccess, onCancel, reunionAEd
                         </View>
                     </View>
 
-                    {/* Modal protegido de iOS - Mix de Fade (Fondo) y Slide (Contenido) */}
+                    {/* Modal de DatePicker para iOS. Mix de Fade (Fondo) y Slide (Contenido) */}
                     {showDatePicker && Platform.OS !== 'web' && (
                         Platform.OS === 'ios' ? (
                             <Modal transparent={true} animationType="fade" visible={showDatePicker} onRequestClose={closeIOSDatePicker}>
