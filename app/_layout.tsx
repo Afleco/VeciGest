@@ -244,15 +244,19 @@ function AppNavigation() {
             <View style={[styles.popoverMenu, isDesktop && styles.webPopover]}>
               <View style={styles.popoverHeader}>
                 <Ionicons name="person-circle" size={40} color={Colors.primary.blue} />
-                <div style={styles.popoverUserInfo as any}>
+                <View style={styles.popoverUserInfo}>
+                  {/* ELIMINADO numberOfLines={1} para mostrar nombre completo */}
                   <Text style={styles.popoverName}>{profile?.nombre || 'Usuario'}</Text>
                   <Text style={styles.popoverRole}>{profile?.rol || 'Vecino'}</Text>
-                </div>
+                </View>
               </View>
 
               <View style={styles.divider} />
 
-              <TouchableOpacity style={styles.popoverItem} onPress={() => setMenuVisible(false)}>
+              <TouchableOpacity style={styles.popoverItem} onPress={() => {
+                setMenuVisible(false);
+                // Si tienes ref al navigation puedes navegar, sino cerramos modal al menos
+              }}>
                 <Ionicons name="notifications-outline" size={22} color={Colors.text.primary} />
                 <Text style={styles.popoverText}>Avisos</Text>
               </TouchableOpacity>
@@ -389,7 +393,8 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 60,
     right: 15,
-    width: 220,
+    // width: 220, <-- ELIMINADO ANCHO FIJO
+    minWidth: 200, // <-- AÑADIDO ANCHO MÍNIMO PARA ESTÉTICA
     backgroundColor: Colors.base.white,
     borderRadius: BorderRadius.lg,
     ...Shadows.medium,
@@ -403,12 +408,14 @@ const styles = StyleSheet.create({
   },
   popoverUserInfo: {
     marginLeft: Spacing.sm,
-    flex: 1
+    flex: 1,
+    justifyContent: 'center',
   },
   popoverName: {
     fontSize: FontSizes.md,
     fontWeight: 'bold',
-    color: Colors.text.primary
+    color: Colors.text.primary,
+    marginBottom: 4,
   },
   popoverRole: {
     fontSize: FontSizes.xs,
