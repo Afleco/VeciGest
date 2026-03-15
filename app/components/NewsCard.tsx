@@ -45,20 +45,27 @@ const NewsCard: React.FC<NewsCardProps> = ({
         activeOpacity={0.9} 
         onPress={() => setModalVisible(true)}
       >
-        {imagen && (
-          // Usamos aspectRatio en lugar de height fija para evitar deformación
+        {/* LÓGICA DE IMAGEN UNIFORME */}
+        {imagen ? (
           <Image 
             source={{ uri: imagen }} 
             style={styles.cardImage} 
             resizeMode="cover" 
           />
+        ) : (
+          <View style={[styles.cardImage, styles.placeholderContainer]}>
+            <Ionicons name="image-outline" size={40} color={Colors.text.light} />
+            <Text style={styles.placeholderText}>Sin imagen adjunta</Text>
+          </View>
         )}
         
         <View style={styles.cardContent}>
           <View style={styles.headerRow}>
-            <Text style={styles.title} numberOfLines={2}>{titulo}</Text>
+            {/* Título forzado a 1 línea con puntos suspensivos */}
+            <Text style={styles.title} numberOfLines={1}>{titulo}</Text>
           </View>
           
+          {/* Descripción forzada a 3 líneas exactas de altura */}
           <Text style={styles.description} numberOfLines={3}>
             {cuerpo}
           </Text>
@@ -100,11 +107,7 @@ const NewsCard: React.FC<NewsCardProps> = ({
         transparent={true}
         onRequestClose={() => setModalVisible(false)}
       >
-        {/* Contenedor principal que centra todo y tiene el fondo negro */}
         <View style={styles.modalOverlay}>
-          
-          {/* Solución para Scroll en mobile -> botón invisible que ocupa todo el fondo por detrás. 
-                 Si tocas fuera de la caja blanca, esto lo detecta y cierra el modal. */}
           <Pressable 
             style={StyleSheet.absoluteFill} 
             onPress={() => setModalVisible(false)} 
@@ -136,7 +139,6 @@ const NewsCard: React.FC<NewsCardProps> = ({
               </View>
             </ScrollView>
           </View>
-
         </View>
       </Modal>
     </>
@@ -156,7 +158,20 @@ const styles = StyleSheet.create({
   },
   cardImage: {
     width: '100%',
-    aspectRatio: 16 / 9, // <-- Mantiene la proporción panorámica
+    aspectRatio: 16 / 9, 
+  },
+  placeholderContainer: {
+    backgroundColor: Colors.background.main,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
+  },
+  placeholderText: {
+    color: Colors.text.light,
+    fontSize: FontSizes.sm,
+    marginTop: Spacing.xs,
+    fontStyle: 'italic',
   },
   cardContent: {
     padding: Spacing.md,
@@ -171,12 +186,14 @@ const styles = StyleSheet.create({
     fontWeight: FontWeights.bold,
     color: Colors.text.primary,
     flex: 1,
+    minHeight: 24, // Ocupa exactamente 1 línea
   },
   description: {
     fontSize: FontSizes.sm,
     color: Colors.text.secondary,
     marginBottom: Spacing.md,
     lineHeight: 20,
+    minHeight: 60, // OBLIGA a ocupar el espacio de 3 líneas exactas (20px * 3)
   },
   footer: {
     flexDirection: 'row',
@@ -189,19 +206,19 @@ const styles = StyleSheet.create({
   authorInfo: {
     flexDirection: 'row',
     alignItems: 'center',
-    flex: 1, // Toma el espacio disponible sin empujar a la fecha
-    marginRight: Spacing.sm, // pequeño margen para separar la fecha
+    flex: 1, 
+    marginRight: Spacing.sm, 
   },
   authorText: {
     fontSize: FontSizes.xs,
     color: Colors.text.secondary,
     fontWeight: FontWeights.medium,
-    flexShrink: 1, // Permite que el texto se acorte si falta espacio
+    flexShrink: 1, 
   },
   dateText: {
     fontSize: FontSizes.xs,
     color: Colors.text.light,
-    flexShrink: 0, //Protege a la fecha para que jamás se encoja o deforme
+    flexShrink: 0, 
   },
   actionsBar: {
     flexDirection: 'row',
@@ -224,7 +241,7 @@ const styles = StyleSheet.create({
   },
   
   // --- ESTILOS DEL MODAL ---
-modalOverlay: {
+  modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.5)', 
     justifyContent: 'center',
@@ -235,16 +252,14 @@ modalOverlay: {
     backgroundColor: Colors.base.white,
     borderRadius: BorderRadius.xl,
     overflow: 'hidden',
-    flexShrink: 1, // Permite que el contenedor se encoja si la pantalla es pequeña
-    maxHeight: '75%', // Un pelín menos del 90% suele dar mejor resultado en móviles para no chocar con las barras de estado
-    // ---------------------
+    flexShrink: 1, 
+    maxHeight: '75%', 
     width: '100%',
     maxWidth: 800,
   },
   modalScroll: {
     flexGrow: 1, 
-    paddingBottom: Spacing.xl, // Añade espacio al final para que el texto no se pegue al borde inferior al hacer scroll
-    // ---------------------
+    paddingBottom: Spacing.xl, 
   },
   modalImage: {
     width: '100%',
