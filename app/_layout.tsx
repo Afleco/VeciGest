@@ -108,7 +108,7 @@ function AppNavigation() {
   const puedeCederVoto = !esInquilino && !esVecino;
 
   const { width } = useWindowDimensions();
-  const isDesktop = width >= 1025;
+  const isDesktop = width >= 1366;
 
   if (!session) {
     return <Login />;
