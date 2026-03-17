@@ -49,6 +49,9 @@ function WebNavbar({ navigation, isAdmin, esInquilino, puedeCederVoto, setMenuVi
     );
   };
 
+  // Extraemos solo el primer nombre para la barra superior
+  const primerNombre = profile?.nombre ? profile.nombre.split(' ')[0] : 'Usuario';
+
   return (
     <View style={styles.webHeader}>
       <View style={styles.webHeaderLeft}>
@@ -75,7 +78,7 @@ function WebNavbar({ navigation, isAdmin, esInquilino, puedeCederVoto, setMenuVi
         onPress={() => setMenuVisible(true)}
         style={({ hovered }) => [styles.webProfileBtn, hovered && { opacity: 0.7 }]}
       >
-        <Text style={styles.webProfileName}>{profile?.nombre}</Text>
+        <Text style={styles.webProfileName}>{primerNombre}</Text>
         <Ionicons name="person-circle-outline" size={35} color={Colors.base.white} />
       </Pressable>
     </View>
@@ -108,7 +111,7 @@ function AppNavigation() {
   const puedeCederVoto = !esInquilino && !esVecino;
 
   const { width } = useWindowDimensions();
-  const isDesktop = width >= 1366;
+  const isDesktop = width >= 1280;
 
   if (!session) {
     return <Login />;
@@ -183,7 +186,6 @@ function AppNavigation() {
           }}
         />
 
-        {/* Lógica de Ceder Votos para Móvil */}
         {puedeCederVoto && (
           <Drawer.Screen
             name="Ceder Votos"
@@ -254,7 +256,6 @@ function AppNavigation() {
 
               <TouchableOpacity style={styles.popoverItem} onPress={() => {
                 setMenuVisible(false);
-                // Si tienes ref al navigation puedes navegar, sino cerramos modal al menos
               }}>
                 <Ionicons name="notifications-outline" size={22} color={Colors.text.primary} />
                 <Text style={styles.popoverText}>Avisos</Text>
@@ -355,10 +356,6 @@ const styles = StyleSheet.create({
     marginRight: 10,
     fontWeight: '500'
   },
-  webPopover: {
-    top: 75,
-    right: 40
-  },
   drawerHeader: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -386,27 +383,32 @@ const styles = StyleSheet.create({
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.3)'
+    backgroundColor: 'rgba(0,0,0,0.3)',
+    alignItems: 'flex-end', // Posiciona el contenido a la derecha de forma nativa
   },
   popoverMenu: {
-    position: 'absolute',
-    top: 60,
-    right: 15,
+    marginTop: 60, 
+    marginRight: 15, 
     minWidth: 200, 
+    maxWidth: 260, 
     backgroundColor: Colors.base.white,
     borderRadius: BorderRadius.lg,
     ...Shadows.medium,
-    paddingVertical: Spacing.sm,
+    paddingVertical: Spacing.md, 
+  },
+  webPopover: {
+    marginTop: 75, 
+    marginRight: 40, 
   },
   popoverHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm
+    paddingBottom: Spacing.sm, 
   },
   popoverUserInfo: {
     marginLeft: Spacing.sm,
-    flex: 1,
+    flex: 1, 
     justifyContent: 'center',
   },
   popoverName: {
@@ -414,6 +416,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: Colors.text.primary,
     marginBottom: 4,
+    flexShrink: 1, 
   },
   popoverRole: {
     fontSize: FontSizes.xs,
@@ -427,7 +430,7 @@ const styles = StyleSheet.create({
   popoverItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: Spacing.md,
+    paddingVertical: 10, 
     paddingHorizontal: Spacing.md
   },
   popoverText: {
