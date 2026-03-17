@@ -37,6 +37,19 @@ const NewsCard: React.FC<NewsCardProps> = ({
   const fecha = noticia.fecha;
   const imagen = noticia.imagen_url;
 
+  // Transformar fecha de YYYY-MM-DD a DD-MM-YYYY
+  const formatearFecha = (fechaOriginal: string) => {
+    if (!fechaOriginal) return '';
+    const partesFecha = fechaOriginal.split('-'); // Divide por guiones
+    if (partesFecha.length === 3) {
+      // Retorna en orden: Día - Mes - Año
+      return `${partesFecha[2]}-${partesFecha[1]}-${partesFecha[0]}`;
+    }
+    return fechaOriginal; // Por si viene en otro formato (ej. con horas)
+  };
+
+  const fechaFormateada = formatearFecha(fecha);
+
   return (
     <>
       {/* TARJETA PRINCIPAL (Thumbnail) */}
@@ -75,7 +88,7 @@ const NewsCard: React.FC<NewsCardProps> = ({
               <Ionicons name="person-circle-outline" size={16} color={Colors.text.secondary} />
               <Text style={styles.authorText} numberOfLines={1}> {autorNombre} ({autorRol})</Text>
             </View>
-            <Text style={styles.dateText}>{fecha}</Text>
+            <Text style={styles.dateText}>{fechaFormateada}</Text>
           </View>
 
           {!readOnly && canEdit && (
@@ -130,7 +143,7 @@ const NewsCard: React.FC<NewsCardProps> = ({
                    <View style={styles.badge}>
                       <Text style={styles.badgeText}>{autorRol}</Text>
                    </View>
-                   <Text style={styles.modalDate}>Publicado por {autorNombre} el {fecha}</Text>
+                   <Text style={styles.modalDate}>Publicado por {autorNombre} el {fechaFormateada}</Text>
                 </View>
 
                 <View style={styles.divider} />
