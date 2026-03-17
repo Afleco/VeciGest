@@ -67,8 +67,8 @@ function WebNavbar({ navigation, isAdmin, esInquilino, puedeCederVoto, setMenuVi
         {/* Lógica de Ceder Votos para Web */}
         {puedeCederVoto && <NavItem name="Ceder Votos" label="Ceder Votos" />}
         
-        {!esInquilino && <NavItem name="MisCuotas" label="Mis Recibos" />}
-        {isAdmin && <NavItem name="Administracion" label="Administración" />}
+        {!esInquilino && <NavItem name="Mis Cuotas" label="Mis Cuotas" />}
+        {isAdmin && <NavItem name="Administración" label="Administración" />}
       </View>
 
       <Pressable
@@ -199,10 +199,10 @@ function AppNavigation() {
 
         {!esInquilino && (
           <Drawer.Screen
-            name="MisCuotas"
+            name="Mis Cuotas"
             component={MisCuotas}
             options={{
-              headerTitle: 'Mis Recibos',
+              headerTitle: 'Mis Cuotas',
               drawerIcon: ({ color, size }) => <Ionicons name="wallet-outline" size={size} color={color} />
             }}
           />
@@ -211,7 +211,7 @@ function AppNavigation() {
         {isAdmin && (
           <>
             <Drawer.Screen
-              name="Administracion"
+              name="Administración"
               component={Administracion}
               options={{
                 headerTitle: 'Administración',

@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { FlatList, KeyboardAvoidingView, Platform, SafeAreaView, StyleSheet } from 'react-native';
+import { FlatList, KeyboardAvoidingView, Platform, StyleSheet } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { supabase } from '../../lib/supabase';
 import { ChatInput } from '../components/ChatInput';
 import { MessageBubble } from '../components/MessageBubble';
