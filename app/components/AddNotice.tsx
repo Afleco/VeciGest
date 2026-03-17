@@ -171,14 +171,14 @@ const AddNotice: React.FC<AddNoticeProps> = ({ onSuccess, onCancel, noticiaAEdit
 
         <View style={styles.labelRow}>
           <Text style={styles.label}>Título</Text>
-          <Text style={styles.charCount}>{titulo.length}/50</Text>
+          <Text style={styles.charCount}>{titulo.length}/70</Text>
         </View>
         <TextInput
           style={styles.titleInput}
           placeholder="Título de la noticia..."
           value={titulo}
           onChangeText={setTitulo}
-          maxLength={50} // <-- Límite de 50 caracteres
+          maxLength={70} // <-- Límite de 70 caracteres
         />
 
         <Text style={styles.label}>Imagen (Opcional)</Text>
@@ -201,7 +201,7 @@ const AddNotice: React.FC<AddNoticeProps> = ({ onSuccess, onCancel, noticiaAEdit
 
         <View style={styles.labelRow}>
           <Text style={styles.label}>Descripción</Text>
-          <Text style={styles.charCount}>{descripcion.length}/1000</Text>
+          <Text style={styles.charCount}>{descripcion.length}/1050</Text>
         </View>
         <TextInput
           style={styles.bodyInput}
@@ -210,7 +210,7 @@ const AddNotice: React.FC<AddNoticeProps> = ({ onSuccess, onCancel, noticiaAEdit
           value={descripcion}
           onChangeText={setDescripcion}
           textAlignVertical="top"
-          maxLength={1000} // <-- Límite de 1000 caracteres
+          maxLength={1050} // <-- Límite de 1050 caracteres
         />
           
         <View style={styles.buttonRow}>
