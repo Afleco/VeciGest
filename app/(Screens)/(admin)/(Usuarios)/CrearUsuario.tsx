@@ -250,6 +250,7 @@ const CrearUsuario = () => {
                 onChangeText={setConfirmPassword}
                 secureTextEntry
                 editable={!loading}
+                maxLength={64}
               />
             </View>
           </View>
