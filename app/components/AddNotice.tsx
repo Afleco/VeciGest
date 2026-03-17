@@ -176,6 +176,7 @@ const AddNotice: React.FC<AddNoticeProps> = ({ onSuccess, onCancel, noticiaAEdit
         <TextInput
           style={styles.titleInput}
           placeholder="Título de la noticia..."
+          placeholderTextColor={Colors.text.light}
           value={titulo}
           onChangeText={setTitulo}
           maxLength={70} // <-- Límite de 70 caracteres
@@ -206,6 +207,7 @@ const AddNotice: React.FC<AddNoticeProps> = ({ onSuccess, onCancel, noticiaAEdit
         <TextInput
           style={styles.bodyInput}
           placeholder="Escribe los detalles aquí..."
+          placeholderTextColor={Colors.text.light}
           multiline
           value={descripcion}
           onChangeText={setDescripcion}
