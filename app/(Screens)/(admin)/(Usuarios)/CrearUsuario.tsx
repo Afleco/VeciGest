@@ -195,6 +195,7 @@ const CrearUsuario = () => {
                 value={nombre}
                 onChangeText={setNombre}
                 editable={!loading}
+                maxLength={100}
               />
             </View>
           </View>
@@ -213,6 +214,7 @@ const CrearUsuario = () => {
                 keyboardType="email-address"
                 autoCapitalize="none"
                 editable={!loading}
+                maxLength={254}
               />
             </View>
           </View>
@@ -230,6 +232,7 @@ const CrearUsuario = () => {
                 onChangeText={setPassword}
                 secureTextEntry
                 editable={!loading}
+                maxLength={64}
               />
             </View>
           </View>

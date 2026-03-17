@@ -223,6 +223,7 @@ const EditarUsuario = () => {
                       value={nombre}
                       onChangeText={setNombre}
                       editable={!loading}
+                      maxLength={100}
                     />
                   </View>
                 </View>
