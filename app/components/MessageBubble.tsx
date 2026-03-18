@@ -4,7 +4,7 @@ import { BorderRadius, Colors, FontSizes, Shadows, Spacing } from '../../styles/
 interface Props {
   mensaje: string;
   nombre: string;
-  rol: string; // <-- AÑADIDO: Prop para el rol
+  rol: string; 
   fecha: string;
   isMine: boolean;
 }
@@ -15,11 +15,11 @@ export const MessageBubble = ({ mensaje, nombre, rol, fecha, isMine }: Props) =>
   return (
     <View style={[styles.bubble, isMine ? styles.myBubble : styles.otherBubble]}>
       {!isMine && (
-        // SOLUCIÓN: Renderizamos nombre y rol
-        <View style={styles.senderInfo}>
+        // SOLUCIÓN DEFINITIVA: Anidamos los textos para que se comporten como un párrafo único
+        <Text style={styles.senderHeader}>
             <Text style={styles.senderName}>{nombre}</Text>
             <Text style={styles.senderRol}> ({rol})</Text>
-        </View>
+        </Text>
       )}
       <Text style={[styles.text, isMine ? styles.myText : styles.otherText]}>{mensaje}</Text>
       <Text style={[styles.timestamp, isMine ? styles.myTimestamp : styles.otherTimestamp]}>{time}</Text>
@@ -32,6 +32,7 @@ const styles = StyleSheet.create({
     padding: Spacing.md, 
     borderRadius: BorderRadius.lg, 
     marginBottom: Spacing.sm, 
+    // Mantenemos el maxWidth para que la burbuja no ocupe todo el ancho
     maxWidth: '85%', 
     ...Shadows.small 
   },
@@ -40,27 +41,29 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.primary.green, 
     borderBottomRightRadius: 4 
   },
-  // SOLUCIÓN CONTRASTE: Ahora destacan sobre el fondo gris suave de Chats.tsx
   otherBubble: { 
     alignSelf: 'flex-start', 
     backgroundColor: Colors.base.white, 
     borderBottomLeftRadius: 4 
   },
-  senderInfo: {
-    flexDirection: 'row',
-    alignItems: 'baseline', // Alinea el texto por la línea base
+  senderHeader: {
     marginBottom: Spacing.xs,
+    // Forzamos a que el texto herede la alineación base para el anidamiento
+    textAlign: 'left', 
   },
   senderName: { 
-    fontSize: FontSizes.xs, 
+    fontSize: FontSizes.md, 
     fontWeight: 'bold', 
     color: Colors.primary.blue, 
+    // Eliminado flex row y alignments
   },
   senderRol: {
-    fontSize: 10,
+    fontSize: 12,
     color: Colors.text.secondary,
     fontStyle: 'italic',
+    // Eliminado flex row y alignments
   },
+  // --------------------------------------------------------
   text: { 
     fontSize: FontSizes.md,
     lineHeight: 22 
@@ -72,7 +75,7 @@ const styles = StyleSheet.create({
     color: Colors.text.primary 
   },
   timestamp: { 
-    fontSize: 10, 
+    fontSize: 12, 
     alignSelf: 'flex-end', 
     marginTop: Spacing.xs 
   },
