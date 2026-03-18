@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { supabase } from '../../lib/supabase'; // Ajusta la ruta a tu cliente
+import { supabase } from '../../lib/supabase';
 
 export const useGlobalChat = (chatId: number) => {
   const [messages, setMessages] = useState<any[]>([]);
@@ -13,10 +13,11 @@ export const useGlobalChat = (chatId: number) => {
         contenido, 
         created_at, 
         user_email,
-        usuarios:user_email (nombre)
-      `)
+        usuarios:user_email (nombre, rol) 
+      `) 
       .eq('chat_id', chatId)
       .order('created_at', { ascending: false });
+      
     if (error) {
         console.error("❌ Error de Supabase:", error.message);
       } else {

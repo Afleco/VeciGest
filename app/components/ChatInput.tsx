@@ -1,5 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
-import { StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
+import { Platform, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
+import { BorderRadius, Colors, FontSizes, Shadows, Spacing } from '../../styles/theme';
 
 interface Props {
   value: string;
@@ -14,16 +15,54 @@ export const ChatInput = ({ value, onChange, onSend }: Props) => (
       value={value}
       onChangeText={onChange}
       placeholder="Escribe un mensaje..."
+      placeholderTextColor={Colors.text.light}
       multiline
     />
-    <TouchableOpacity onPress={onSend} style={styles.sendBtn}>
-      <Ionicons name="send" size={20} color="white" />
+    <TouchableOpacity 
+      onPress={onSend} 
+      style={[styles.sendBtn, !value.trim() && styles.sendBtnDisabled]}
+      disabled={!value.trim()}
+    >
+      <Ionicons name="send" size={20} color={Colors.base.white} />
     </TouchableOpacity>
   </View>
 );
 
 const styles = StyleSheet.create({
-  container: { flexDirection: 'row', padding: 10, backgroundColor: '#F0F0F0', alignItems: 'center' },
-  input: { flex: 1, backgroundColor: 'white', borderRadius: 25, paddingHorizontal: 15, paddingVertical: 8, marginRight: 8, fontSize: 16 },
-  sendBtn: { backgroundColor: '#075E54', width: 45, height: 45, borderRadius: 25, justifyContent: 'center', alignItems: 'center' }
+  container: { 
+    flexDirection: 'row', 
+    padding: Spacing.md, 
+    backgroundColor: Colors.base.white, 
+    alignItems: 'flex-end',
+    borderTopWidth: 1,
+    borderTopColor: '#E0E0E0',
+  },
+  input: { 
+    flex: 1, 
+    backgroundColor: Colors.background.main, 
+    borderRadius: BorderRadius.xl, 
+    paddingHorizontal: Spacing.lg, 
+    paddingTop: Platform.OS === 'ios' ? 12 : 10,
+    paddingBottom: Platform.OS === 'ios' ? 12 : 10,
+    marginRight: Spacing.md, 
+    fontSize: FontSizes.md,
+    color: Colors.text.primary,
+    maxHeight: 120, // Permite escribir mensajes largos creciendo en altura
+    ...Platform.select({ web: { outlineStyle: 'none' } as any })
+  },
+  sendBtn: { 
+    backgroundColor: Colors.primary.blue, 
+    width: 45, 
+    height: 45, 
+    borderRadius: 25, 
+    justifyContent: 'center', 
+    alignItems: 'center',
+    marginBottom: 2, // Lo alinea perfectamente con la base del input
+    ...Shadows.small
+  },
+  sendBtnDisabled: {
+    backgroundColor: Colors.text.light,
+    elevation: 0,
+    shadowOpacity: 0
+  }
 });
