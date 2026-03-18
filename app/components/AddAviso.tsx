@@ -179,14 +179,15 @@ const AddAviso: React.FC<AddAvisoProps> = ({ onSuccess, onCancel, avisoAEditar }
 
         <View style={styles.labelRow}>
           <Text style={styles.label}>Título</Text>
-          <Text style={styles.charCount}>{titulo.length}/50</Text>
+          <Text style={styles.charCount}>{titulo.length}/70</Text>
         </View>
         <TextInput
           style={styles.titleInput}
           placeholder="Título del aviso..."
+          placeholderTextColor={Colors.text.light}
           value={titulo}
           onChangeText={setTitulo}
-          maxLength={50} // <-- Límite de 50 caracteres
+          maxLength={70} // <-- Límite de 70 caracteres
         />
 
         {/* --- SELECTOR DE IMAGEN (Igual que Noticias) --- */}
@@ -215,11 +216,12 @@ const AddAviso: React.FC<AddAvisoProps> = ({ onSuccess, onCancel, avisoAEditar }
         <TextInput
           style={styles.bodyInput}
           placeholder="Escribe los detalles aquí..."
+          placeholderTextColor={Colors.text.light}
           multiline
           value={descripcion}
           onChangeText={setDescripcion}
           textAlignVertical="top"
-          maxLength={400} // <-- Límite de 500 caracteres
+          maxLength={500} // <-- Límite de 500 caracteres
         />
           
         <View style={styles.buttonRow}>
