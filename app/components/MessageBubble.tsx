@@ -15,7 +15,7 @@ export const MessageBubble = ({ mensaje, nombre, rol, fecha, isMine }: Props) =>
   return (
     <View style={[styles.bubble, isMine ? styles.myBubble : styles.otherBubble]}>
       {!isMine && (
-        // SOLUCIÓN DEFINITIVA: Anidamos los textos para que se comporten como un párrafo único
+        // Anidamos los textos para que se comporten como un párrafo único
         <Text style={styles.senderHeader}>
             <Text style={styles.senderName}>{nombre}</Text>
             <Text style={styles.senderRol}> ({rol})</Text>
@@ -32,7 +32,7 @@ const styles = StyleSheet.create({
     padding: Spacing.md, 
     borderRadius: BorderRadius.lg, 
     marginBottom: Spacing.sm, 
-    // Mantenemos el maxWidth para que la burbuja no ocupe todo el ancho
+    // maxWidth para que la burbuja no ocupe todo el ancho
     maxWidth: '85%', 
     ...Shadows.small 
   },
@@ -55,13 +55,11 @@ const styles = StyleSheet.create({
     fontSize: FontSizes.md, 
     fontWeight: 'bold', 
     color: Colors.primary.blue, 
-    // Eliminado flex row y alignments
   },
   senderRol: {
     fontSize: 12,
     color: Colors.text.secondary,
     fontStyle: 'italic',
-    // Eliminado flex row y alignments
   },
   // --------------------------------------------------------
   text: { 
