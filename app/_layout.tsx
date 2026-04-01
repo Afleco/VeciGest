@@ -13,7 +13,7 @@ import GestionCuotas from './(Screens)/(admin)/GestionCuotas';
 import GestionUsuarios from './(Screens)/(admin)/GestionUsuarios';
 import Administracion from './(Screens)/Administracion';
 import Avisos from './(Screens)/Avisos';
-import Chats from './(Screens)/Chats';
+import Chat from './(Screens)/Chat';
 import Inicio from './(Screens)/Inicio';
 import Login from './(Screens)/Login';
 import MisCuotas from './(Screens)/MisCuotas';
@@ -159,8 +159,8 @@ function AppNavigation() {
         />
 
         <Drawer.Screen
-          name="Chats"
-          component={Chats}
+          name="Chat"
+          component={Chat}
           options={{
             drawerIcon: ({ color, size }) => <Ionicons name="chatbubbles-outline" size={size} color={color} />
           }}
