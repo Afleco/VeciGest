@@ -4,7 +4,7 @@ import { supabase } from '../../lib/supabase';
 export const useGlobalChat = (chatId: number) => {
   const [messages, setMessages] = useState<any[]>([]);
 
-  // 1. Función para traer los mensajes de la DB
+  // Función para traer los mensajes de la DB
   const fetchMessages = async () => {
     const { data, error } = await supabase
       .from('mensajes')
@@ -13,7 +13,7 @@ export const useGlobalChat = (chatId: number) => {
         contenido, 
         created_at, 
         user_email,
-        usuarios:user_email (nombre, rol) 
+        usuarios:user_email (nombre, rol, vivienda_id) 
       `) 
       .eq('chat_id', chatId)
       .order('created_at', { ascending: false });
@@ -27,10 +27,10 @@ export const useGlobalChat = (chatId: number) => {
   };
 
   useEffect(() => {
-    // 2. Al montar el componente, cargamos historial
+    // Al montar el componente, cargamos historial
     fetchMessages();
 
-    // 3. Suscribirse a cambios en tiempo real
+    // Suscribirse a cambios en tiempo real
     const channel = supabase
       .channel(`chat_${chatId}`) // Crea un canal único para este chat
       .on(
@@ -48,7 +48,7 @@ export const useGlobalChat = (chatId: number) => {
       )
       .subscribe();
 
-    // 4. Limpieza al salir
+    // Limpieza al salir
     return () => {
       supabase.removeChannel(channel);
     };

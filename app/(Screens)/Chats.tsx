@@ -62,7 +62,7 @@ export default function Chats() {
 
             return (
               <View>
-                {/* SOLUCIÓN: Separadores de ancho completo con líneas */}
+                {/* Separadores de ancho completo con líneas */}
                 {showDateHeader && (
                   <View style={styles.dateSeparatorContainer}>
                     <View style={styles.dateLine} />
@@ -77,7 +77,8 @@ export default function Chats() {
                 <MessageBubble
                   mensaje={item.contenido}
                   nombre={item.usuarios?.nombre || 'Vecino'}
-                  rol={item.usuarios?.rol || 'Vecino'} // <-- Pasamos el rol
+                  rol={item.usuarios?.rol || 'Vecino'}
+                  vivienda={item.usuarios?.vivienda_id || '--'}
                   fecha={item.created_at}
                   isMine={item.user_email === userEmail}
                 />
@@ -98,7 +99,7 @@ export default function Chats() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    // SOLUCIÓN CONTRASTE: Usamos el fondo gris suave corporativo
+    // fondo gris suave 
     backgroundColor: Colors.background.main, 
   },
   // Estilos para el separador con líneas laterales
