@@ -64,7 +64,7 @@ function WebNavbar({ navigation, isAdmin, esInquilino, puedeCederVoto, setMenuVi
         <NavItem name="Inicio" label="Inicio" />
         <NavItem name="Noticias" label="Noticias" />
         <NavItem name="Avisos" label="Avisos" />
-        <NavItem name="Chats" label="Chats" />
+        <NavItem name="Chat" label="Chat" />
         
         {puedeCederVoto && <NavItem name="Ceder Votos" label="Ceder Votos" />}
         
@@ -393,8 +393,9 @@ const styles = StyleSheet.create({
   popoverMenu: {
     marginTop: 60, 
     marginRight: 15, 
-
-    width: 280, 
+    // medidas flexibles para que se adapte
+    minWidth: 200, 
+    maxWidth: 280, 
     backgroundColor: Colors.base.white,
     borderRadius: BorderRadius.lg,
     ...Shadows.medium,
@@ -406,7 +407,7 @@ const styles = StyleSheet.create({
   },
   popoverHeader: {
     flexDirection: 'row',
-    alignItems: 'center', 
+    alignItems: 'center', //  para equilibrarlo visualmente
     paddingHorizontal: Spacing.md,
     paddingBottom: Spacing.sm, 
   },
@@ -426,20 +427,21 @@ const styles = StyleSheet.create({
   },
   popoverUserInfo: {
     marginLeft: Spacing.md,
-    flex: 1, 
+    // flexShrink: 1 en lugar de flex: 1. 
+    // Permite que el contenedor se expanda a su antojo, pero si llega a los 280px, se encoja.
+    flexShrink: 1, 
     justifyContent: 'center',
   },
   popoverName: {
     fontSize: FontSizes.md,
     fontWeight: 'bold',
     color: Colors.text.primary,
-    // flexShrink obligatorio para que el texto envuelva en un Flex container
-    flexShrink: 1,
+    marginBottom: 4,
+    flexShrink: 1, // Obliga al texto a saltar de línea sin cortar palabras
   },
   popoverRole: {
     fontSize: FontSizes.xs,
     color: Colors.text.secondary,
-    marginTop: 2, 
   },
   divider: {
     height: 1,
