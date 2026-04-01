@@ -49,7 +49,6 @@ function WebNavbar({ navigation, isAdmin, esInquilino, puedeCederVoto, setMenuVi
     );
   };
 
-  // Extraemos solo el primer nombre para la barra superior
   const primerNombre = profile?.nombre ? profile.nombre.split(' ')[0] : 'Usuario';
 
   return (
@@ -67,7 +66,6 @@ function WebNavbar({ navigation, isAdmin, esInquilino, puedeCederVoto, setMenuVi
         <NavItem name="Avisos" label="Avisos" />
         <NavItem name="Chats" label="Chats" />
         
-        {/* Lógica de Ceder Votos para Web */}
         {puedeCederVoto && <NavItem name="Ceder Votos" label="Ceder Votos" />}
         
         {!esInquilino && <NavItem name="Mis Cuotas" label="Mis Cuotas" />}
@@ -105,7 +103,6 @@ function AppNavigation() {
   const { session, isAdmin, profile, logout } = useAuth();
   const [menuVisible, setMenuVisible] = useState(false);
   
-  // Lógica de roles: Solo Propietario, Presidente, Vicepresidente, Secretario, Tesorero, Administrador
   const esInquilino = profile?.rol === 'Inquilino';
   const esVecino = profile?.rol === 'Vecino';
   const puedeCederVoto = !esInquilino && !esVecino;
@@ -245,7 +242,14 @@ function AppNavigation() {
           <View style={styles.modalOverlay}>
             <View style={[styles.popoverMenu, isDesktop && styles.webPopover]}>
               <View style={styles.popoverHeader}>
-                <Ionicons name="person-circle" size={40} color={Colors.primary.blue} />
+                {profile?.vivienda_id ? (
+                  <View style={styles.popoverUnitBadge}>
+                    <Text style={styles.popoverUnitText}>{profile.vivienda_id}</Text>
+                  </View>
+                ) : (
+                  <Ionicons name="person-circle" size={44} color={Colors.primary.blue} />
+                )}
+                
                 <View style={styles.popoverUserInfo}>
                   <Text style={styles.popoverName}>{profile?.nombre || 'Usuario'}</Text>
                   <Text style={styles.popoverRole}>{profile?.rol || 'Vecino'}</Text>
@@ -384,13 +388,13 @@ const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.3)',
-    alignItems: 'flex-end', // Posiciona el contenido a la derecha de forma nativa
+    alignItems: 'flex-end', 
   },
   popoverMenu: {
     marginTop: 60, 
     marginRight: 15, 
-    minWidth: 200, 
-    maxWidth: 260, 
+
+    width: 280, 
     backgroundColor: Colors.base.white,
     borderRadius: BorderRadius.lg,
     ...Shadows.medium,
@@ -402,12 +406,26 @@ const styles = StyleSheet.create({
   },
   popoverHeader: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'center', 
     paddingHorizontal: Spacing.md,
     paddingBottom: Spacing.sm, 
   },
+  popoverUnitBadge: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: Colors.primary.blue,
+    justifyContent: 'center',
+    alignItems: 'center',
+    ...Shadows.small,
+  },
+  popoverUnitText: {
+    color: Colors.base.white,
+    fontSize: FontSizes.sm,
+    fontWeight: FontWeights.bold,
+  },
   popoverUserInfo: {
-    marginLeft: Spacing.sm,
+    marginLeft: Spacing.md,
     flex: 1, 
     justifyContent: 'center',
   },
@@ -415,12 +433,13 @@ const styles = StyleSheet.create({
     fontSize: FontSizes.md,
     fontWeight: 'bold',
     color: Colors.text.primary,
-    marginBottom: 4,
-    flexShrink: 1, 
+    // flexShrink obligatorio para que el texto envuelva en un Flex container
+    flexShrink: 1,
   },
   popoverRole: {
     fontSize: FontSizes.xs,
-    color: Colors.text.secondary
+    color: Colors.text.secondary,
+    marginTop: 2, 
   },
   divider: {
     height: 1,

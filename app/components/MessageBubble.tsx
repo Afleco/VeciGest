@@ -48,9 +48,9 @@ const styles = StyleSheet.create({
     maxWidth: '85%',
   },
   viviendaAvatar: {
-    width: 40,   // Tamaños de la burbuja del avatar
-    height: 40,
-    borderRadius: 20,
+    width: 44,   // Tamaños de la burbuja del avatar
+    height: 44,
+    borderRadius: 22,
     backgroundColor: Colors.primary.blue,
     justifyContent: 'center',
     alignItems: 'center',
@@ -59,7 +59,7 @@ const styles = StyleSheet.create({
   },
   viviendaAvatarText: {
     color: Colors.base.white,
-    fontSize: 12,  // Tamaño de la fuenta del avatar
+    fontSize: 14,  // Tamaño de la fuenta del avatar
     fontWeight: 'bold',
   },
   bubble: { 
