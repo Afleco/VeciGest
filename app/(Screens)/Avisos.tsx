@@ -35,6 +35,7 @@ const Avisos = () => {
 
     const { profile, user } = useAuth();
     
+    // Mantenemos esta lógica porque es necesaria para saber si el usuario puede Editar/Borrar (canEdit)
     const rolesPermitidos = ['Presidente', 'Vicepresidente', 'Secretario', 'Administrador'];
     const esDirectiva = rolesPermitidos.includes(profile?.rol || '');
 
@@ -122,7 +123,7 @@ const Avisos = () => {
     };
 
     const openEditModal = (aviso: any) => {
-        slideAnim.setValue(SCREEN_HEIGHT); // Reset de la animación al editar
+        slideAnim.setValue(SCREEN_HEIGHT); 
         setEditingAviso(aviso);
         setModalVisible(true);
     };
@@ -143,9 +144,7 @@ const Avisos = () => {
                             const esAutor = user?.email === item.email_user;
                             const tienePermiso = esDirectiva || esAutor;
 
-                            if (item.notificacion === true && !esAutor && !esDirectiva) {
-                                return null;
-                            }
+                            // Eliminada la condición que ocultaba las "notificaciones"
 
                             return (
                                 <View style={[styles.cardWrapper, numColumns > 1 && { maxWidth: 400 }]}>
@@ -172,7 +171,6 @@ const Avisos = () => {
                 )}
             </View>
 
-            {/* SOLUCIÓN: Cambiado animationType a "fade" para igualar a Noticias */}
             <Modal visible={modalVisible} transparent={true} onRequestClose={closeModal} animationType="fade">
                 <View style={styles.modalOverlay}>
                     <Animated.View style={[styles.modalContent, { transform: [{ translateY: slideAnim }] }]}>

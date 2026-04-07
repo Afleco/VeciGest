@@ -2,15 +2,15 @@ import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import React, { useCallback, useState } from 'react';
 import {
-  FlatList,
-  Platform,
-  RefreshControl,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  useWindowDimensions,
-  View
+    FlatList,
+    Platform,
+    RefreshControl,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    useWindowDimensions,
+    View
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { supabase } from '../../lib/supabase';
@@ -28,36 +28,17 @@ const Inicio = () => {
 
     const insets = useSafeAreaInsets();
     const { width } = useWindowDimensions();
-    const isDesktop = width >= 1024;
-
-    // Roles que pueden ver todas las notificaciones
-    const rolesPermitidos = ['Presidente', 'Vicepresidente', 'Secretario', 'Administrador'];
-    const esDirectiva = rolesPermitidos.includes(profile?.rol || '');
 
     const fetchData = async () => {
         try {
             setLoading(true);
             const [newsRes, avisosRes] = await Promise.all([
                 supabase.from('noticias').select('*, profiles:email_user(nombre, rol)').order('id', { ascending: false }).limit(5),
-                supabase.from('avisos').select('*, profiles:email_user(nombre, rol)').order('id', { ascending: false }).limit(20) // Aumentamos límite para filtrar después
+                supabase.from('avisos').select('*, profiles:email_user(nombre, rol)').order('id', { ascending: false }).limit(5) 
             ]);
 
             setNoticias(newsRes.data || []);
-
-            // APLICAMOS EL FILTRADO DE NOTIFICACIONES AQUÍ
-            const avisosFiltrados = (avisosRes.data || []).filter(item => {
-                const esDestinatario = user?.email === item.email_user;
-                
-                // Si es notificación, solo pasa si es el destinatario o directiva
-                if (item.notificacion === true) {
-                    return esDestinatario || esDirectiva;
-                }
-                // Si no es notificación (noticia general), pasa siempre
-                return true;
-            });
-
-            // Tomamos solo los 5 primeros después de filtrar
-            setAvisos(avisosFiltrados.slice(0, 5));
+            setAvisos(avisosRes.data || []);
 
         } catch (error: any) {
             console.error('Error:', error.message);
@@ -69,10 +50,21 @@ const Inicio = () => {
 
     useFocusEffect(useCallback(() => { fetchData(); }, [user?.email, profile?.rol]));
 
-    const renderSafeCard = (item: any, isCarousel = false, isLast = false) => {
+    const cardWidth = width > 500 ? 400 : width * 0.75;
+
+    const getCarouselWidth = (itemCount: number) => {
+        if (itemCount === 0) return 'auto';
+        const totalCardsWidth = cardWidth * itemCount;
+        const totalMargins = 12 * (itemCount - 1); // 12px de margen entre tarjetas
+        const totalPaddings = 24; // 12px de padding interior a cada lado
+        return totalCardsWidth + totalMargins + totalPaddings;
+    };
+    // ----------------------------------------------------
+
+    const renderSafeCard = (item: any, isCarousel = true, isLast = false) => {
         const safeData = {
             ...item,
-            titulo: item.titulo || (item.notificacion ? "Notificación" : "Sin título"),
+            titulo: item.titulo || "Sin título",
             contenido: item.contenido || "",
             imagen_url: item.imagen_url,
             created_at: item.fecha || item.created_at || new Date().toISOString(),
@@ -85,7 +77,7 @@ const Inicio = () => {
                 style={[
                     styles.cardWrapper,
                     isCarousel
-                        ? { width: width * 0.75, marginRight: isLast ? 0 : 12, marginBottom: 0 }
+                        ? { width: cardWidth, marginRight: isLast ? 0 : 12, marginBottom: 0 }
                         : { marginBottom: isLast ? 0 : 12 }
                 ]}
             >
@@ -109,102 +101,67 @@ const Inicio = () => {
                         {profile?.rol && <Text style={styles.roleLabel}>{profile.rol}</Text>}
                     </View>
 
-                    {isDesktop ? (
-                        <View style={styles.columnsContainer}>
-                            {/* NOTICIAS */}
-                            <View style={styles.column}>
-                                <View style={styles.columnHeader}>
-                                    <Ionicons name="newspaper-outline" size={24} color={Colors.primary.blue} />
-                                    <Text style={styles.columnTitle}>Últimas Noticias</Text>
-                                </View>
-                                {noticias.length > 0 ? (
-                                    <View style={styles.columnNoticiasContent}>
-                                        {noticias.map((item, index) => renderSafeCard(item, false, index === noticias.length - 1))}
-                                    </View>
-                                ) : (
-                                    <Text style={styles.emptyText}>No hay noticias recientes.</Text>
-                                )}
-                                <TouchableOpacity style={styles.verTodasButton} onPress={() => navigation.navigate('Noticias')}>
-                                    <Text style={styles.verTodasText}>Ver todas las noticias</Text>
-                                </TouchableOpacity>
+                    <View style={styles.carouselContainer}>
+                        {/* SECCIÓN NOTICIAS */}
+                        <View style={styles.sectionHeader}>
+                            <View style={styles.titleRow}>
+                                <Ionicons name="newspaper-outline" size={24} color={Colors.primary.blue} />
+                                <Text style={styles.sectionTitle}>Últimas Noticias</Text>
                             </View>
-
-                            {/* AVISOS Y NOTIFICACIONES */}
-                            <View style={styles.column}>
-                                <View style={styles.columnHeader}>
-                                    <Ionicons name="megaphone-outline" size={24} color={Colors.primary.orange} />
-                                    <Text style={styles.columnTitle}>Avisos y Notificaciones</Text>
-                                </View>
-                                {avisos.length > 0 ? (
-                                    <View style={styles.columnAvisosContent}>
-                                        {avisos.map((item, index) => renderSafeCard(item, false, index === avisos.length - 1))}
-                                    </View>
-                                ) : (
-                                    <Text style={styles.emptyText}>No hay avisos recientes.</Text>
-                                )}
-                                <TouchableOpacity style={styles.verTodasButton} onPress={() => navigation.navigate('Avisos')}>
-                                    <Text style={styles.verTodasText}>Ver todos los avisos</Text>
-                                </TouchableOpacity>
-                            </View>
+                            <TouchableOpacity onPress={() => navigation.navigate('Noticias')}>
+                                <Text style={styles.verTodasTextMobile}>Ver todas</Text>
+                            </TouchableOpacity>
                         </View>
-                    ) : (
-                        <View style={styles.carouselContainer}>
-                            {/* SECCIÓN NOTICIAS MOBILE */}
-                            <View style={styles.sectionHeader}>
-                                <View style={styles.titleRow}>
-                                    <Ionicons name="newspaper-outline" size={24} color={Colors.primary.blue} />
-                                    <Text style={styles.sectionTitle}>Últimas Noticias</Text>
-                                </View>
-                                <TouchableOpacity onPress={() => navigation.navigate('Noticias')}>
-                                    <Text style={styles.verTodasTextMobile}>Ver todas</Text>
-                                </TouchableOpacity>
+                        
+                        {noticias.length > 0 ? (
+                            // Aplicamos el ancho calculado dinámicamente
+                            <View style={[styles.carouselBoxGreen, { width: getCarouselWidth(noticias.length) }]}>
+                                <FlatList
+                                    horizontal
+                                    showsHorizontalScrollIndicator={Platform.OS === 'web'}
+                                    data={noticias}
+                                    keyExtractor={item => item.id.toString()}
+                                    renderItem={({ item, index }) => renderSafeCard(item, true, index === noticias.length - 1)}
+                                    contentContainerStyle={styles.carouselInnerPadding}
+                                />
                             </View>
-                            {noticias.length > 0 ? (
-                                <View style={styles.carouselBoxGreen}>
-                                    <FlatList
-                                        horizontal
-                                        showsHorizontalScrollIndicator={Platform.OS === 'web'}
-                                        data={noticias}
-                                        keyExtractor={item => item.id.toString()}
-                                        renderItem={({ item, index }) => renderSafeCard(item, true, index === noticias.length - 1)}
-                                        contentContainerStyle={styles.carouselInnerPadding}
-                                    />
-                                </View>
-                            ) : (
-                                <Text style={styles.emptyText}>No hay noticias recientes.</Text>
-                            )}
+                        ) : (
+                            <Text style={styles.emptyText}>No hay noticias recientes.</Text>
+                        )}
 
-                            {/* SECCIÓN AVISOS / NOTIFICACIONES MOBILE */}
-                            <View style={[styles.sectionHeader, { marginTop: Spacing.xl }]}>
-                                <View style={styles.titleRow}>
-                                    <Ionicons name="megaphone-outline" size={24} color={Colors.primary.orange} />
-                                    <Text style={styles.sectionTitle}>Avisos y Notificaciones</Text>
-                                </View>
-                                <TouchableOpacity onPress={() => navigation.navigate('Avisos')}>
-                                    <Text style={styles.verTodasTextMobile}>Ver todos</Text>
-                                </TouchableOpacity>
+                        {/* SECCIÓN AVISOS */}
+                        <View style={[styles.sectionHeader, { marginTop: Spacing.xl }]}>
+                            <View style={styles.titleRow}>
+                                <Ionicons name="megaphone-outline" size={24} color={Colors.primary.orange} />
+                                <Text style={styles.sectionTitle}>Últimos Avisos</Text>
                             </View>
-                            {avisos.length > 0 ? (
-                                <View style={styles.carouselBoxOrange}>
-                                    <FlatList
-                                        horizontal
-                                        showsHorizontalScrollIndicator={Platform.OS === 'web'}
-                                        data={avisos}
-                                        keyExtractor={item => item.id.toString()}
-                                        renderItem={({ item, index }) => renderSafeCard(item, true, index === avisos.length - 1)}
-                                        contentContainerStyle={styles.carouselInnerPadding}
-                                    />
-                                </View>
-                            ) : (
-                                <Text style={styles.emptyText}>No hay avisos recientes.</Text>
-                            )}
+                            <TouchableOpacity onPress={() => navigation.navigate('Avisos')}>
+                                <Text style={styles.verTodasTextMobile}>Ver todos</Text>
+                            </TouchableOpacity>
                         </View>
-                    )}
+                        
+                        {avisos.length > 0 ? (
+                            // Aplicamos el ancho calculado dinámicamente
+                            <View style={[styles.carouselBoxOrange, { width: getCarouselWidth(avisos.length) }]}>
+                                <FlatList
+                                    horizontal
+                                    showsHorizontalScrollIndicator={Platform.OS === 'web'}
+                                    data={avisos}
+                                    keyExtractor={item => item.id.toString()}
+                                    renderItem={({ item, index }) => renderSafeCard(item, true, index === avisos.length - 1)}
+                                    contentContainerStyle={styles.carouselInnerPadding}
+                                />
+                            </View>
+                        ) : (
+                            <Text style={styles.emptyText}>No hay avisos recientes.</Text>
+                        )}
+                    </View>
                 </ScrollView>
             </View>
         </View>
     );
 };
+
 const styles = StyleSheet.create({
   container: { flex: 1 },
   welcomeCard: { 
@@ -218,63 +175,47 @@ const styles = StyleSheet.create({
   welcomeText: { fontSize: FontSizes.xxl, fontWeight: FontWeights.bold, color: Colors.text.primary },
   userName: { fontSize: FontSizes.lg, color: Colors.primary.blue, marginTop: Spacing.xs },
   roleLabel: { fontSize: FontSizes.xs, color: Colors.text.secondary, fontStyle: 'italic', marginTop: Spacing.xs },
-  
-  //  estilos web
-  columnsContainer: { flexDirection: 'row', paddingHorizontal: Spacing.md, paddingBottom: Spacing.xl },
-  column: { flex: 1, paddingHorizontal: Spacing.sm },
-  columnHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: Spacing.md, justifyContent: 'center' },
-  columnTitle: { fontSize: FontSizes.lg, fontWeight: FontWeights.bold, marginLeft: 8, color: Colors.text.primary },
-  
-  // Las cajas verticalespadding exacto de 12 por todos lados, un ancho del 100% y centrado.
-  columnNoticiasContent: { 
-    backgroundColor: Colors.primary.green, 
-    padding: 12, // el padding es simétrico porque la última tarjeta ya no tiene margen inferior
-    borderRadius: BorderRadius.md, 
-    ...Shadows.small, 
-    marginBottom: Spacing.sm,
-    width: '100%',
-    maxWidth: 600, // Evita que se deforme en monitores muy anchos
-    alignSelf: 'center'
-  },
-  columnAvisosContent: { 
-    backgroundColor: Colors.primary.orange, 
-    padding: 12, 
-    borderRadius: BorderRadius.md, 
-    ...Shadows.small, 
-    marginBottom: Spacing.sm,
-    width: '100%',
-    maxWidth: 600,
-    alignSelf: 'center'
-  },
-  verTodasButton: { alignSelf: 'center', paddingVertical: Spacing.sm, paddingHorizontal: Spacing.lg, backgroundColor: Colors.base.white, borderRadius: BorderRadius.xl, borderWidth: 1, borderColor: Colors.primary.blue, marginTop: Spacing.sm, marginBottom: Spacing.xl },
-  verTodasText: { color: Colors.primary.blue, fontWeight: 'bold', fontSize: FontSizes.sm },
 
-  // estilos mobile (Carruseles Enmarcados)
   carouselContainer: { paddingBottom: Spacing.xl },
-  sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: Spacing.lg, marginBottom: Spacing.sm }, 
+  
+  sectionHeader: { 
+    flexDirection: 'row', 
+    justifyContent: 'space-between', 
+    alignItems: 'center', 
+    paddingHorizontal: Spacing.sm, 
+    marginBottom: Spacing.sm,
+    width: '100%',
+    maxWidth: '94%', 
+    alignSelf: 'center',
+  }, 
   titleRow: { flexDirection: 'row', alignItems: 'center' },
   sectionTitle: { fontSize: FontSizes.lg, fontWeight: FontWeights.bold, marginLeft: 8, color: Colors.text.primary },
   verTodasTextMobile: { color: Colors.primary.blue, fontWeight: 'bold', fontSize: FontSizes.sm },
   
   carouselBoxGreen: {
     backgroundColor: Colors.primary.green,
-    paddingVertical: 12, 
-    marginHorizontal: Spacing.lg, 
+    paddingTop: 12, 
+    paddingBottom: 0, // El NewsCard ya tiene marginBottom de 12px, así evitamos doble margen inferior
     borderRadius: BorderRadius.md,
+    alignSelf: 'center', 
+    maxWidth: '94%',     
     ...Shadows.small,
   },
   carouselBoxOrange: {
     backgroundColor: Colors.primary.orange,
-    paddingVertical: 12,
-    marginHorizontal: Spacing.lg,
+    paddingTop: 12,
+    paddingBottom: 0, // Mismo balanceo simétrico que arriba
     borderRadius: BorderRadius.md,
+    alignSelf: 'center', 
+    maxWidth: '94%',     
     ...Shadows.small,
   },
+  
   carouselInnerPadding: { 
-    paddingHorizontal: 12, 
+    paddingHorizontal: 12,
+    // flexGrow y justifyContent eliminados para no forzar al motor nativo
   },
   
-  // ESTILOS GENERALES
   emptyText: { textAlign: 'center', color: Colors.text.light, fontStyle: 'italic', marginVertical: Spacing.lg },
   cardWrapper: { width: '100%' },
 });
