@@ -162,6 +162,7 @@ function AppNavigation() {
           name="Chat"
           component={Chat}
           options={{
+            headerTitle: 'Chat de la Comunidad',
             drawerIcon: ({ color, size }) => <Ionicons name="chatbubbles-outline" size={size} color={color} />
           }}
         />
@@ -178,7 +179,6 @@ function AppNavigation() {
           name="Avisos"
           component={Avisos}
           options={{
-            headerTitle: 'Avisos de la Comunidad',
             drawerIcon: ({ color, size }) => <Ionicons name="notifications-outline" size={size} color={color} />
           }}
         />
