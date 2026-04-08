@@ -54,7 +54,8 @@ const Noticias = () => {
       const { data, error } = await supabase
         .from('noticias')
         .select(`*, profiles:email_user ( nombre, rol )`)
-        .order('fecha', { ascending: false });
+        .order('fecha', { ascending: false })
+        .order('id', { ascending: false });
 
       if (error) throw error;
       setNoticias(data || []);
