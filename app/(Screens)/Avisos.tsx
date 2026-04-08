@@ -35,7 +35,6 @@ const Avisos = () => {
 
     const { profile, user } = useAuth();
     
-    // Mantenemos esta lógica porque es necesaria para saber si el usuario puede Editar/Borrar (canEdit)
     const rolesPermitidos = ['Presidente', 'Vicepresidente', 'Secretario', 'Administrador'];
     const esDirectiva = rolesPermitidos.includes(profile?.rol || '');
 
@@ -143,8 +142,6 @@ const Avisos = () => {
                         renderItem={({ item }) => {
                             const esAutor = user?.email === item.email_user;
                             const tienePermiso = esDirectiva || esAutor;
-
-                            // Eliminada la condición que ocultaba las "notificaciones"
 
                             return (
                                 <View style={[styles.cardWrapper, numColumns > 1 && { maxWidth: 400 }]}>
