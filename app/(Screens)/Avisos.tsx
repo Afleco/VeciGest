@@ -58,7 +58,7 @@ const Avisos = () => {
                     *,
                     profiles:usuarios!email_user ( nombre, rol )
                 `)
-                .order('id', { ascending: false });
+                .order('fecha', { ascending: false });
 
             if (error) throw error;
             setAvisos(data || []);
