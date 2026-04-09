@@ -1,14 +1,15 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator, Modal, ScrollView } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { useFocusEffect } from '@react-navigation/native';
+import React, { useCallback, useState } from 'react';
+import { ActivityIndicator, FlatList, Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { supabase } from '../../lib/supabase';
 import { Colors, Shadows } from '../../styles/theme';
-import { Ionicons } from '@expo/vector-icons';
-import CederVoto from '../components/CederVoto'; 
+import CederVoto from '../components/CederVoto';
 
 const ROLES_ADMIN = ['Presidente', 'Vicepresidente', 'Secretario', 'Tesorero', 'Administrador'];
 
 const Reuniones = () => {
-    const [reuniones, setReuniones] = useState([]);
+    const [reuniones, setReuniones] = useState<any[]>([]);
     const [votosCedidos, setVotosCedidos] = useState<number[]>([]);
     const [userRol, setUserRol] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
@@ -17,44 +18,22 @@ const Reuniones = () => {
     const [adminModalVisible, setAdminModalVisible] = useState(false);
     const [listaVotosAdmin, setListaVotosAdmin] = useState<any[]>([]);
 
-    useEffect(() => {
-        cargarDatosIniciales();
-
-        // --- CONFIGURACIÓN REALTIME ---
-        const channel = supabase
-            .channel('cambios_reuniones_votos')
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'votos_cedidos' }, () => {
-                actualizarEstadoVotos();
-            })
-
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'reuniones' }, () => {
-                fetchReuniones();
-            })
-            .subscribe();
-
-        return () => {
-            supabase.removeChannel(channel);
-        };
-    }, []);
-
-    const cargarDatosIniciales = async () => {
-        setLoading(true);
-        await Promise.all([
-            fetchReuniones(),
-            actualizarEstadoVotos()
-        ]);
-        setLoading(false);
+    // Función para obtener fecha local (evitar problemas de zona horaria)
+    const getHoyLocal = () => {
+        const d = new Date();
+        return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().split('T')[0];
     };
 
     const fetchReuniones = async () => {
         try {
-            const hoy = new Date().toISOString().split('T')[0];
-            const { data } = await supabase
+            const hoy = getHoyLocal();
+            const { data, error } = await supabase
                 .from('reuniones')
                 .select('*')
                 .gte('fecha', hoy)
                 .order('fecha', { ascending: true });
             
+            if (error) throw error;
             setReuniones(data || []);
         } catch (error) {
             console.error("Error cargando reuniones:", error);
@@ -86,9 +65,40 @@ const Reuniones = () => {
         }
     };
 
+    const cargarDatosIniciales = async () => {
+        if (reuniones.length === 0) setLoading(true); 
+        
+        await Promise.all([
+            fetchReuniones(),
+            actualizarEstadoVotos()
+        ]);
+        setLoading(false);
+    };
+
+    // useFocusEffect con useCallback
+    useFocusEffect(
+        useCallback(() => {
+            cargarDatosIniciales();
+
+            const channel = supabase
+                .channel('cambios_reuniones_votos')
+                .on('postgres_changes', { event: '*', schema: 'public', table: 'votos_cedidos' }, () => {
+                    actualizarEstadoVotos();
+                })
+                .on('postgres_changes', { event: '*', schema: 'public', table: 'reuniones' }, () => {
+                    fetchReuniones();
+                })
+                .subscribe();
+
+            return () => {
+                supabase.removeChannel(channel);
+            };
+        }, [])
+    );
+
     const abrirAdminVotos = async () => {
         if (reuniones.length === 0) return;
-        const proximaReunion = reuniones[0];
+        const proximaReunion: any = reuniones[0];
         try {
             const { data, error } = await supabase
                 .from('votos_cedidos')
@@ -98,7 +108,9 @@ const Reuniones = () => {
             setListaVotosAdmin(data || []);
             setSelectedReunion(proximaReunion);
             setAdminModalVisible(true);
-        } catch (error) { console.error(error); }
+        } catch (error) { 
+            console.error(error); 
+        }
     };
 
     const renderItem = ({ item }: any) => {
@@ -169,7 +181,7 @@ const Reuniones = () => {
                                 <Ionicons name="close-circle" size={28} color="#ccc" />
                             </TouchableOpacity>
                         </View>
-                        <Text style={styles.reunionSub}>{selectedReunion?.titulo}</Text>
+                        <Text style={styles.reunionSub}>{(selectedReunion as any)?.titulo}</Text>
                         <ScrollView style={styles.votosList}>
                             {listaVotosAdmin.map((v, i) => (
                                 <View key={i} style={styles.votoRow}>

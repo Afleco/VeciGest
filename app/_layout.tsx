@@ -199,7 +199,7 @@ function AppNavigation() {
             name="Reuniones"
             component={ReunionesScreen}
             options={{
-              headerTitle: 'Cediendo Voto',
+              headerTitle: 'Próxima Reuniones',
               drawerIcon: ({ color, size }) => (
                 <Ionicons name="swap-horizontal-outline" size={size} color={color} />
               ),
