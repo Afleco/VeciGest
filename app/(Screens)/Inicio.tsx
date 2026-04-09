@@ -29,12 +29,31 @@ const Inicio = () => {
     const insets = useSafeAreaInsets();
     const { width } = useWindowDimensions();
 
+    // Función para determinar el saludo según la hora local
+    const obtenerSaludo = () => {
+        const horaActual = new Date().getHours();
+        if (horaActual >= 6 && horaActual < 12) {
+            return '¡Buenos días!';
+        } else if (horaActual >= 12 && horaActual < 20) {
+            return '¡Buenas tardes!';
+        } else {
+            return '¡Buenas noches!';
+        }
+    };
+
     const fetchData = async () => {
         try {
             setLoading(true);
             const [newsRes, avisosRes] = await Promise.all([
-                supabase.from('noticias').select('*, profiles:email_user(nombre, rol)').order('fecha', { ascending: false }).order('id', { ascending: false }).limit(5),
-                supabase.from('avisos').select('*, profiles:email_user(nombre, rol)').order('fecha', { ascending: false }).order('id', { ascending: false }).limit(5) 
+                // Doble ordenamiento: Fecha primero, luego ID para desempatar
+                supabase.from('noticias').select('*, profiles:email_user(nombre, rol)')
+                    .order('fecha', { ascending: false })
+                    .order('id', { ascending: false })
+                    .limit(5),
+                supabase.from('avisos').select('*, profiles:email_user(nombre, rol)')
+                    .order('fecha', { ascending: false })
+                    .order('id', { ascending: false })
+                    .limit(5) 
             ]);
 
             setNoticias(newsRes.data || []);
@@ -50,7 +69,8 @@ const Inicio = () => {
 
     useFocusEffect(useCallback(() => { fetchData(); }, [user?.email, profile?.rol]));
 
-    const cardWidth = width > 500 ? 400 : width * 0.75;
+    // --- ANCHO DE LOS CARRUSELES ---
+    const cardWidth = width > 600 ? 400 : width * 0.75;
 
     const getCarouselWidth = (itemCount: number) => {
         if (itemCount === 0) return 'auto';
@@ -59,9 +79,9 @@ const Inicio = () => {
         const totalPaddings = 24; // 12px de padding interior a cada lado
         return totalCardsWidth + totalMargins + totalPaddings;
     };
-    // ----------------------------------------------------
+    // --------------------------------------------------------
 
-    const renderSafeCard = (item: any, isCarousel = true, isLast = false) => {
+    const renderSafeCard = (item: any, isLast = false) => {
         const safeData = {
             ...item,
             titulo: item.titulo || "Sin título",
@@ -76,9 +96,7 @@ const Inicio = () => {
                 key={item.id}
                 style={[
                     styles.cardWrapper,
-                    isCarousel
-                        ? { width: cardWidth, marginRight: isLast ? 0 : 12, marginBottom: 0 }
-                        : { marginBottom: isLast ? 0 : 12 }
+                    { width: cardWidth, marginRight: isLast ? 0 : 12, marginBottom: 0 }
                 ]}
             >
                 <NewsCard noticia={safeData} readOnly={true} />
@@ -96,7 +114,7 @@ const Inicio = () => {
 
                     <View style={styles.welcomeCard}>
                         <Ionicons name="person-circle-outline" size={60} color={Colors.primary.orange} />
-                        <Text style={styles.welcomeText}>¡Bienvenido!</Text>
+                        <Text style={styles.welcomeText}>{obtenerSaludo()}</Text>
                         <Text style={styles.userName}>{profile?.nombre || user?.email}</Text>
                         {profile?.rol && <Text style={styles.roleLabel}>{profile.rol}</Text>}
                     </View>
@@ -114,14 +132,13 @@ const Inicio = () => {
                         </View>
                         
                         {noticias.length > 0 ? (
-                            // Aplicamos el ancho calculado dinámicamente
                             <View style={[styles.carouselBoxGreen, { width: getCarouselWidth(noticias.length) }]}>
                                 <FlatList
                                     horizontal
                                     showsHorizontalScrollIndicator={Platform.OS === 'web'}
                                     data={noticias}
                                     keyExtractor={item => item.id.toString()}
-                                    renderItem={({ item, index }) => renderSafeCard(item, true, index === noticias.length - 1)}
+                                    renderItem={({ item, index }) => renderSafeCard(item, index === noticias.length - 1)}
                                     contentContainerStyle={styles.carouselInnerPadding}
                                 />
                             </View>
@@ -141,14 +158,13 @@ const Inicio = () => {
                         </View>
                         
                         {avisos.length > 0 ? (
-                            // Aplicamos el ancho calculado dinámicamente
                             <View style={[styles.carouselBoxOrange, { width: getCarouselWidth(avisos.length) }]}>
                                 <FlatList
                                     horizontal
                                     showsHorizontalScrollIndicator={Platform.OS === 'web'}
                                     data={avisos}
                                     keyExtractor={item => item.id.toString()}
-                                    renderItem={({ item, index }) => renderSafeCard(item, true, index === avisos.length - 1)}
+                                    renderItem={({ item, index }) => renderSafeCard(item, index === avisos.length - 1)}
                                     contentContainerStyle={styles.carouselInnerPadding}
                                 />
                             </View>
@@ -172,10 +188,27 @@ const styles = StyleSheet.create({
     alignItems: 'center', 
     ...Shadows.medium 
   },
-  welcomeText: { fontSize: FontSizes.xxl, fontWeight: FontWeights.bold, color: Colors.text.primary },
-  userName: { fontSize: FontSizes.lg, color: Colors.primary.blue, marginTop: Spacing.xs },
-  roleLabel: { fontSize: FontSizes.xs, color: Colors.text.secondary, fontStyle: 'italic', marginTop: Spacing.xs },
+  welcomeText: { 
+    fontSize: FontSizes.xxl, 
+    fontWeight: FontWeights.bold, 
+    color: Colors.text.primary, 
+    textAlign: 'center' 
+  },
+  userName: { 
+    fontSize: FontSizes.lg, 
+    color: Colors.primary.blue, 
+    marginTop: Spacing.xs, 
+    textAlign: 'center' 
+  },
+  roleLabel: { 
+    fontSize: FontSizes.xs, 
+    color: Colors.text.secondary, 
+    fontStyle: 'italic', 
+    marginTop: Spacing.xs, 
+    textAlign: 'center' 
+  },
 
+  // Estilos del carrusel
   carouselContainer: { paddingBottom: Spacing.xl },
   
   sectionHeader: { 
@@ -195,7 +228,7 @@ const styles = StyleSheet.create({
   carouselBoxGreen: {
     backgroundColor: Colors.primary.green,
     paddingTop: 12, 
-    paddingBottom: 0, // El NewsCard ya tiene marginBottom de 12px, así evitamos doble margen inferior
+    paddingBottom: 0, 
     borderRadius: BorderRadius.md,
     alignSelf: 'center', 
     maxWidth: '94%',     
@@ -204,7 +237,7 @@ const styles = StyleSheet.create({
   carouselBoxOrange: {
     backgroundColor: Colors.primary.orange,
     paddingTop: 12,
-    paddingBottom: 0, // Mismo balanceo simétrico que arriba
+    paddingBottom: 0, 
     borderRadius: BorderRadius.md,
     alignSelf: 'center', 
     maxWidth: '94%',     
@@ -212,8 +245,7 @@ const styles = StyleSheet.create({
   },
   
   carouselInnerPadding: { 
-    paddingHorizontal: 12,
-    // flexGrow y justifyContent eliminados para no forzar al motor nativo
+    paddingHorizontal: 12, 
   },
   
   emptyText: { textAlign: 'center', color: Colors.text.light, fontStyle: 'italic', marginVertical: Spacing.lg },
