@@ -19,11 +19,11 @@ import Inicio from './(Screens)/Inicio';
 import Login from './(Screens)/Login';
 import MisCuotas from './(Screens)/MisCuotas';
 import Noticias from './(Screens)/Noticias';
-import CederVoto from './(Screens)/Votos';
+import ReunionesScreen from './(Screens)/Reuniones';
 
 const Drawer = createDrawerNavigator();
 
-function WebNavbar({ navigation, isAdmin, esInquilino, puedeCederVoto, setMenuVisible, profile }: any) {
+function WebNavbar({ navigation, isAdmin, esInquilino, puedeReunionesScreen, setMenuVisible, profile }: any) {
   const currentRouteName = useNavigationState((state) => state?.routes[state.index].name);
 
   const NavItem = ({ name, label }: { name: string; label: string }) => {
@@ -67,7 +67,7 @@ function WebNavbar({ navigation, isAdmin, esInquilino, puedeCederVoto, setMenuVi
         <NavItem name="Avisos" label="Avisos" />
         <NavItem name="Chat" label="Chat" />
         
-        {puedeCederVoto && <NavItem name="Ceder Votos" label="Ceder Votos" />}
+        {puedeReunionesScreen && <NavItem name="Reuniones" label="Reuniones" />}
         
         {!esInquilino && <NavItem name="Mis Cuotas" label="Mis Cuotas" />}
         {isAdmin && <NavItem name="Administración" label="Administración" />}
@@ -111,7 +111,7 @@ function AppNavigation() {
 
   const esInquilino = profile?.rol === 'Inquilino';
   const esVecino = profile?.rol === 'Vecino';
-  const puedeCederVoto = !esInquilino && !esVecino;
+  const puedeReunionesScreen = !esInquilino && !esVecino;
 
   const { width } = useWindowDimensions();
   const isDesktop = width >= 1280;
@@ -136,7 +136,7 @@ function AppNavigation() {
               navigation={drawerNav}
               isAdmin={isAdmin}
               esInquilino={esInquilino}
-              puedeCederVoto={puedeCederVoto}
+              puedeReunionesScreen={puedeReunionesScreen}
               setMenuVisible={setMenuVisible}
               profile={profile}
             />
@@ -194,10 +194,10 @@ function AppNavigation() {
           }}
         />
 
-        {puedeCederVoto && (
+        {puedeReunionesScreen && (
           <Drawer.Screen
-            name="Ceder Votos"
-            component={CederVoto}
+            name="Reuniones"
+            component={ReunionesScreen}
             options={{
               headerTitle: 'Cediendo Voto',
               drawerIcon: ({ color, size }) => (
