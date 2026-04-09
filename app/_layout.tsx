@@ -7,6 +7,7 @@ import { Image, Modal, Platform, Pressable, StyleSheet, Text, TouchableOpacity, 
 import { BorderRadius, Colors, FontSizes, FontWeights, Shadows, Spacing } from '../styles/theme';
 
 import AuthProvider, { useAuth } from '../providers/AuthProvider';
+import UserProfileModal from './components/UserProfileModal';
 
 // Pantallas
 import GestionCuotas from './(Screens)/(admin)/GestionCuotas';
@@ -101,8 +102,13 @@ function CustomDrawerContent(props: any) {
 
 function AppNavigation() {
   const { session, isAdmin, profile, logout } = useAuth();
+  
+  // Estados para el Popover de opciones
   const [menuVisible, setMenuVisible] = useState(false);
   
+  // Estado para el Modal de Perfil
+  const [profileModalVisible, setProfileModalVisible] = useState(false);
+
   const esInquilino = profile?.rol === 'Inquilino';
   const esVecino = profile?.rol === 'Vecino';
   const puedeCederVoto = !esInquilino && !esVecino;
@@ -113,6 +119,11 @@ function AppNavigation() {
   if (!session) {
     return <Login />;
   }
+
+  const handleOpenProfile = () => {
+    setMenuVisible(false);
+    setProfileModalVisible(true);
+  };
 
   return (
     <>
@@ -237,6 +248,7 @@ function AppNavigation() {
         )}
       </Drawer.Navigator>
 
+      {/* MODAL POPOVER DEL MENÚ DE USUARIO */}
       <Modal visible={menuVisible} transparent animationType="fade" onRequestClose={() => setMenuVisible(false)}>
         <TouchableWithoutFeedback onPress={() => setMenuVisible(false)}>
           <View style={styles.modalOverlay}>
@@ -258,9 +270,12 @@ function AppNavigation() {
 
               <View style={styles.divider} />
 
-              <TouchableOpacity style={styles.popoverItem} onPress={() => {
-                setMenuVisible(false);
-              }}>
+              <TouchableOpacity style={styles.popoverItem} onPress={handleOpenProfile}>
+                <Ionicons name="person-outline" size={22} color={Colors.text.primary} />
+                <Text style={styles.popoverText}>Mi Perfil</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity style={styles.popoverItem} onPress={() => setMenuVisible(false)}>
                 <Ionicons name="notifications-outline" size={22} color={Colors.text.primary} />
                 <Text style={styles.popoverText}>Avisos</Text>
               </TouchableOpacity>
@@ -279,6 +294,13 @@ function AppNavigation() {
           </View>
         </TouchableWithoutFeedback>
       </Modal>
+
+      {/* COMPONENTE DE PERFIL */}
+      <UserProfileModal 
+        visible={profileModalVisible} 
+        onClose={() => setProfileModalVisible(false)} 
+      />
+
     </>
   );
 }
@@ -393,7 +415,6 @@ const styles = StyleSheet.create({
   popoverMenu: {
     marginTop: 60, 
     marginRight: 15, 
-    // medidas flexibles para que se adapte
     minWidth: 200, 
     maxWidth: 280, 
     backgroundColor: Colors.base.white,
@@ -407,7 +428,7 @@ const styles = StyleSheet.create({
   },
   popoverHeader: {
     flexDirection: 'row',
-    alignItems: 'center', //  para equilibrarlo visualmente
+    alignItems: 'center', 
     paddingHorizontal: Spacing.md,
     paddingBottom: Spacing.sm, 
   },
@@ -427,8 +448,6 @@ const styles = StyleSheet.create({
   },
   popoverUserInfo: {
     marginLeft: Spacing.md,
-    // flexShrink: 1 en lugar de flex: 1. 
-    // Permite que el contenedor se expanda a su antojo, pero si llega a los 280px, se encoja.
     flexShrink: 1, 
     justifyContent: 'center',
   },
@@ -437,7 +456,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: Colors.text.primary,
     marginBottom: 4,
-    flexShrink: 1, // Obliga al texto a saltar de línea sin cortar palabras
+    flexShrink: 1, 
   },
   popoverRole: {
     fontSize: FontSizes.xs,
