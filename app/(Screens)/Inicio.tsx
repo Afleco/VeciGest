@@ -29,23 +29,17 @@ const Inicio = () => {
     const insets = useSafeAreaInsets();
     const { width } = useWindowDimensions();
 
-    // Función para determinar el saludo según la hora local
     const obtenerSaludo = () => {
         const horaActual = new Date().getHours();
-        if (horaActual >= 6 && horaActual < 12) {
-            return '¡Buenos días!';
-        } else if (horaActual >= 12 && horaActual < 20) {
-            return '¡Buenas tardes!';
-        } else {
-            return '¡Buenas noches!';
-        }
+        if (horaActual >= 6 && horaActual < 12) return '¡Buenos días!';
+        if (horaActual >= 12 && horaActual < 20) return '¡Buenas tardes!';
+        return '¡Buenas noches!';
     };
 
     const fetchData = async () => {
         try {
             setLoading(true);
             const [newsRes, avisosRes] = await Promise.all([
-                // Doble ordenamiento: Fecha primero, luego ID para desempatar
                 supabase.from('noticias').select('*, profiles:email_user(nombre, rol)')
                     .order('fecha', { ascending: false })
                     .order('id', { ascending: false })
@@ -53,11 +47,23 @@ const Inicio = () => {
                 supabase.from('avisos').select('*, profiles:email_user(nombre, rol)')
                     .order('fecha', { ascending: false })
                     .order('id', { ascending: false })
-                    .limit(5) 
             ]);
 
             setNoticias(newsRes.data || []);
-            setAvisos(avisosRes.data || []);
+
+            // --- FILTRO DE PRIVACIDAD EN INICIO ---
+            if (avisosRes.data) {
+                const avisosFiltrados = avisosRes.data.filter(aviso => {
+                    // Si es notificación privada, solo la ve el receptor
+                    if (aviso.notificacion === true) {
+                        return aviso.email_user === user?.email;
+                    }
+                    // Si no es notificación (público), lo ven todos
+                    return true;
+                }).slice(0, 5); // Limitamos a 5 después de filtrar
+
+                setAvisos(avisosFiltrados);
+            }
 
         } catch (error: any) {
             console.error('Error:', error.message);
@@ -69,22 +75,17 @@ const Inicio = () => {
 
     useFocusEffect(useCallback(() => { fetchData(); }, [user?.email, profile?.rol]));
 
-    // --- ANCHO DE LOS CARRUSELES ---
     const cardWidth = width > 600 ? 400 : width * 0.75;
 
     const getCarouselWidth = (itemCount: number) => {
         if (itemCount === 0) return 'auto';
-        const totalCardsWidth = cardWidth * itemCount;
-        const totalMargins = 12 * (itemCount - 1); // 12px de margen entre tarjetas
-        const totalPaddings = 24; // 12px de padding interior a cada lado
-        return totalCardsWidth + totalMargins + totalPaddings;
+        return (cardWidth * itemCount) + (12 * (itemCount - 1)) + 24;
     };
-    // --------------------------------------------------------
 
     const renderSafeCard = (item: any, isLast = false) => {
         const safeData = {
             ...item,
-            titulo: item.titulo || "Sin título",
+            titulo: item.titulo || (item.notificacion ? "Notificación" : "Sin título"),
             contenido: item.contenido || "",
             imagen_url: item.imagen_url,
             created_at: item.fecha || item.created_at || new Date().toISOString(),
@@ -96,7 +97,7 @@ const Inicio = () => {
                 key={item.id}
                 style={[
                     styles.cardWrapper,
-                    { width: cardWidth, marginRight: isLast ? 0 : 12, marginBottom: 0 }
+                    { width: cardWidth, marginRight: isLast ? 0 : 12 }
                 ]}
             >
                 <NewsCard noticia={safeData} readOnly={true} />
@@ -111,7 +112,6 @@ const Inicio = () => {
                     contentContainerStyle={{ paddingBottom: insets.bottom + 20 }}
                     refreshControl={<RefreshControl refreshing={refreshing} onRefresh={fetchData} />}
                 >
-
                     <View style={styles.welcomeCard}>
                         <Ionicons name="person-circle-outline" size={60} color={Colors.primary.orange} />
                         <Text style={styles.welcomeText}>{obtenerSaludo()}</Text>
@@ -130,7 +130,7 @@ const Inicio = () => {
                                 <Text style={styles.verTodasTextMobile}>Ver todas</Text>
                             </TouchableOpacity>
                         </View>
-                        
+
                         {noticias.length > 0 ? (
                             <View style={[styles.carouselBoxGreen, { width: getCarouselWidth(noticias.length) }]}>
                                 <FlatList
@@ -156,7 +156,7 @@ const Inicio = () => {
                                 <Text style={styles.verTodasTextMobile}>Ver todos</Text>
                             </TouchableOpacity>
                         </View>
-                        
+
                         {avisos.length > 0 ? (
                             <View style={[styles.carouselBoxOrange, { width: getCarouselWidth(avisos.length) }]}>
                                 <FlatList
@@ -178,78 +178,69 @@ const Inicio = () => {
     );
 };
 
+// ... (Estilos se mantienen iguales que tu código original)
 const styles = StyleSheet.create({
-  container: { flex: 1 },
-  welcomeCard: { 
-    backgroundColor: Colors.base.white, 
-    margin: Spacing.lg, 
-    padding: Spacing.xl, 
-    borderRadius: BorderRadius.lg, 
-    alignItems: 'center', 
-    ...Shadows.medium 
-  },
-  welcomeText: { 
-    fontSize: FontSizes.xxl, 
-    fontWeight: FontWeights.bold, 
-    color: Colors.text.primary, 
-    textAlign: 'center' 
-  },
-  userName: { 
-    fontSize: FontSizes.lg, 
-    color: Colors.primary.blue, 
-    marginTop: Spacing.xs, 
-    textAlign: 'center' 
-  },
-  roleLabel: { 
-    fontSize: FontSizes.xs, 
-    color: Colors.text.secondary, 
-    fontStyle: 'italic', 
-    marginTop: Spacing.xs, 
-    textAlign: 'center' 
-  },
-
-  // Estilos del carrusel
-  carouselContainer: { paddingBottom: Spacing.xl },
-  
-  sectionHeader: { 
-    flexDirection: 'row', 
-    justifyContent: 'space-between', 
-    alignItems: 'center', 
-    paddingHorizontal: Spacing.sm, 
-    marginBottom: Spacing.sm,
-    width: '100%',
-    maxWidth: '94%', 
-    alignSelf: 'center',
-  }, 
-  titleRow: { flexDirection: 'row', alignItems: 'center' },
-  sectionTitle: { fontSize: FontSizes.lg, fontWeight: FontWeights.bold, marginLeft: 8, color: Colors.text.primary },
-  verTodasTextMobile: { color: Colors.primary.blue, fontWeight: 'bold', fontSize: FontSizes.sm },
-  
-  carouselBoxGreen: {
-    backgroundColor: Colors.primary.green,
-    paddingTop: 12, 
-    paddingBottom: 0, 
-    borderRadius: BorderRadius.md,
-    alignSelf: 'center', 
-    maxWidth: '94%',     
-    ...Shadows.small,
-  },
-  carouselBoxOrange: {
-    backgroundColor: Colors.primary.orange,
-    paddingTop: 12,
-    paddingBottom: 0, 
-    borderRadius: BorderRadius.md,
-    alignSelf: 'center', 
-    maxWidth: '94%',     
-    ...Shadows.small,
-  },
-  
-  carouselInnerPadding: { 
-    paddingHorizontal: 12, 
-  },
-  
-  emptyText: { textAlign: 'center', color: Colors.text.light, fontStyle: 'italic', marginVertical: Spacing.lg },
-  cardWrapper: { width: '100%' },
+    container: { flex: 1 },
+    welcomeCard: {
+        backgroundColor: Colors.base.white,
+        margin: Spacing.lg,
+        padding: Spacing.xl,
+        borderRadius: BorderRadius.lg,
+        alignItems: 'center',
+        ...Shadows.medium
+    },
+    welcomeText: {
+        fontSize: FontSizes.xxl,
+        fontWeight: FontWeights.bold,
+        color: Colors.text.primary,
+        textAlign: 'center'
+    },
+    userName: {
+        fontSize: FontSizes.lg,
+        color: Colors.primary.blue,
+        marginTop: Spacing.xs,
+        textAlign: 'center'
+    },
+    roleLabel: {
+        fontSize: FontSizes.xs,
+        color: Colors.text.secondary,
+        fontStyle: 'italic',
+        marginTop: Spacing.xs,
+        textAlign: 'center'
+    },
+    carouselContainer: { paddingBottom: Spacing.xl },
+    sectionHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        paddingHorizontal: Spacing.sm,
+        marginBottom: Spacing.sm,
+        width: '100%',
+        maxWidth: '94%',
+        alignSelf: 'center',
+    },
+    titleRow: { flexDirection: 'row', alignItems: 'center' },
+    sectionTitle: { fontSize: FontSizes.lg, fontWeight: FontWeights.bold, marginLeft: 8, color: Colors.text.primary },
+    verTodasTextMobile: { color: Colors.primary.blue, fontWeight: 'bold', fontSize: FontSizes.sm },
+    carouselBoxGreen: {
+        backgroundColor: Colors.primary.green,
+        paddingTop: 12,
+        borderRadius: BorderRadius.md,
+        alignSelf: 'center',
+        maxWidth: '94%',
+        ...Shadows.small,
+    },
+    carouselBoxOrange: {
+        backgroundColor: Colors.primary.orange,
+        paddingTop: 12,
+        borderRadius: BorderRadius.md,
+        alignSelf: 'center',
+        maxWidth: '94%',
+        ...Shadows.small,
+    },
+    carouselInnerPadding: { paddingHorizontal: 12 },
+    emptyText: { textAlign: 'center', color: Colors.text.light, fontStyle: 'italic', marginVertical: Spacing.lg },
+    cardWrapper: { marginBottom: 0 },
 });
 
 export default Inicio;

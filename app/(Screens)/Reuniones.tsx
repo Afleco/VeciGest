@@ -32,7 +32,7 @@ const Reuniones = () => {
                 .select('*')
                 .gte('fecha', hoy)
                 .order('fecha', { ascending: true });
-            
+
             if (error) throw error;
             setReuniones(data || []);
         } catch (error) {
@@ -44,7 +44,7 @@ const Reuniones = () => {
         try {
             const { data: { user } } = await supabase.auth.getUser();
             if (!user) return;
-            
+
             const { data: userData } = await supabase
                 .from('usuarios')
                 .select('vivienda_id, rol')
@@ -57,7 +57,7 @@ const Reuniones = () => {
                     .from('votos_cedidos')
                     .select('id_reunion')
                     .eq('cesor', userData.vivienda_id);
-                
+
                 setVotosCedidos(misVotos?.map(v => Number(v.id_reunion)) || []);
             }
         } catch (error) {
@@ -66,8 +66,8 @@ const Reuniones = () => {
     };
 
     const cargarDatosIniciales = async () => {
-        if (reuniones.length === 0) setLoading(true); 
-        
+        if (reuniones.length === 0) setLoading(true);
+
         await Promise.all([
             fetchReuniones(),
             actualizarEstadoVotos()
@@ -108,8 +108,8 @@ const Reuniones = () => {
             setListaVotosAdmin(data || []);
             setSelectedReunion(proximaReunion);
             setAdminModalVisible(true);
-        } catch (error) { 
-            console.error(error); 
+        } catch (error) {
+            console.error(error);
         }
     };
 
@@ -126,8 +126,8 @@ const Reuniones = () => {
                 </View>
                 <Text style={styles.title}>{item.titulo}</Text>
                 <Text style={styles.description}>{item.descripcion}</Text>
-                <TouchableOpacity 
-                    style={[styles.cederButton, yaCedio && styles.cederButtonDisabled]} 
+                <TouchableOpacity
+                    style={[styles.cederButton, yaCedio && styles.cederButtonDisabled]}
                     onPress={() => { setSelectedReunion(item); setModalVisible(true); }}
                     disabled={yaCedio}
                 >
@@ -148,7 +148,15 @@ const Reuniones = () => {
                     <Text style={styles.adminButtonText}>Ver votos cedidos para la próxima reunión</Text>
                 </TouchableOpacity>
             )}
-
+            {reuniones.length > 0 && (
+                <View style={styles.publicInfoContainer}>
+                    <Ionicons name="alert-circle-outline" size={18} color={Colors.primary.orange} />
+                    <Text style={styles.publicInfoText}>
+                       Las reuniones dejarán de ser visibles al comenzar el día de su celebración (00:00h), 
+                       y por ende el plazo para la cesión de votos acabará en ese mismo momento.
+                    </Text>
+                </View>
+            )}
             <FlatList
                 data={reuniones}
                 keyExtractor={(item) => item.id.toString()}
@@ -165,9 +173,9 @@ const Reuniones = () => {
 
             {/* MODALES */}
             <Modal visible={modalVisible} animationType="slide" transparent={true}>
-                <CederVoto 
-                    reunion={selectedReunion} 
-                    onClose={() => setModalVisible(false)} 
+                <CederVoto
+                    reunion={selectedReunion}
+                    onClose={() => setModalVisible(false)}
                     onSuccess={() => { setModalVisible(false); actualizarEstadoVotos(); }}
                 />
             </Modal>
@@ -187,7 +195,7 @@ const Reuniones = () => {
                                 <View key={i} style={styles.votoRow}>
                                     <View style={styles.viviendaBox}><Text style={styles.viviendaText}>{v.cesor}</Text></View>
                                     <Ionicons name="arrow-forward" size={16} color="#999" />
-                                    <View style={[styles.viviendaBox, {backgroundColor: '#e8f5e9'}]}><Text style={[styles.viviendaText, {color: '#2e7d32'}]}>{v.receptor}</Text></View>
+                                    <View style={[styles.viviendaBox, { backgroundColor: '#e8f5e9' }]}><Text style={[styles.viviendaText, { color: '#2e7d32' }]}>{v.receptor}</Text></View>
                                 </View>
                             ))}
                         </ScrollView>
@@ -202,179 +210,199 @@ const Reuniones = () => {
 };
 
 const styles = StyleSheet.create({
-    container: { 
-        flex: 1, 
-        backgroundColor: Colors.background.main 
+    container: {
+        flex: 1,
+        backgroundColor: Colors.background.main
     },
-    center: { 
-        flex: 1, 
-        justifyContent: 'center', 
-        alignItems: 'center' 
+    center: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center'
     },
-    listContent: { 
-        padding: 16, 
-        flexGrow: 1 
+    listContent: {
+        padding: 16,
+        flexGrow: 1
     },
-    adminButton: { 
-        flexDirection: 'row', 
-        backgroundColor: '#1a2a3a', 
-        margin: 16, 
-        padding: 16, 
-        borderRadius: 12, 
-        justifyContent: 'center', 
-        alignItems: 'center', 
-        gap: 10, 
-        ...Shadows.medium 
-    },
-    adminButtonText: { 
-        color: '#fff', 
-        fontWeight: 'bold' 
-    },
-    card: { 
-        backgroundColor: '#fff', 
-        borderRadius: 15, 
-        padding: 16, 
-        marginBottom: 16, 
-        ...Shadows.medium 
-    },
-    cardHeader: { 
-        flexDirection: 'row', 
-        justifyContent: 'space-between', 
+    adminButton: {
+        flexDirection: 'row',
+        backgroundColor: '#1a2a3a',
+        margin: 16,
+        padding: 16,
+        borderRadius: 12,
+        justifyContent: 'center',
         alignItems: 'center',
-        marginBottom: 10 
+        gap: 10,
+        ...Shadows.medium
     },
-    dateBadge: { 
-        flexDirection: 'row', 
-        alignItems: 'center', 
-        gap: 6, 
-        backgroundColor: '#FFF4E5', 
-        paddingHorizontal: 10, 
-        paddingVertical: 4, 
-        borderRadius: 20 
+    adminButtonText: {
+        color: '#fff',
+        fontWeight: 'bold'
     },
-    dateText: { 
-        color: Colors.primary.orange, 
-        fontWeight: 'bold', 
-        fontSize: 13 
+    card: {
+        backgroundColor: '#fff',
+        borderRadius: 15,
+        padding: 16,
+        marginBottom: 16,
+        ...Shadows.medium
     },
-    hourText: { 
-        color: '#888', 
-        fontWeight: '600' 
+    cardHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 10
     },
-    title: { 
-        fontSize: 18, 
-        fontWeight: 'bold', 
-        color: Colors.text.primary, 
-        marginBottom: 6 
+    dateBadge: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 6,
+        backgroundColor: '#FFF4E5',
+        paddingHorizontal: 10,
+        paddingVertical: 4,
+        borderRadius: 20
     },
-    description: { 
-        fontSize: 14, 
-        color: '#666', 
+    dateText: {
+        color: Colors.primary.orange,
+        fontWeight: 'bold',
+        fontSize: 13
+    },
+    hourText: {
+        color: '#888',
+        fontWeight: '600'
+    },
+    title: {
+        fontSize: 18,
+        fontWeight: 'bold',
+        color: Colors.text.primary,
+        marginBottom: 6
+    },
+    description: {
+        fontSize: 14,
+        color: '#666',
         lineHeight: 20,
-        marginBottom: 16 
+        marginBottom: 16
     },
-    cederButton: { 
-        flexDirection: 'row', 
-        backgroundColor: Colors.primary.orange, 
-        padding: 14, 
-        borderRadius: 10, 
-        justifyContent: 'center', 
-        alignItems: 'center', 
-        gap: 8 
+    cederButton: {
+        flexDirection: 'row',
+        backgroundColor: Colors.primary.orange,
+        padding: 14,
+        borderRadius: 10,
+        justifyContent: 'center',
+        alignItems: 'center',
+        gap: 8
     },
-    cederButtonDisabled: { 
-        backgroundColor: '#bbb' 
+    cederButtonDisabled: {
+        backgroundColor: '#bbb'
     },
-    cederButtonText: { 
-        color: '#fff', 
-        fontWeight: 'bold' 
+    cederButtonText: {
+        color: '#fff',
+        fontWeight: 'bold'
     },
-    warningBox: { 
-        flex: 1, 
-        justifyContent: 'center', 
-        alignItems: 'center', 
-        marginTop: 100, 
-        paddingHorizontal: 40 
+    warningBox: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginTop: 100,
+        paddingHorizontal: 40
     },
-    warningTitle: { 
-        fontSize: 20, 
-        fontWeight: 'bold', 
-        color: '#333', 
-        marginTop: 20 
+    warningTitle: {
+        fontSize: 20,
+        fontWeight: 'bold',
+        color: '#333',
+        marginTop: 20
     },
-    warningText: { 
-        textAlign: 'center', 
-        color: '#999', 
-        fontSize: 15, 
-        marginTop: 10, 
-        lineHeight: 22 
+    warningText: {
+        textAlign: 'center',
+        color: '#999',
+        fontSize: 15,
+        marginTop: 10,
+        lineHeight: 22
     },
-    modalOverlay: { 
-        flex: 1, 
-        backgroundColor: 'rgba(0,0,0,0.5)', 
-        justifyContent: 'center', 
-        alignItems: 'center', 
-        padding: 20 
+    modalOverlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0,0,0,0.5)',
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: 20
     },
-    adminModalContent: { 
-        width: '100%', 
-        backgroundColor: '#fff', 
-        borderRadius: 20, 
-        padding: 20, 
-        maxHeight: '80%', 
-        ...Shadows.medium 
+    adminModalContent: {
+        width: '100%',
+        backgroundColor: '#fff',
+        borderRadius: 20,
+        padding: 20,
+        maxHeight: '80%',
+        ...Shadows.medium
     },
-    modalHeader: { 
-        flexDirection: 'row', 
-        justifyContent: 'space-between', 
-        alignItems: 'center', 
-        marginBottom: 5 
+    modalHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 5
     },
-    modalTitle: { 
-        fontSize: 22, 
-        fontWeight: 'bold', 
-        color: '#1a2a3a' 
+    modalTitle: {
+        fontSize: 22,
+        fontWeight: 'bold',
+        color: '#1a2a3a'
     },
-    reunionSub: { 
-        fontSize: 14, 
-        color: Colors.primary.orange, 
-        marginBottom: 20, 
-        fontWeight: '600' 
+    reunionSub: {
+        fontSize: 14,
+        color: Colors.primary.orange,
+        marginBottom: 20,
+        fontWeight: '600'
     },
-    votosList: { 
-        marginVertical: 10 
+    votosList: {
+        marginVertical: 10
     },
-    votoRow: { 
-        flexDirection: 'row', 
-        alignItems: 'center', 
-        justifyContent: 'space-between', 
-        paddingVertical: 10, 
-        borderBottomWidth: 1, 
-        borderBottomColor: '#eee' 
+    votoRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        paddingVertical: 10,
+        borderBottomWidth: 1,
+        borderBottomColor: '#eee'
     },
-    viviendaBox: { 
+    viviendaBox: {
         width: '40%',
-        paddingHorizontal: 12, 
-        paddingVertical: 6, 
-        backgroundColor: '#f0f0f0', 
-        borderRadius: 8, 
-        alignItems: 'center' 
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+        backgroundColor: '#f0f0f0',
+        borderRadius: 8,
+        alignItems: 'center'
     },
-    viviendaText: { 
-        fontWeight: 'bold', 
-        color: '#444' 
+    viviendaText: {
+        fontWeight: 'bold',
+        color: '#444'
     },
-    closeBtn: { 
-        marginTop: 20, 
-        backgroundColor: '#1a2a3a', 
-        padding: 15, 
-        borderRadius: 12, 
-        alignItems: 'center' 
+    closeBtn: {
+        marginTop: 20,
+        backgroundColor: '#1a2a3a',
+        padding: 15,
+        borderRadius: 12,
+        alignItems: 'center'
     },
-    closeBtnText: { 
-        color: '#fff', 
-        fontWeight: 'bold' 
-    }
+    closeBtnText: {
+        color: '#fff',
+        fontWeight: 'bold'
+    },
+    publicInfoContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fff', // Fondo blanco para que resalte sobre el fondo grisáceo
+    marginHorizontal: 16,
+    marginBottom: 16,
+    padding: 12,
+    borderRadius: 12,
+    gap: 10,
+    borderLeftWidth: 4,
+    borderLeftColor: Colors.primary.orange, // Una barrita naranja lateral queda muy profesional
+    ...Shadows.small,
+},
+publicInfoText: {
+    fontSize: 13,
+    color: '#555',
+    flex: 1,
+    lineHeight: 18,
+    fontWeight: '500',
+},
 });
 
 export default Reuniones;

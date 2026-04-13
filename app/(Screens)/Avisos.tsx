@@ -34,7 +34,7 @@ const Avisos = () => {
     const slideAnim = useRef(new Animated.Value(SCREEN_HEIGHT)).current;
 
     const { profile, user } = useAuth();
-    
+
     const rolesPermitidos = ['Presidente', 'Vicepresidente', 'Secretario', 'Administrador'];
     const esDirectiva = rolesPermitidos.includes(profile?.rol || '');
 
@@ -62,7 +62,21 @@ const Avisos = () => {
                 .order('id', { ascending: false });
 
             if (error) throw error;
-            setAvisos(data || []);
+
+            if (data) {
+                // FILTRO CRÍTICO DE PRIVACIDAD:
+                // 1. Si 'notificacion' es false, lo ve todo el mundo (avisos generales).
+                // 2. Si 'notificacion' es true, SOLO lo ve el usuario cuyo email coincide.
+                // Esto evita que la directiva vea notificaciones de votos cedidos a otros.
+                const avisosFiltrados = data.filter(aviso => {
+                    if (aviso.notificacion === true) {
+                        return aviso.email_user === user?.email;
+                    }
+                    return true; // Es un aviso público
+                });
+
+                setAvisos(avisosFiltrados);
+            }
         } catch (error: any) {
             console.error('Error cargando avisos:', error.message);
         } finally {
@@ -123,7 +137,7 @@ const Avisos = () => {
     };
 
     const openEditModal = (aviso: any) => {
-        slideAnim.setValue(SCREEN_HEIGHT); 
+        slideAnim.setValue(SCREEN_HEIGHT);
         setEditingAviso(aviso);
         setModalVisible(true);
     };
@@ -135,14 +149,19 @@ const Avisos = () => {
                     <ActivityIndicator size="large" color={Colors.primary.blue} style={{ marginTop: 20 }} />
                 ) : (
                     <FlatList
-                        key={`grid-${numColumns}`} 
+                        key={`grid-${numColumns}`}
                         data={avisos}
                         keyExtractor={(item) => item.id.toString()}
                         numColumns={numColumns}
                         columnWrapperStyle={numColumns > 1 ? styles.row : undefined}
                         renderItem={({ item }) => {
                             const esAutor = user?.email === item.email_user;
-                            const tienePermiso = esDirectiva || esAutor;
+
+                            // Un directivo puede editar avisos públicos, 
+                            // pero las notificaciones privadas SOLO las gestiona el autor/receptor.
+                            const tienePermiso = item.notificacion
+                                ? esAutor
+                                : (esDirectiva || esAutor);
 
                             return (
                                 <View style={[styles.cardWrapper, numColumns > 1 && { maxWidth: 400 }]}>
@@ -163,7 +182,10 @@ const Avisos = () => {
                         }
                         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={fetchAvisos} />}
                         ListEmptyComponent={
-                            <Text style={styles.emptyText}>No hay avisos hoy.</Text>
+                            <View style={styles.emptyContainer}>
+                                <Ionicons name="notifications-off-outline" size={48} color={Colors.text.light} />
+                                <Text style={styles.emptyText}>No hay avisos ni notificaciones.</Text>
+                            </View>
                         }
                     />
                 )}
@@ -182,8 +204,8 @@ const Avisos = () => {
             </Modal>
 
             {esDirectiva && (
-                <TouchableOpacity 
-                    style={[styles.fab, { bottom: 20 + insets.bottom }]} 
+                <TouchableOpacity
+                    style={[styles.fab, { bottom: 20 + insets.bottom }]}
                     onPress={() => {
                         slideAnim.setValue(SCREEN_HEIGHT);
                         setEditingAviso(null);
@@ -201,7 +223,7 @@ const styles = StyleSheet.create({
     container: { flex: 1 },
     flatList: { width: '100%', alignSelf: 'center' },
     coloredContainer: {
-        backgroundColor: Colors.primary.orange, 
+        backgroundColor: Colors.primary.orange,
         padding: Spacing.md,
         margin: Spacing.md,
         borderRadius: BorderRadius.lg,
@@ -209,16 +231,17 @@ const styles = StyleSheet.create({
     },
     row: { gap: Spacing.md, justifyContent: 'center' },
     cardWrapper: { flex: 1 },
-    emptyText: { textAlign: 'center', color: Colors.text.light, marginTop: 50, fontSize: 16 },
-    fab: { 
-        position: 'absolute', 
-        right: 20, 
-        backgroundColor: Colors.primary.green, 
-        width: 60, 
-        height: 60, 
-        borderRadius: 30, 
-        justifyContent: 'center', 
-        alignItems: 'center', 
+    emptyContainer: { alignItems: 'center', marginTop: 100 },
+    emptyText: { textAlign: 'center', color: Colors.text.light, marginTop: 10, fontSize: 16 },
+    fab: {
+        position: 'absolute',
+        right: 20,
+        backgroundColor: Colors.primary.green,
+        width: 60,
+        height: 60,
+        borderRadius: 30,
+        justifyContent: 'center',
+        alignItems: 'center',
         elevation: 8,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 4 },
@@ -226,11 +249,11 @@ const styles = StyleSheet.create({
         shadowRadius: 4.65,
     },
     modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
-    modalContent: { 
-        backgroundColor: 'white', 
-        borderTopLeftRadius: 20, 
-        borderTopRightRadius: 20, 
-        height: '90%', 
+    modalContent: {
+        backgroundColor: 'white',
+        borderTopLeftRadius: 20,
+        borderTopRightRadius: 20,
+        height: '90%',
         padding: Spacing.lg,
         shadowColor: "#000",
         shadowOffset: { width: 0, height: -2 },
