@@ -178,7 +178,6 @@ const Inicio = () => {
     );
 };
 
-// ... (Estilos se mantienen iguales que tu código original)
 const styles = StyleSheet.create({
     container: { flex: 1 },
     welcomeCard: {
