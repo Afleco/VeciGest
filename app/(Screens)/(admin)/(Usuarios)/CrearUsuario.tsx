@@ -24,7 +24,7 @@ const CrearUsuario = () => {
   const [nombre, setNombre] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState(''); // <-- NUEVO ESTADO
+  const [confirmPassword, setConfirmPassword] = useState(''); 
   const [viviendaId, setViviendaId] = useState('');
   const [rol, setRol] = useState('');
   const [loading, setLoading] = useState(false);
@@ -90,19 +90,17 @@ const CrearUsuario = () => {
     setNombre('');
     setEmail('');
     setPassword('');
-    setConfirmPassword(''); // <-- LIMPIAR ESTADO
+    setConfirmPassword(''); 
     setViviendaId('');
     setRol(roles.length > 0 ? roles[0] : '');
   };
 
   const handleCrearUsuario = async () => {
-    // NUEVO: Verificar que todos los campos y confirmPassword estén rellenos
     if (!nombre.trim() || !email.trim() || !password || !confirmPassword || !rol) {
       showAlert('Error', 'Por favor completa todos los campos obligatorios');
       return;
     }
 
-    // NUEVO: Validar que coincidan
     if (password !== confirmPassword) {
       showAlert('Error', 'Las contraseñas no coinciden. Por favor, verifícalas.');
       return;
@@ -124,6 +122,7 @@ const CrearUsuario = () => {
         },
       });
 
+      // Creamos la identidad segura en Auth (Supabase la encripta y la guarda en su tabla interna)
       const { data: authData, error: authError } = await tempSupabase.auth.signUp({
         email: email.trim(),
         password: password,
@@ -132,12 +131,12 @@ const CrearUsuario = () => {
       if (authError) throw authError;
       if (!authData.user) throw new Error('No se pudo crear el usuario en Auth');
 
+      // Guardamos el perfil público en nuestra tabla 'usuarios' SIN la contraseña
       const { error: insertError } = await supabase
         .from('usuarios')
         .insert({
           email: email.trim(),
           vivienda_id: viviendaId || null,
-          password: password, 
           nombre: nombre.trim(),
           rol: rol,
           auth_id: authData.user.id, 
@@ -237,7 +236,7 @@ const CrearUsuario = () => {
             </View>
           </View>
 
-          {/* Confirmar Contraseña (NUEVO INPUT) */}
+          {/* Confirmar Contraseña */}
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Confirmar Contraseña *</Text>
             <View style={styles.inputContainer}>
