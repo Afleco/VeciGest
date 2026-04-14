@@ -84,7 +84,7 @@ VeciGest/
 │   ├── (Screens)/        # Application screens (Home, Chat, News...)
 │   ├── components/       # Reusable UI components (NewsCard, CustomPicker...)
 │   ├── hooks/            # Custom hooks (e.g., useGlobalChat)
-│   └── providers/        # Global contexts (AuthProvider)
+├── providers/            # Global contexts (AuthProvider)
 ├── lib/                  # External client configuration (Supabase)
 ├── styles/               # Centralized design system (Theme, Colors, Spacing)
 └── assets/               # Static resources, fonts, and images
