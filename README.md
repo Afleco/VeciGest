@@ -1,50 +1,114 @@
-# Welcome to your Expo app 👋
+# 🏡 VeciGest - Comprehensive Community Management Platform
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)
+![React Native](https://img.shields.io/badge/React%20Native-Framework-20232A?logo=react&logoColor=61DAFB)
+![Expo](https://img.shields.io/badge/Expo-Platform-000020?logo=expo&logoColor=white)
+![TypeScript](https://img.shields.io/badge/TypeScript-Language-007ACC?logo=typescript&logoColor=white)
+![Supabase](https://img.shields.io/badge/Supabase-BaaS-3ECF8E?logo=supabase&logoColor=white)
+![License](https://img.shields.io/badge/License-MIT-yellow.svg)
 
-## Get started
+**VeciGest** is a cross-platform application (Web, iOS, and Android) designed to modernize, bring transparency to, and streamline the management of homeowners' associations. It eliminates bureaucratic friction and improves coexistence through real-time communication tools, financial management, and remote democratic participation.
 
-1. Install dependencies
+---
 
-   ```bash
-   npm install
-   ```
+## ✨ Key Features
 
-2. Start the app
+* **👥 Smart Role System:** Dynamically adapted interfaces and permissions for Administrators, Presidents, Vice Presidents, Secretaries, Treasurers, Neighbors, and Tenants.
+* **💬 Real-Time Community Chat:** Instant and secure communication between neighbors using WebSockets, identifying users by their housing unit to protect phone number privacy.
+* **📢 News & Announcements Board:** Management of official communications and community incidents with multimedia support (images) and a strict grid layout (Shrink-wrap).
+* **🗳️ Meetings & Vote Delegation Module:** Interactive schedule of future meetings with a cryptographically secure system for transferring proxy votes between owners (combating absenteeism).
+* **💶 Financial Control:** Tracking of community fees. Neighbors can view their pending receipts, while the board monitors the global debt and delinquency breakdown through a data aggregation engine.
+* **📱 Universal Architecture (Responsive):** Native adaptive design. Utilizes a sidebar menu (*Drawer*) on mobile devices and a top navigation bar (*NavBar*) on desktop environments.
 
-   ```bash
-   npx expo start
-   ```
+---
 
-In the output, you'll find options to open the app in a
+## 🛠️ Technologies & Architecture
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+### Frontend (User App & Admin Panel)
+* **Framework:** React Native + Expo
+* **Language:** TypeScript
+* **Navigation:** React Navigation (Nested Drawer & Bottom Tabs)
+* **State Management & UX:** Context API (`AuthProvider`), native animations (`Animated.spring`), and conditional rendering by platform.
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+### Backend as a Service (BaaS)
+* **Platform:** Supabase
+* **Database:** PostgreSQL with restrictive Row Level Security (RLS) policies.
+* **Authentication:** Supabase Auth (JWT) with OTP password recovery flows.
+* **Storage:** Supabase Storage (Buckets for news and announcement images).
+* **Subscriptions:** Supabase Realtime (for chat and live updates of vote delegations).
 
-## Get a fresh project
+---
 
-When you're ready, run:
+## 🚀 Local Installation & Setup
 
+Follow these steps to run the project in your local environment:
+
+### 1. Clone the repository
 ```bash
-npm run reset-project
+git clone https://github.com/Afleco/VeciGest.git
+cd VeciGest
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+### 2. Install dependencies
+```bash
+npm install
+```
+#### or
+```bash
+yarn install
+```
+### 3. Configure Environment Variables
+Create a file named `.env` in the root of the project and add your Supabase credentials:
+```bash
+EXPO_PUBLIC_SUPABASE_URL=your_supabase_url_here
+EXPO_PUBLIC_SUPABASE_KEY=your_supabase_anon_key_here
+```
 
-## Learn more
+### 4. Start the development server
+```bash
+npx expo start
+```
+Press `w` to open the Web version.
 
-To learn more about developing your project with Expo, look at the following resources:
+Press `a` to open in an Android emulator.
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+Press `i` to open in an iOS simulator.
 
-## Join the community
+Scan the QR code with the Expo Go app to test it on your physical device.
 
-Join our community of developers creating universal apps.
+### 📂 Project Structure
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+```bash
+VeciGest/
+├── app/                  # Main Expo Router directory
+│   ├── (Screens)/        # Application screens (Home, Chat, News...)
+│   ├── components/       # Reusable UI components (NewsCard, CustomPicker...)
+│   ├── hooks/            # Custom hooks (e.g., useGlobalChat)
+├── providers/            # Global contexts (AuthProvider)
+├── lib/                  # External client configuration (Supabase)
+├── styles/               # Centralized design system (Theme, Colors, Spacing)
+└── assets/               # Static resources, fonts, and images
+```
+
+### 🧑‍💻 Authors
+Developed as an Intermodular Project for CIFP Villa de Agüimes:
+
+Lucas Alexandre Caso Rial
+
+Alejandro Fleitas Correa
+
+(Group 4)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
