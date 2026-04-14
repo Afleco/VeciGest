@@ -175,7 +175,7 @@ const Reuniones = () => {
             />
 
             {/* Modal para ceder voto */}
-            <Modal visible={modalVisible} animationType="slide" transparent={true}>
+            <Modal visible={modalVisible} animationType="fade" transparent={true}>
                 <CederVoto
                     reunion={selectedReunion}
                     onClose={() => setModalVisible(false)}
