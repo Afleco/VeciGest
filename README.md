@@ -1,9 +1,11 @@
 # 🏡 VeciGest - Comprehensive Community Management Platform
 
-![React Native](https://img.shields.io/badge/React_Native-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)
-![Expo](https://img.shields.io/badge/Expo-000020?style=for-the-badge&logo=expo&logoColor=white)
-![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white)
-![Supabase](https://img.shields.io/badge/Supabase-181818?style=for-the-badge&logo=supabase&logoColor=3ECF8E)
+![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)
+![React Native](https://img.shields.io/badge/React%20Native-Framework-20232A?logo=react&logoColor=61DAFB)
+![Expo](https://img.shields.io/badge/Expo-Platform-000020?logo=expo&logoColor=white)
+![TypeScript](https://img.shields.io/badge/TypeScript-Language-007ACC?logo=typescript&logoColor=white)
+![Supabase](https://img.shields.io/badge/Supabase-BaaS-3ECF8E?logo=supabase&logoColor=white)
+![License](https://img.shields.io/badge/License-MIT-yellow.svg)
 
 **VeciGest** is a cross-platform application (Web, iOS, and Android) designed to modernize, bring transparency to, and streamline the management of homeowners' associations. It eliminates bureaucratic friction and improves coexistence through real-time communication tools, financial management, and remote democratic participation.
 
@@ -75,6 +77,8 @@ Press `i` to open in an iOS simulator.
 Scan the QR code with the Expo Go app to test it on your physical device.
 
 ### 📂 Project Structure
+
+```bash
 VeciGest/
 ├── app/                  # Main Expo Router directory
 │   ├── (Screens)/        # Application screens (Home, Chat, News...)
@@ -84,7 +88,7 @@ VeciGest/
 ├── lib/                  # External client configuration (Supabase)
 ├── styles/               # Centralized design system (Theme, Colors, Spacing)
 └── assets/               # Static resources, fonts, and images
-
+```
 
 ### 🧑‍💻 Authors
 Developed as an Intermodular Project for CIFP Villa de Agüimes:
