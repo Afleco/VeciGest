@@ -15,7 +15,7 @@ import { BorderRadius, Colors, FontSizes, FontWeights, Shadows, Spacing } from '
 interface ViviendaDeuda {
   id: string;
   unidad: string;
-  nombrePropietario: string; // El nombre real recuperado de la tabla usuarios
+  nombrePropietario: string; 
   totalDeuda: number;
   recibosPendientes: number;
 }
@@ -34,37 +34,40 @@ const GestionCuotas = () => {
 
   const cargarDatos = async () => {
     try {
-      // Descargamos las 3 tablas necesarias
-      const [resViviendas, resCuotas, resUsuarios] = await Promise.all([
-        supabase.from('viviendas').select('*').order('unidad', { ascending: true }),
-        supabase.from('cuotas').select('coste, vivienda_id').eq('pagada', false),
-        supabase.from('usuarios').select('email, nombre') // Necesitamos email para enlazar y nombre para mostrar
-      ]);
+      // Trae las viviendas, cruza con el nombre del usuario y trae solo las cuotas impagadas
+      const { data: viviendas, error } = await supabase
+        .from('viviendas')
+        .select(`
+          unidad,
+          propietario,
+          usuarios!viviendas_propietario_fkey ( nombre ), 
+          cuotas ( coste )
+        `)
+        .eq('cuotas.pagada', false)
+        .order('unidad', { ascending: true });
 
-      if (resViviendas.error) throw resViviendas.error;
-      if (resCuotas.error) throw resCuotas.error;
-      // Si falla usuarios no bloqueamos, pero no saldrán nombres
-      
-      const viviendas = resViviendas.data || [];
-      const cuotas = resCuotas.data || [];
-      const usuarios = resUsuarios.data || [];
+      if (error) throw error;
 
-      // Procesamos los datos
-      const reporte: ViviendaDeuda[] = viviendas.map((vivienda) => {
-        // Calcular deuda 
-        const susCuotas = cuotas.filter(c => c.vivienda_id === vivienda.unidad);
-        const total = susCuotas.reduce((acc, curr) => acc + curr.coste, 0);
+      // Procesamos los datos que ya vienen cruzados desde el servidor
+      const reporte: ViviendaDeuda[] = (viviendas || []).map((vivienda: any) => {
         
-        // Encontrar el nombre real del propietario
-        // vivienda.propietario contiene el EMAIL. Buscamos ese email en la tabla usuarios.
-        const emailPropietario = vivienda.propietario; 
-        const datosUsuario = usuarios.find(u => u.email === emailPropietario);
+        // Calcular la deuda (las cuotas ya vienen filtradas por pagada=false)
+        const susCuotas = vivienda.cuotas || [];
+        const total = susCuotas.reduce((acc: number, curr: any) => acc + curr.coste, 0);
         
-        // Si encontramos al usuario usamos su nombre, si no, mostramos "Sin propietario" o el email como fallback
-        const nombreReal = datosUsuario ? datosUsuario.nombre : (emailPropietario || 'Sin propietario asignado');
+        // Extraer el nombre real 
+        let nombreReal = vivienda.propietario || 'Sin propietario asignado';
+        
+        if (vivienda.usuarios) {
+            if (Array.isArray(vivienda.usuarios) && vivienda.usuarios.length > 0) {
+                nombreReal = vivienda.usuarios[0].nombre;
+            } else if (!Array.isArray(vivienda.usuarios) && vivienda.usuarios.nombre) {
+                nombreReal = vivienda.usuarios.nombre;
+            }
+        }
 
         return {
-          id: vivienda.id || vivienda.unidad,
+          id: vivienda.unidad,
           unidad: vivienda.unidad,
           nombrePropietario: nombreReal,
           totalDeuda: total,
@@ -83,7 +86,7 @@ const GestionCuotas = () => {
       setTotalComunidad(granTotal);
 
     } catch (error) {
-      console.error('Error cargando balance:', error);
+      console.error('Error cargando balance con JOIN:', error);
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -101,7 +104,6 @@ const GestionCuotas = () => {
     if (text) {
       const lowerText = text.toLowerCase();
       const filtered = data.filter(item => 
-        // Buscamos SOLO por Unidad o por el Nombre Real que hemos recuperado
         item.unidad.toLowerCase().includes(lowerText) ||
         item.nombrePropietario.toLowerCase().includes(lowerText)
       );
@@ -123,7 +125,6 @@ const GestionCuotas = () => {
         </View>
         
         <View style={styles.infoContainer}>
-            {/* Aquí muestra el NOMBRE REAL, no el email */}
             <Text style={styles.propietarioText}>{item.nombrePropietario}</Text>
             
             {item.totalDeuda > 0 ? (
@@ -183,119 +184,28 @@ const GestionCuotas = () => {
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Colors.background.main,
-  },
-  summaryHeader: {
-    backgroundColor: Colors.base.white,
-    padding: Spacing.xl,
-    alignItems: 'center',
-    borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
-    ...Shadows.small,
-  },
-  summaryLabel: {
-    fontSize: FontSizes.sm,
-    color: Colors.text.secondary,
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-    marginBottom: Spacing.xs,
-  },
-  summaryAmount: {
-    fontSize: 32,
-    fontWeight: FontWeights.bold,
-    color: Colors.status.error,
-  },
-  content: {
-    flex: 1,
-  },
-  searchContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Colors.base.white,
-    margin: Spacing.lg,
-    paddingHorizontal: Spacing.md,
-    borderRadius: BorderRadius.md,
-    height: 50,
-    ...Shadows.small,
-  },
-  searchIcon: {
-    marginRight: Spacing.sm,
-  },
-  searchInput: {
-    flex: 1,
-    height: 50,
-    fontSize: FontSizes.md,
-    color: Colors.text.primary,
-  },
-  listContent: {
-    paddingHorizontal: Spacing.lg,
-    paddingBottom: Spacing.xxl,
-  },
-  card: {
-    backgroundColor: Colors.base.white,
-    borderRadius: BorderRadius.md,
-    marginBottom: Spacing.md,
-    padding: Spacing.md,
-    ...Shadows.small,
-    borderLeftWidth: 5,
-  },
-  cardDebt: {
-    borderLeftColor: Colors.status.error,
-  },
-  cardClean: {
-    borderLeftColor: Colors.status.success,
-  },
-  cardHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  unidadBadge: {
-    backgroundColor: Colors.background.main,
-    paddingVertical: 6,
-    paddingHorizontal: 10,
-    borderRadius: BorderRadius.sm,
-    marginRight: Spacing.md,
-    minWidth: 50,
-    alignItems: 'center',
-  },
-  unidadText: {
-    fontWeight: 'bold',
-    fontSize: FontSizes.md,
-    color: Colors.text.primary,
-  },
-  infoContainer: {
-    flex: 1,
-  },
-  propietarioText: {
-    fontSize: FontSizes.md,
-    fontWeight: FontWeights.bold,
-    color: Colors.text.primary,
-  },
-  recibosText: {
-    fontSize: FontSizes.xs,
-    color: Colors.status.error,
-    marginTop: 2,
-  },
-  cleanText: {
-    fontSize: FontSizes.xs,
-    color: Colors.status.success,
-    marginTop: 2,
-    fontWeight: '600',
-  },
-  amountContainer: {
-    alignItems: 'flex-end',
-  },
-  amountText: {
-    fontSize: FontSizes.lg,
-    fontWeight: FontWeights.bold,
-  },
-  emptyText: {
-    textAlign: 'center',
-    marginTop: 20,
-    color: Colors.text.secondary,
-  },
+  container: { flex: 1, backgroundColor: Colors.background.main },
+  summaryHeader: { backgroundColor: Colors.base.white, padding: Spacing.xl, alignItems: 'center', borderBottomWidth: 1, borderBottomColor: '#E0E0E0', ...Shadows.small },
+  summaryLabel: { fontSize: FontSizes.sm, color: Colors.text.secondary, textTransform: 'uppercase', letterSpacing: 1, marginBottom: Spacing.xs },
+  summaryAmount: { fontSize: 32, fontWeight: FontWeights.bold, color: Colors.status.error },
+  content: { flex: 1 },
+  searchContainer: { flexDirection: 'row', alignItems: 'center', backgroundColor: Colors.base.white, margin: Spacing.lg, paddingHorizontal: Spacing.md, borderRadius: BorderRadius.md, height: 50, ...Shadows.small },
+  searchIcon: { marginRight: Spacing.sm },
+  searchInput: { flex: 1, height: 50, fontSize: FontSizes.md, color: Colors.text.primary },
+  listContent: { paddingHorizontal: Spacing.lg, paddingBottom: Spacing.xxl },
+  card: { backgroundColor: Colors.base.white, borderRadius: BorderRadius.md, marginBottom: Spacing.md, padding: Spacing.md, ...Shadows.small, borderLeftWidth: 5 },
+  cardDebt: { borderLeftColor: Colors.status.error },
+  cardClean: { borderLeftColor: Colors.status.success },
+  cardHeader: { flexDirection: 'row', alignItems: 'center' },
+  unidadBadge: { backgroundColor: Colors.background.main, paddingVertical: 6, paddingHorizontal: 10, borderRadius: BorderRadius.sm, marginRight: Spacing.md, minWidth: 50, alignItems: 'center' },
+  unidadText: { fontWeight: 'bold', fontSize: FontSizes.md, color: Colors.text.primary },
+  infoContainer: { flex: 1 },
+  propietarioText: { fontSize: FontSizes.md, fontWeight: FontWeights.bold, color: Colors.text.primary },
+  recibosText: { fontSize: FontSizes.xs, color: Colors.status.error, marginTop: 2 },
+  cleanText: { fontSize: FontSizes.xs, color: Colors.status.success, marginTop: 2, fontWeight: '600' },
+  amountContainer: { alignItems: 'flex-end' },
+  amountText: { fontSize: FontSizes.lg, fontWeight: FontWeights.bold },
+  emptyText: { textAlign: 'center', marginTop: 20, color: Colors.text.secondary },
 });
 
 export default GestionCuotas;
