@@ -1,24 +1,32 @@
-# 🏡 VeciGest - Comprehensive Community Management Platform
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/5c9486e9-1bc8-46f5-8f8c-64ec4fa53dae" alt="VeciGest Logo" width="200">
+</p>
 
-![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)
-![React Native](https://img.shields.io/badge/React%20Native-Framework-20232A?logo=react&logoColor=61DAFB)
-![Expo](https://img.shields.io/badge/Expo-Platform-000020?logo=expo&logoColor=white)
-![TypeScript](https://img.shields.io/badge/TypeScript-Language-007ACC?logo=typescript&logoColor=white)
-![Supabase](https://img.shields.io/badge/Supabase-BaaS-3ECF8E?logo=supabase&logoColor=white)
-![License](https://img.shields.io/badge/License-MIT-yellow.svg)
+<h1 align="center">VeciGest</h1>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/version-1.0.0-blue.svg" alt="Version">
+  <img src="https://img.shields.io/badge/React%20Native-Framework-20232A?logo=react&logoColor=61DAFB" alt="React Native">
+  <img src="https://img.shields.io/badge/Expo-Platform-000020?logo=expo&logoColor=white" alt="Expo">
+  <img src="https://img.shields.io/badge/TypeScript-Language-007ACC?logo=typescript&logoColor=white" alt="TypeScript">
+  <img src="https://img.shields.io/badge/Supabase-BaaS-3ECF8E?logo=supabase&logoColor=white" alt="Supabase">
+  <img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License">
+</p>
+
+<img src="https://github.com/user-attachments/assets/cf5653aa-9ec1-48ae-bf04-8ffeb080b67f" align="right" height="460" style="margin-left: 20px;">
+
+### 🏡 Comprehensive Community Management Platform
 
 **VeciGest** is a cross-platform application (Web, iOS, and Android) designed to modernize, bring transparency to, and streamline the management of homeowners' associations. It eliminates bureaucratic friction and improves coexistence through real-time communication tools, financial management, and remote democratic participation.
 
----
+### ✨ Key Features
 
-## ✨ Key Features
-
-* **👥 Smart Role System:** Dynamically adapted interfaces and permissions for Administrators, Presidents, Vice Presidents, Secretaries, Treasurers, Neighbors, and Tenants.
-* **💬 Real-Time Community Chat:** Instant and secure communication between neighbors using WebSockets, identifying users by their housing unit to protect phone number privacy.
-* **📢 News & Announcements Board:** Management of official communications and community incidents with multimedia support (images) and a strict grid layout (Shrink-wrap).
-* **🗳️ Meetings & Vote Delegation Module:** Interactive schedule of future meetings with a cryptographically secure system for transferring proxy votes between owners (combating absenteeism).
-* **💶 Financial Control:** Tracking of community fees. Neighbors can view their pending receipts, while the board monitors the global debt and delinquency breakdown through a data aggregation engine.
-* **📱 Universal Architecture (Responsive):** Native adaptive design. Utilizes a sidebar menu (*Drawer*) on mobile devices and a top navigation bar (*NavBar*) on desktop environments.
+* **👥 Smart Role System:** Dynamically adapted interfaces and permissions for all community members.
+* **💬 Real-Time Community Chat:** Instant communication between neighbors using WebSockets.
+* **📢 News & Announcements:** Management of official communications and incidents.
+* **🗳️ Meetings & Vote Delegation:** Secure system for transferring proxy votes.
+* **💶 Financial Control:** Tracking of fees, pending receipts, and delinquency.
+* **📱 Universal Architecture:** Native adaptive design for Mobile and Desktop.
 
 ---
 
