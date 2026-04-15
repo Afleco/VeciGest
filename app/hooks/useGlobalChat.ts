@@ -65,3 +65,5 @@ export const useGlobalChat = (chatId: number) => {
 
   return { messages, sendMessage };
 };
+
+export default useGlobalChat;

@@ -66,3 +66,5 @@ const styles = StyleSheet.create({
     shadowOpacity: 0
   }
 });
+
+export default ChatInput;

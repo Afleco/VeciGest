@@ -1,8 +1,9 @@
 import { Ionicons } from '@expo/vector-icons';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import React from 'react';
+import { Platform } from 'react-native'; // <-- Asegúrate de tener Platform importado
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Colors, FontSizes } from '../../../styles/theme';
+import { Colors } from '../../../styles/theme';
 
 // Importar las pantallas de gestión
 import CrearUsuario from './(Usuarios)/CrearUsuario';
@@ -13,7 +14,7 @@ import ListarUsuarios from './(Usuarios)/ListarUsuarios';
 const Tab = createBottomTabNavigator();
 
 const GestionUsuarios = () => {
-  const insets = useSafeAreaInsets(); // <-- DETECTA EL BORDE INFERIOR DEL MÓVIL
+  const insets = useSafeAreaInsets(); 
 
   return (
     <Tab.Navigator
@@ -21,17 +22,27 @@ const GestionUsuarios = () => {
         headerShown: false,
         tabBarActiveTintColor: Colors.primary.orange,
         tabBarInactiveTintColor: Colors.text.light,
+        
+        // Forzamos a que siempre esté debajo 
+        tabBarLabelPosition: 'below-icon', 
+        
         tabBarStyle: {
           backgroundColor: Colors.base.white,
           borderTopWidth: 1,
           borderTopColor: Colors.background.main,
-          height: 60 + insets.bottom, // <-- SUMA EL ESPACIO EXTRA DEL MÓVIL
-          paddingBottom: 8 + insets.bottom, // <-- SUMA EL ESPACIO EXTRA DEL MÓVIL
-          paddingTop: 8,
+          // En web le damos 65px fijos. En móvil la altura normal + el espacio seguro.
+          height: Platform.OS === 'web' ? 65 : 60 + insets.bottom, 
+          // En web reducimos el padding inferior para que el texto respire.
+          paddingBottom: Platform.OS === 'web' ? 5 : Math.max(8, insets.bottom), 
+          paddingTop: 5,
+        },
+        tabBarItemStyle: {
+          paddingHorizontal: 0, 
         },
         tabBarLabelStyle: {
-          fontSize: FontSizes.xs,
+          fontSize: 11,
           fontWeight: '600',
+          marginTop: 0,
         },
       }}
     >
@@ -39,7 +50,7 @@ const GestionUsuarios = () => {
         name="Listar"
         component={ListarUsuarios}
         options={{
-          tabBarLabel: 'Ver Todos',
+          tabBarLabel: 'Lista', 
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="list-outline" size={size} color={color} />
           ),
@@ -69,7 +80,7 @@ const GestionUsuarios = () => {
         name="Eliminar"
         component={EliminarUsuario}
         options={{
-          tabBarLabel: 'Eliminar',
+          tabBarLabel: 'Eliminar', 
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="trash-outline" size={size} color={color} />
           ),
