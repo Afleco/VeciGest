@@ -122,7 +122,7 @@ const CrearUsuario = () => {
         },
       });
 
-      // Creamos la identidad segura en Auth (Supabase la encripta y la guarda en su tabla interna)
+      // Creamos la identidad en Auth 
       const { data: authData, error: authError } = await tempSupabase.auth.signUp({
         email: email.trim(),
         password: password,
@@ -131,7 +131,7 @@ const CrearUsuario = () => {
       if (authError) throw authError;
       if (!authData.user) throw new Error('No se pudo crear el usuario en Auth');
 
-      // Guardamos el perfil público en nuestra tabla 'usuarios' SIN la contraseña
+      // Guardamos el perfil público en nuestra tabla 'usuarios'
       const { error: insertError } = await supabase
         .from('usuarios')
         .insert({
