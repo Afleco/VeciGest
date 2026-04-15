@@ -266,7 +266,7 @@ const LoginScreen: React.FC = () => {
 
         </View>
 
-        {/* CONTENEDOR INFERIOR DE ACCIONES SECUNDARIAS */}
+        {/* CONTENEDOR INFERIOR */}
         <View style={styles.forgotContainer}>
           {!isForgotPassword ? (
             <TouchableOpacity style={styles.forgotButtonOutside} onPress={() => setIsForgotPassword(true)} disabled={loading}>
@@ -280,6 +280,14 @@ const LoginScreen: React.FC = () => {
         </View>
 
       </KeyboardAvoidingView>
+
+      {/* FOOTER */}
+      <View style={styles.footerContainer}>
+        <Text style={styles.footerText}>
+          © {new Date().getFullYear()} VeciGest. Creado por Lucas Caso & Alejandro Fleitas
+        </Text>
+      </View>
+      
     </View>
   );
 
@@ -327,6 +335,18 @@ const styles = StyleSheet.create({
     color: Colors.primary.blue, 
     fontSize: FontSizes.md,
     fontWeight: 'bold',
+  },
+  footerContainer: {
+    position: 'absolute',
+    bottom: Spacing.lg,
+    width: '100%',
+    alignItems: 'center',
+  },
+  footerText: {
+    fontSize: 12,
+    color: Colors.text.light,
+    fontWeight: '500',
+    textAlign: 'center',
   }
 });
 
