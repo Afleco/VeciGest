@@ -21,11 +21,13 @@ export const MessageBubble = ({ mensaje, nombre, rol, vivienda, fecha, isMine }:
         </View>
       )}
 
-      {/* Aplicamos flex: 1 condicionalmente para que los mensajes propios se encojan */}
+      {/* Usamos flexShrink: 1 para todos los mensajes.
+          Para que la burbuja ocupe el ancho del texto, pero si este va a superar el ancho de su padre
+          haga un salto de linea */}
       <View style={[
         styles.bubble, 
         isMine ? styles.myBubble : styles.otherBubble,
-        !isMine && { flex: 1 } 
+        { flexShrink: 1 } 
       ]}>
         {!isMine && (
           <Text style={styles.senderHeader}>
@@ -33,8 +35,12 @@ export const MessageBubble = ({ mensaje, nombre, rol, vivienda, fecha, isMine }:
             <Text style={styles.senderRol}> ({rol})</Text>
           </Text>
         )}
-        <Text style={[styles.text, isMine ? styles.myText : styles.otherText]}>{mensaje}</Text>
-        <Text style={[styles.timestamp, isMine ? styles.myTimestamp : styles.otherTimestamp]}>{time}</Text>
+        <Text style={[styles.messageText, isMine ? styles.myMessageText : styles.otherMessageText]}>
+          {mensaje}
+        </Text>
+        <Text style={[styles.timeText, isMine ? styles.myTimeText : styles.otherTimeText]}>
+          {time}
+        </Text>
       </View>
     </View>
   );
@@ -48,7 +54,7 @@ const styles = StyleSheet.create({
     maxWidth: '85%',
   },
   viviendaAvatar: {
-    width: 44,   // Tamaños de la burbuja del avatar
+    width: 44,
     height: 44,
     borderRadius: 22,
     backgroundColor: Colors.primary.blue,
@@ -59,7 +65,7 @@ const styles = StyleSheet.create({
   },
   viviendaAvatarText: {
     color: Colors.base.white,
-    fontSize: 14,  // Tamaño de la fuenta del avatar
+    fontSize: 14,
     fontWeight: 'bold',
   },
   bubble: { 
@@ -86,20 +92,27 @@ const styles = StyleSheet.create({
   },
   senderRol: {
     fontSize: 10,
-    color: Colors.text.secondary,
-    fontStyle: 'italic',
+    color: Colors.text.light,
   },
-  text: { 
+  messageText: {
     fontSize: FontSizes.md,
-    lineHeight: 22 
+    lineHeight: 20,
   },
-  myText: { color: Colors.base.white },
-  otherText: { color: Colors.text.primary },
-  timestamp: { 
-    fontSize: 10, 
-    alignSelf: 'flex-end', 
-    marginTop: Spacing.xs
+  myMessageText: {
+    color: Colors.base.white,
   },
-  myTimestamp: { color: 'rgba(255, 255, 255, 0.8)' },
-  otherTimestamp: { color: Colors.text.light }
+  otherMessageText: {
+    color: Colors.text.primary,
+  },
+  timeText: {
+    fontSize: 10,
+    marginTop: 4,
+    alignSelf: 'flex-end',
+  },
+  myTimeText: {
+    color: 'rgba(255,255,255,0.7)',
+  },
+  otherTimeText: {
+    color: Colors.text.light,
+  },
 });
