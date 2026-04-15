@@ -64,7 +64,7 @@ const Avisos = () => {
             if (error) throw error;
 
             if (data) {
-                // FILTRO CRÍTICO DE PRIVACIDAD:
+                // FILTRO DE PRIVACIDAD:
                 // 1. Si 'notificacion' es false, lo ve todo el mundo (avisos generales).
                 // 2. Si 'notificacion' es true, SOLO lo ve el usuario cuyo email coincide.
                 // Esto evita que la directiva vea notificaciones de votos cedidos a otros.
