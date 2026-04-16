@@ -19,14 +19,14 @@
 
 **VeciGest** is a cross-platform application (Web, iOS, and Android) designed to modernize, bring transparency to, and streamline the management of homeowners' associations. It eliminates bureaucratic friction and improves coexistence through real-time communication tools, financial management, and remote democratic participation.
 
-### ✨ Key Features
+### Key Features
 
-* **👥 Smart Role System:** Dynamically adapted interfaces and permissions for all community members.
-* **💬 Real-Time Community Chat:** Instant communication between neighbors using WebSockets.
-* **📢 News & Announcements:** Management of official communications and incidents.
-* **🗳️ Meetings & Vote Delegation:** Secure system for transferring proxy votes.
-* **💶 Financial Control:** Tracking of fees, pending receipts, and delinquency.
-* **📱 Universal Architecture:** Native adaptive design for Mobile and Desktop.
+* ** Smart Role System:** Dynamically adapted interfaces and permissions for all community members.
+* ** Real-Time Community Chat:** Instant communication between neighbors using WebSockets.
+* ** News & Announcements:** Management of official communications and incidents.
+* ** Meetings & Vote Delegation:** Secure system for transferring proxy votes.
+* ** Financial Control:** Tracking of fees, pending receipts, and delinquency.
+* ** Universal Architecture:** Native adaptive design for Mobile and Desktop.
 
 ---
 
